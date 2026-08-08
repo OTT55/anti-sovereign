@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Log in &middot; Story Atlas</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <script>
+    (function(){ try{ var t=localStorage.getItem('ott-theme'); if(!t){ t=matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light'; } document.documentElement.setAttribute('data-theme',t); }catch(e){} })();
+  </script>
+  <style>
+    body{display:flex;min-height:100vh;align-items:center;justify-content:center;}
+    .login-wrap{width:100%;max-width:400px;padding:20px;}
+    .login-head{text-align:center;padding:0 0 22px;}
+    .login-head .genre{display:inline-block;margin-bottom:8px;}
+    .login-head h1{font-family:var(--serif);font-size:28px;margin:0 0 10px;}
+    .login-head p{color:var(--text-2);font-size:14px;}
+    .login-err{color:var(--err);font-size:13px;margin:0 0 14px;}
+    .login-foot{color:var(--text-3);font-size:12px;text-align:center;margin-top:14px;}
+    .login-below{color:var(--text-2);text-align:center;margin-top:16px;font-size:13px;}
+  </style>
+</head>
+<body>
+  <div class="login-wrap">
+    <div class="login-head">
+      <span class="genre">Story Atlas</span>
+      <h1>Log in</h1>
+      <p>Use your <strong>FrameVault</strong> account &mdash; one login across CreativeOS.</p>
+    </div>
+
+    <div class="panel">
+      {% if error %}
+      <p class="login-err">{{ error }}</p>
+      {% endif %}
+      <form method="post" action="/login{% if request.args.get('next') %}?next={{ request.args.get('next') }}{% endif %}">
+        <div class="form-row">
+          <label>FrameVault handle</label>
+          <input name="handle" autocomplete="username" placeholder="ott" autofocus>
+        </div>
+        <div class="form-row">
+          <label>Password</label>
+          <input name="password" type="password" autocomplete="current-password" placeholder="&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;">
+        </div>
+        <button class="btn primary" type="submit" style="width:100%;">Log in with FrameVault</button>
+      </form>
+      <p class="login-foot">Story Atlas verifies your password with FrameVault and never stores it.</p>
+    </div>
+
+    <p class="login-below">
+      No account yet? <a href="{{ framevault_url }}/signup" target="_blank" rel="noopener" style="color:var(--accent);font-weight:600;">Create one on FrameVault &#8599;</a>
+    </p>
+  </div>
+</body>
+</html>

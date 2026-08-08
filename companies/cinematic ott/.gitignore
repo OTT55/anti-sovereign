@@ -1,0 +1,28 @@
+# Secrets — never commit the API key
+.env
+
+# Virtual environment
+.venv/
+
+# Run outputs and cache (data + local state, not source)
+runs/
+
+# Model weights + downloaded assets (fetched by scripts/fetch_assets.py; large binaries)
+*.pt
+yolov8*.pt
+models/
+wheels/
+evalset/samples/*.jpg
+evalset/samples/*.png
+
+# Python
+__pycache__/
+*.pyc
+.pytest_cache/
+
+# Install / run logs
+*.log
+
+# Locally cached wheels (large binaries fetched during setup)
+wheels/
+*.whl

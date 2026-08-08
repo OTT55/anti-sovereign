@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+{% set active = "home" %}
+{% block title %}{{ doc.title }} — ContextCore{% endblock %}
+{% block body %}
+<a href="/" class="muted" style="text-decoration:none;font-size:13px">← Documents</a>
+<h1 style="margin-top:8px">{{ doc.title }}</h1>
+<p class="lede">
+  <span class="mono">{{ doc.doc_id }}</span> · {{ chunk_count }} chunks indexed
+  {% if entity_count %}· <a href="/doc/{{ doc.doc_id }}/graph" style="color:var(--accent)">{{ entity_count }} entities — knowledge graph →</a>{% endif %}
+</p>
+
+<div id="chat" class="chat"></div>
+
+<div class="card ask-bar">
+  <input type="text" id="question" placeholder="Ask a question about this document…">
+  <button id="ask" data-doc="{{ doc.doc_id }}">Ask</button>
+</div>
+<div id="err" class="err hidden"></div>
+
+{% if related %}
+<h2 class="section">Related documents</h2>
+<p class="lede">Documents sharing at least one real extracted entity with this one —
+graph-grounded, not a text-similarity guess. <a href="/connect" style="color:var(--accent)">Trace a specific connection →</a></p>
+<div class="doc-list">
+  {% for r in related %}
+  <a class="doc-card" href="/doc/{{ r.doc_id }}">
+    <div class="dc-title">{{ r.title }}</div>
+    <div class="muted" style="font-size:12px">shares {{ r.shared }} entit{{ 'y' if r.shared == 1 else 'ies' }}: {{ r.names[:3]|join(', ') }}{{ '…' if r.names|length > 3 else '' }}</div>
+  </a>
+  {% endfor %}
+</div>
+{% endif %}
+{% endblock %}
+{% block scripts %}<script src="{{ url_for('static', filename='chat.js') }}"></script>{% endblock %}

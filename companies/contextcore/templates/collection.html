@@ -1,0 +1,75 @@
+{% extends "base.html" %}
+{% set active = "home" %}
+{% block title %}{{ category }} — ContextCore Collection{% endblock %}
+{% block body %}
+<a href="/" class="muted" style="text-decoration:none;font-size:13px">← Documents</a>
+<h1 style="margin-top:8px">Collection: {{ category }}</h1>
+<p class="lede">
+  A collection pools retrieval across every document below as one corpus — the exact
+  same chunk / TF-IDF / Claude-generation engine as a single-document question, just
+  spanning multiple sources. Answers cite which document they came from.
+  {% if entity_count %}<a href="/collection/{{ category }}/graph" style="color:var(--accent)">{{ entity_count }} entities across this collection — knowledge graph →</a>{% endif %}
+</p>
+
+<h2 class="section">Documents in this collection ({{ docs|length }})</h2>
+<div class="doc-list">
+  {% for d in docs %}
+  <a class="doc-card" href="/doc/{{ d.doc_id }}">
+    <div class="dc-title">{{ d.title }}</div>
+    <div class="muted" style="font-size:12px">{{ d.chunks }} chunks</div>
+    <div class="mono dc-id">{{ d.doc_id }}</div>
+  </a>
+  {% endfor %}
+</div>
+
+{% if is_distribution %}
+<h2 class="section">Structured query — Distribution Strategy</h2>
+<p class="lede">
+  This builds a natural-language question from your selections and asks it against the
+  collection above, the same way the free-form box below does. There is no separate
+  answer engine for this form — it's a query template over the same retrieval pipeline.
+</p>
+<div class="card">
+  <label>Genre(s)</label>
+  <div class="genre-grid">
+    {% for key, label in genres.items() %}
+    <label class="genre-check">
+      <input type="checkbox" class="dist-genre" value="{{ key }}">
+      <span>{{ label }}</span>
+    </label>
+    {% endfor %}
+  </div>
+  <label>Budget tier</label>
+  <div class="tier-tabs">
+    {% for key, label in tiers.items() %}
+    <button class="tier-tab" data-tier="{{ key }}" type="button">{{ label }}</button>
+    {% endfor %}
+  </div>
+  <label class="genre-check" style="margin-top:14px">
+    <input type="checkbox" id="dist-awards">
+    <span>Positioned for awards consideration</span>
+  </label>
+  <button id="dist-analyze">Analyze release strategy</button>
+</div>
+{% endif %}
+
+<h2 class="section">Ask anything about this collection</h2>
+<div id="chat" class="chat"></div>
+<div class="card ask-bar">
+  <input type="text" id="question" placeholder="Ask a question across every document in this collection…">
+  <button id="ask" data-category="{{ category }}">Ask</button>
+</div>
+<div id="err" class="err hidden"></div>
+{% endblock %}
+{% block scripts %}
+<style>
+  .genre-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 8px; margin-bottom: 8px; }
+  .genre-check { display: flex; align-items: center; gap: 8px; background: #0e0b0f; border: 1px solid var(--border); border-radius: 8px; padding: 9px 12px; cursor: pointer; font-size: 13px; }
+  .genre-check:has(input:checked) { border-color: var(--accent); background: var(--accent-dim); }
+  .tier-tabs { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 8px; }
+  .tier-tab { background: transparent; border: 1px solid var(--border); border-radius: 999px; padding: 8px 16px; color: var(--muted); font-family: inherit; font-size: 13px; cursor: pointer; }
+  .tier-tab.is-selected { background: var(--accent); border-color: var(--accent); color: #1a0611; font-weight: 600; }
+</style>
+<script src="{{ url_for('static', filename='chat.js') }}"></script>
+<script src="{{ url_for('static', filename='collection.js') }}"></script>
+{% endblock %}

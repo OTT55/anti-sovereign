@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+{% set active = "register" %}
+{% block title %}Canonchain — Register{% endblock %}
+{% block body %}
+<h1>Register origin</h1>
+<p class="lede">Hash a file in your browser and register that fingerprint. The bytes
+never leave your machine — only the SHA-256 is submitted. Whoever registers a
+hash first holds the earliest provable claim to that exact file.</p>
+
+<div class="stat-row">
+  <div class="stat"><b id="stat-count">{{ count }}</b><span>REGISTERED WORKS</span></div>
+  <div class="stat"><b class="hash" style="font-size:13px" id="stat-root">{{ (root or '—')[:16] }}{{ '…' if root }}</b><span>CURRENT MERKLE ROOT</span></div>
+</div>
+
+<div class="card">
+  <label>File to fingerprint</label>
+  <input type="file" id="file">
+  <div id="hashline" class="hash hidden" style="margin-top:10px"></div>
+
+  <label>Creator name</label>
+  <input type="text" id="creator" placeholder="e.g. Jesse O.">
+
+  <label>Filename / title</label>
+  <input type="text" id="filename" placeholder="auto-filled from the file, editable">
+
+  <label>Description <span class="muted">(optional)</span></label>
+  <textarea id="description" placeholder="What is this work?"></textarea>
+
+  <button id="submit" disabled>Register hash</button>
+  <div id="err" class="err hidden"></div>
+</div>
+
+<div id="cert" class="cert hidden">
+  <div class="seal">CANON<br>CHAIN</div>
+  <h2>Registry Certificate</h2>
+  <div class="muted" style="font-size:12px">Cryptographic proof of first registration</div>
+  <div class="kv"><div class="k">Registry ID</div><div class="v" id="c_id"></div></div>
+  <div class="kv"><div class="k">Creator</div><div class="v" id="c_creator"></div></div>
+  <div class="kv"><div class="k">Work</div><div class="v" id="c_file"></div></div>
+  <div class="kv"><div class="k">SHA-256</div><div class="v hash" id="c_hash"></div></div>
+  <div class="kv"><div class="k">Registered (UTC)</div><div class="v" id="c_time"></div></div>
+  <div class="kv"><div class="k">Merkle root · leaf <span id="c_index"></span> of <span id="c_size"></span></div><div class="v hash" id="c_root"></div></div>
+  <div class="kv"><div class="k">Inclusion proof</div><div class="proof" id="c_proof"></div></div>
+</div>
+{% endblock %}
+{% block scripts %}<script src="{{ url_for('static', filename='register.js') }}"></script>{% endblock %}

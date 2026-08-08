@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>CreativeOS — OTT Studio</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/creativeos.css">
+<script>(function(){ try{ var t=localStorage.getItem('ott-theme'); if(!t){ t=matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light'; } document.documentElement.setAttribute('data-theme',t); }catch(e){} })();</script>
+</head>
+<body>
+<main class="pane" data-view="studio">
+  <div class="inner" style="--h:var(--studio)">
+    <div class="phdr">
+      <div>
+        <div class="prod" style="--h:var(--studio)"><span class="pdot"></span>OTT Studio · Creator workspace</div>
+        <h1>"Halcyon" — production workspace</h1>
+        <p class="sub">A cloud studio, not a folder. Manage the project, orchestrate AI jobs, organise assets and collaborate — then publish straight to your portfolio and the ecosystem search index.</p>
+      </div>
+      <div style="display:flex; gap:10px; align-items:center">
+        <div style="display:flex; margin-right:4px">
+          <span class="me av" style="width:28px;height:28px;border:2px solid var(--bg-0)">O</span>
+          <span class="me av" style="width:28px;height:28px;margin-left:-8px;border:2px solid var(--bg-0);background:linear-gradient(135deg,#3DA9FC,#1c6fc0)">A</span>
+          <span class="me av" style="width:28px;height:28px;margin-left:-8px;border:2px solid var(--bg-0);background:linear-gradient(135deg,#2CC9A0,#178a6c)">K</span>
+        </div>
+        <button class="btn sec" data-toast="Share — uses spine resource_grants for permissions">Share</button>
+        <button class="btn hue" style="--h:var(--studio)" data-toast="Publish — emits project.published to Search + FrameVault">Publish</button>
+      </div>
+    </div>
+
+    <div class="toolbar">
+      <div class="tabs"><button class="tab on hue" style="--h:var(--studio)">Board</button><button class="tab" data-toast="Assets tab — see tray below">Assets</button><button class="tab" data-toast="AI jobs — see panel below">AI jobs</button><button class="tab" data-toast="Timeline / edit view — prototype stub">Timeline</button></div>
+      <span class="pill"><span class="dotv" style="color:var(--warn)"></span>In production · Day 2 / 4</span>
+    </div>
+
+    <section class="blk">
+      <div class="blkhead"><h2>Production board</h2><span class="cap">Shared with 2 collaborators</span></div>
+      <div class="board k3">
+        <div class="col">
+          <div class="ch">📋 To do <span class="ct">3</span></div>
+          <div class="tk"><div class="tt">Lock shot list — night ext.</div><div class="tm"><span class="pill" style="padding:2px 8px">OTT</span></div></div>
+          <div class="tk"><div class="tt">Source practical lights</div><div class="tm"><span class="pill" style="padding:2px 8px">Aria</span><span>due tmrw</span></div></div>
+          <div class="tk"><div class="tt">Sound recce — location B</div><div class="tm"><span class="pill" style="padding:2px 8px">Sena</span></div></div>
+        </div>
+        <div class="col">
+          <div class="ch" style="color:var(--studio)">🎬 In progress <span class="ct">2</span></div>
+          <div class="tk" style="border-color:color-mix(in srgb,var(--studio) 40%,var(--line))"><div class="tt">Grade — scene 4 (Umber LUT)</div><div class="tm"><span class="pill" style="padding:2px 8px">Kojo</span><span>60%</span></div></div>
+          <div class="tk"><div class="tt">Assemble rough cut</div><div class="tm"><span class="pill" style="padding:2px 8px">OTT</span></div></div>
+        </div>
+        <div class="col">
+          <div class="ch">✅ Done <span class="ct">4</span></div>
+          <div class="tk"><div class="tt">Proxy transcodes</div><div class="tm"><span class="pill hue" style="--h:var(--studio);padding:2px 8px">🤖 AI job</span></div></div>
+          <div class="tk"><div class="tt">Day 1 dailies synced</div><div class="tm"><span class="pill ok" style="padding:2px 8px"><span class="dotv"></span>ok</span></div></div>
+        </div>
+      </div>
+    </section>
+
+    <div class="split2" style="margin-top:26px">
+      <section class="card">
+        <div class="blkhead" style="margin-bottom:14px"><h2>Asset tray</h2><span class="cap">12 items · 4.2 GB</span></div>
+        <div class="cards c3">
+          <div class="uc" style="--h:var(--studio)"><div class="cover" style="--tb:linear-gradient(135deg,#221a30,#140f1e)"><span class="tagtr">4K</span><span class="ic">🎞️</span></div><div class="body" style="padding:10px"><div class="t" style="font-size:12.5px">SC4_night_take3</div><div class="m" style="font-size:11px">ProRes · 2.1 GB</div></div></div>
+          <div class="uc" style="--h:var(--studio)"><div class="cover" style="--tb:linear-gradient(135deg,#1c1a2e,#12101c)"><span class="ic">🖼️</span></div><div class="body" style="padding:10px"><div class="t" style="font-size:12.5px">moodboard_v2</div><div class="m" style="font-size:11px">PNG · 6 MB</div></div></div>
+          <div class="uc" style="--h:var(--studio)"><div class="cover" style="--tb:linear-gradient(135deg,#201a2e,#13101b)"><span class="ic">🎵</span></div><div class="body" style="padding:10px"><div class="t" style="font-size:12.5px">temp_score</div><div class="m" style="font-size:11px">WAV · 48 MB</div></div></div>
+        </div>
+        <button class="btn sec sm" style="margin-top:14px" data-toast="Import from RightsForge — shared media layer">+ Import from RightsForge</button>
+      </section>
+
+      <section class="card">
+        <div class="blkhead" style="margin-bottom:14px"><h2>AI jobs</h2><span class="cap">Orchestrated</span></div>
+        <div class="rows" style="border:none">
+          <div class="lrow" style="--h:var(--studio); padding:12px 0; background:transparent"><div class="av">🤖</div><div class="grow"><div class="t">Proxy transcode — all dailies</div><div class="m">Done · 24 clips · 3m 12s</div></div><span class="pill ok"><span class="dotv"></span>Done</span></div>
+          <div class="lrow" style="--h:var(--studio); padding:12px 0; background:transparent"><div class="av">🤖</div><div class="grow"><div class="t">Auto-sync audio to picture</div><div class="m">Running · 60%</div><div class="progress" style="--h:var(--studio); margin-top:8px"><i style="width:60%"></i></div></div></div>
+          <div class="lrow" style="--h:var(--studio); padding:12px 0; background:transparent"><div class="av">🤖</div><div class="grow"><div class="t">Rough color match (draft)</div><div class="m">Queued · behind 1 job</div></div><span class="pill warn">Queued</span></div>
+        </div>
+        <button class="btn hue sm" style="--h:var(--studio); margin-top:14px" data-toast="New AI job — orchestration is a prototype stub">+ New AI job</button>
+        <p class="muted" style="font-size:12px; margin:12px 0 0">AI does the mechanical passes. The creative decisions stay yours — the workspace is built around your judgment, not to replace it.</p>
+      </section>
+    </div>
+
+    <div class="banner" style="--h:var(--studio)">🔗 <span><b>Cross-product loop:</b> hitting <b>Publish</b> emits <code style="font-family:var(--font-mono);color:var(--studio)">project.published</code> — Search indexes the work, FrameVault adds it to your portfolio, and Provenance stamps authorship.</span></div>
+  </div>
+</main>
+<script src="assets/shell.js"></script>
+</body>
+</html>

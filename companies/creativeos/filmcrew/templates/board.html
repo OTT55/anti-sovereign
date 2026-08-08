@@ -1,0 +1,161 @@
+{% extends "base.html" %}
+{% block title %}Productions{% endblock %}
+{% block nav_board %}on{% endblock %}
+
+{% block body %}
+<div class="row spread wrap-w" style="gap:16px;">
+  <div>
+    <p class="eyebrow">FilmCrew · Collaboration</p>
+    <h1 style="margin:.2em 0;">Productions</h1>
+    <p class="muted">Staff a shoot end to end — post roles, rank applicants, run the contract to payment.{% if me %} Drag a card between columns to change its stage.{% endif %}</p>
+  </div>
+  {% if me %}
+  <button class="btn btn-primary" onclick="document.getElementById('newproject').open=true;document.getElementById('np-title').focus()">+ New production</button>
+  {% else %}
+  <a class="btn btn-primary" href="/login">Log in to manage</a>
+  {% endif %}
+</div>
+
+<div class="stats" id="stats">
+  <div class="stat"><div class="n" id="stat-projects">{{ stats.projects }}</div><div class="l">Productions</div></div>
+  <div class="stat"><div class="n" id="stat-open_roles">{{ stats.open_roles }}</div><div class="l">Open roles</div></div>
+  <div class="stat"><div class="n" id="stat-applicants">{{ stats.applicants }}</div><div class="l">New applicants</div></div>
+  <div class="stat"><div class="n" id="stat-in_escrow">£{{ '{:,}'.format(stats.in_escrow) }}</div><div class="l">In contract</div></div>
+</div>
+
+<div class="board">
+  {% for key, label in stages %}
+  <div class="col" data-stage="{{ key }}">
+    <h3><span class="ctitle">{{ label }}</span> <span class="ct">{{ cards[key]|length }}</span></h3>
+    {% for c in cards[key] %}
+    <a class="pcard" href="/project/{{ c.p['id'] }}" data-id="{{ c.p['id'] }}" draggable="{{ 'true' if me else 'false' }}"
+       style="--h1:{{ (c.p['id'] * 137) % 360 }}; --h2:{{ (c.p['id'] * 137 + 42) % 360 }};">
+      <div class="cov" aria-hidden="true"></div>
+      <div class="body">
+        <div class="t">{{ c.p['title'] }}</div>
+        <div class="m">{{ c.p['producer'] }}{% if c.p['location'] %} · {{ c.p['location'] }}{% endif %}</div>
+        <div class="tags">
+          {% if c.open_roles %}<span class="badge open"><span class="dot"></span>{{ c.open_roles }} open</span>{% endif %}
+          {% if c.roles %}<span class="badge filled">{{ c.roles }} role{{ '' if c.roles == 1 else 's' }}</span>{% endif %}
+          {% if c.applicants %}<span class="badge match">{{ c.applicants }} applicant{{ '' if c.applicants == 1 else 's' }}</span>{% endif %}
+        </div>
+      </div>
+    </a>
+    {% else %}
+    <p class="empty">Nothing here yet.</p>
+    {% endfor %}
+  </div>
+  {% endfor %}
+</div>
+
+{% if me %}
+<details class="newform" id="newproject">
+  <summary>+ Start a new production</summary>
+  <div class="card pad stack" style="margin-top:12px;">
+    <div class="fgrid">
+      <label class="fld"><span>Title *</span><input id="np-title" placeholder="e.g. Meridian II"></label>
+      <label class="fld"><span>Location</span><input id="np-location" placeholder="London"></label>
+    </div>
+    <label class="fld"><span>Summary</span><textarea id="np-summary" placeholder="What is it? Shoot length, look, constraints…"></textarea></label>
+    <div class="row spread wrap-w">
+      <span class="faint tiny">Starts in <strong>Drafting</strong>; posting a role moves it to Open.</span>
+      <button class="btn btn-primary" onclick="createProject()">Create production</button>
+    </div>
+  </div>
+</details>
+{% endif %}
+
+<div class="note">
+  🔗 <b>The cross-product loop:</b> when a contract here reaches <b>paid</b>, FilmCrew calls FrameVault
+  and writes a verified credit onto that creator's public profile — separate apps, separate databases,
+  one identity. The credit fires on payment, not on "hire", so reputation always means work actually
+  delivered.
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+async function createProject(){
+  const title = document.getElementById('np-title').value.trim();
+  if(!title){ toast('A title is required','err'); return; }
+  const { ok, data } = await postJSON('/api/project', {
+    title,
+    location: document.getElementById('np-location').value.trim(),
+    summary: document.getElementById('np-summary').value.trim(),
+  });
+  if(!ok || !data.ok){ toast(data.error || 'Could not create','err'); return; }
+  toast('Production created','ok');
+  setTimeout(function(){ location.href = '/project/' + data.id; }, 450);
+}
+
+/* ---- drag-and-drop between kanban columns, backed by the same
+   /api/project/:id/stage endpoint the project detail page's dropdown uses ---- */
+let dragId = null, dragSourceCol = null;
+
+function updateColCount(col){
+  if (!col) return;
+  const count = col.querySelectorAll('.pcard').length;
+  const ct = col.querySelector('.ct');
+  if (ct) ct.textContent = String(count);
+  if (count === 0 && !col.querySelector('.empty')){
+    const p = document.createElement('p');
+    p.className = 'empty';
+    p.textContent = 'Nothing here yet.';
+    col.appendChild(p);
+  }
+}
+
+document.querySelectorAll('.pcard[draggable="true"]').forEach((card) => {
+  card.addEventListener('dragstart', (e) => {
+    dragId = card.dataset.id;
+    dragSourceCol = card.closest('.col');
+    e.dataTransfer.effectAllowed = 'move';
+    e.dataTransfer.setData('text/plain', dragId);
+    setTimeout(() => card.classList.add('dragging'), 0);
+  });
+  card.addEventListener('dragend', () => {
+    card.classList.remove('dragging');
+    dragId = null; dragSourceCol = null;
+  });
+});
+
+document.querySelectorAll('.col').forEach((col) => {
+  col.addEventListener('dragover', (e) => { if (dragId) { e.preventDefault(); col.classList.add('dragover'); } });
+  col.addEventListener('dragleave', () => col.classList.remove('dragover'));
+  col.addEventListener('drop', async (e) => {
+    e.preventDefault();
+    col.classList.remove('dragover');
+    if (!dragId || col === dragSourceCol) return;
+    const card = document.querySelector('.pcard[data-id="' + dragId + '"]');
+    const sourceCol = dragSourceCol;
+    if (!card) return;
+    const stage = col.dataset.stage;
+    const { ok, data } = await postJSON('/api/project/' + dragId + '/stage', { stage });
+    if (!ok || !data.ok) { toast(data.error || 'Could not move production', 'err'); return; }
+    const emptyMsg = col.querySelector('.empty'); if (emptyMsg) emptyMsg.remove();
+    col.appendChild(card);
+    updateColCount(col);
+    updateColCount(sourceCol);
+    toast('Moved to ' + col.querySelector('.ctitle').textContent, 'ok');
+  });
+});
+
+/* ---- live stat polling: a genuinely "alive" board, not a static snapshot ---- */
+async function pollStats(){
+  try {
+    const r = await fetch('/api/board/stats');
+    if (!r.ok) return;
+    const s = await r.json();
+    const map = { projects: s.projects, open_roles: s.open_roles, applicants: s.applicants, in_escrow: '£' + s.in_escrow.toLocaleString() };
+    Object.keys(map).forEach((key) => {
+      const el = document.getElementById('stat-' + key);
+      if (el && el.textContent !== String(map[key])) {
+        el.textContent = map[key];
+        el.classList.remove('pulse'); void el.offsetWidth; el.classList.add('pulse');
+      }
+    });
+  } catch (e) { /* offline/unreachable — silently skip this tick */ }
+}
+setInterval(pollStats, 12000);
+</script>
+{% endblock %}

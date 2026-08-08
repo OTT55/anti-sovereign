@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% block title %}Log in{% endblock %}
+
+{% block body %}
+<div style="max-width:420px;margin:6vh auto 0;">
+  <div style="text-align:center;margin-bottom:22px;">
+    <p class="eyebrow">FrameVault</p>
+    <h1 style="margin:.2em 0;">Welcome back</h1>
+    <p class="muted">Your identity &amp; provenance, in one place.</p>
+  </div>
+
+  <div class="card pad">
+    {% if error %}
+    <div class="badge no" style="width:100%;justify-content:flex-start;padding:10px 12px;margin-bottom:14px;">
+      <span class="dot"></span>{{ error }}
+    </div>
+    {% endif %}
+
+    <form method="post" action="/login{% if request.args.get('next') %}?next={{ request.args.get('next') }}{% endif %}" class="stack">
+      <label class="fld"><span>Handle</span>
+        <input name="handle" autocomplete="username" placeholder="ott" autofocus>
+      </label>
+      <label class="fld"><span>Password</span>
+        <input name="password" type="password" autocomplete="current-password" placeholder="••••••••">
+      </label>
+      <button class="btn btn-primary" type="submit" style="width:100%;">Log in</button>
+    </form>
+
+    {% if demo %}
+    <p class="muted tiny" style="text-align:center;margin-top:14px;">
+      Demo account — handle <span class="mono">{{ demo[0] }}</span>, password <span class="mono">{{ demo[1] }}</span>
+    </p>
+    {% endif %}
+  </div>
+
+  <p class="muted" style="text-align:center;margin-top:16px;">
+    New here? <a href="/signup" style="color:var(--accent);font-weight:600;">Create your FrameVault</a>
+  </p>
+</div>
+{% endblock %}

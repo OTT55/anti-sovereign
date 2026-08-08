@@ -1,0 +1,40 @@
+{
+  "kind": "refdata",
+  "name": "jurisdictions",
+  "version": "2026.1",
+  "effective_from": "2026-01-01",
+  "review_by": "2026-12-01",
+  "owner": "compliance",
+  "source": "illustrative, OFAC/GDPR-style — not a live feed (see decisions/0002)",
+
+  "jurisdictions": {
+    "US": "United States",
+    "EU": "European Union",
+    "UK": "United Kingdom",
+    "SG": "Singapore",
+    "CN": "China",
+    "RU": "Russia",
+    "IR": "Iran",
+    "KP": "North Korea"
+  },
+
+  "asset_types": ["funds", "security", "crypto", "media", "dataset", "document"],
+
+  "sets": {
+    "SANCTIONED": {
+      "description": "Countries under comprehensive sanctions",
+      "basis": "OFAC comprehensive sanctions",
+      "members": ["IR", "KP"]
+    },
+    "GDPR_ADEQUATE": {
+      "description": "Destinations with a GDPR adequacy decision — no extra transfer safeguard needed",
+      "basis": "GDPR Art. 45 adequacy decisions",
+      "members": ["UK", "EU"]
+    },
+    "LOCALIZATION": {
+      "description": "Destinations with strict data-localization regimes",
+      "basis": "Local data-localization law",
+      "members": ["CN", "RU"]
+    }
+  }
+}

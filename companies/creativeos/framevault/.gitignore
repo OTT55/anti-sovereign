@@ -1,0 +1,6 @@
+# Never commit the signing secret — anyone with it can forge FrameVault signatures.
+.fv_secret
+# Generated at runtime; data + local state, not source.
+framevault.db
+__pycache__/
+.venv/

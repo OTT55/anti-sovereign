@@ -1,0 +1,128 @@
+{
+  "kind": "rulepack",
+  "pack": "core",
+  "version": "2026.1",
+  "refdata": "jurisdictions@2026.1",
+  "description": "Cross-border transfer compliance — the rule set carried over from the Clearpath MVP, now versioned data instead of Python functions. See decisions/0002.",
+
+  "rules": [
+    {
+      "rule_id": "sanctions_destination",
+      "outcome": "BLOCK",
+      "basis": "OFAC comprehensive sanctions",
+      "citation_url": "https://ofac.treasury.gov/sanctions-programs-and-country-information",
+      "params": {},
+      "applies_when": null,
+      "fires_when": { "field": "destination", "op": "in", "ref": "SANCTIONED" },
+      "message": "{destination_name} is under comprehensive sanctions; transfers are prohibited.",
+      "remediation": null,
+      "effective_from": "2026-01-01",
+      "review_by": "2026-12-01",
+      "owner": "compliance"
+    },
+    {
+      "rule_id": "sanctions_origin",
+      "outcome": "BLOCK",
+      "basis": "OFAC comprehensive sanctions",
+      "citation_url": "https://ofac.treasury.gov/sanctions-programs-and-country-information",
+      "params": {},
+      "applies_when": null,
+      "fires_when": { "field": "origin", "op": "in", "ref": "SANCTIONED" },
+      "message": "{origin_name} is under comprehensive sanctions; transfers are prohibited.",
+      "remediation": null,
+      "effective_from": "2026-01-01",
+      "review_by": "2026-12-01",
+      "owner": "compliance"
+    },
+    {
+      "rule_id": "aml_threshold",
+      "outcome": "REVIEW",
+      "basis": "FATF Rec. 10 / BSA $10k reporting",
+      "citation_url": "https://www.fincen.gov/resources/statutes-and-regulations/bank-secrecy-act",
+      "params": { "aml_threshold": 10000 },
+      "applies_when": {
+        "and": [
+          { "field": "asset_type", "op": "in", "value": ["funds", "crypto", "security"] },
+          { "field": "value", "op": ">=", "param": "aml_threshold" }
+        ]
+      },
+      "fires_when": { "field": "party_verified", "op": "==", "value": false },
+      "message": "Value ${value:,.0f} exceeds the ${aml_threshold:,.0f} threshold and the counterparty is unverified.",
+      "remediation": "Complete KYC / enhanced due diligence on the counterparty.",
+      "effective_from": "2026-01-01",
+      "review_by": "2026-12-01",
+      "owner": "compliance"
+    },
+    {
+      "rule_id": "gdpr_restricted_transfer",
+      "outcome": "REVIEW",
+      "basis": "GDPR Art. 44–46",
+      "citation_url": "https://gdpr-info.eu/chapter-5/",
+      "params": {},
+      "applies_when": {
+        "and": [
+          { "field": "origin", "op": "==", "value": "EU" },
+          { "field": "destination", "op": "not_in", "ref": "GDPR_ADEQUATE" }
+        ]
+      },
+      "fires_when": { "field": "contains_pii", "op": "==", "value": true },
+      "message": "Personal data is leaving the EU for {destination_name}, which lacks an adequacy decision.",
+      "remediation": "Attach Standard Contractual Clauses (SCCs) or an equivalent Art. 46 safeguard.",
+      "effective_from": "2026-01-01",
+      "review_by": "2026-12-01",
+      "owner": "compliance"
+    },
+    {
+      "rule_id": "data_localization",
+      "outcome": "REVIEW",
+      "basis": "Local data-localization law",
+      "citation_url": null,
+      "params": {},
+      "applies_when": { "field": "destination", "op": "in", "ref": "LOCALIZATION" },
+      "fires_when": {
+        "or": [
+          { "field": "contains_pii", "op": "==", "value": true },
+          { "field": "asset_type", "op": "==", "value": "dataset" }
+        ]
+      },
+      "message": "{destination_name} requires covered data to be stored on local infrastructure.",
+      "remediation": "Route storage/processing through an in-country node before transfer.",
+      "effective_from": "2026-01-01",
+      "review_by": "2026-12-01",
+      "owner": "compliance"
+    },
+    {
+      "rule_id": "securities_offering",
+      "outcome": "REVIEW",
+      "basis": "SEC Reg D — accredited investor",
+      "citation_url": "https://www.sec.gov/resources-small-businesses/exempt-offerings/private-placements-rule-506b",
+      "params": {},
+      "applies_when": {
+        "and": [
+          { "field": "asset_type", "op": "==", "value": "security" },
+          { "field": "destination", "op": "==", "value": "US" }
+        ]
+      },
+      "fires_when": { "field": "party_verified", "op": "==", "value": false },
+      "message": "A security is being transferred to a US counterparty whose accreditation is unverified.",
+      "remediation": "Verify accredited-investor status or use a registered offering.",
+      "effective_from": "2026-01-01",
+      "review_by": "2026-12-01",
+      "owner": "compliance"
+    },
+    {
+      "rule_id": "content_provenance",
+      "outcome": "REVIEW",
+      "basis": "Sovereign Stack provenance policy",
+      "citation_url": null,
+      "params": {},
+      "applies_when": { "field": "asset_type", "op": "==", "value": "media" },
+      "fires_when": { "field": "provenance_attached", "op": "==", "value": false },
+      "message": "Media is being routed without a provenance attestation, so its origin cannot be verified downstream.",
+      "remediation": "Attach a Canonchain registration or Veridact manifest before release.",
+      "effective_from": "2026-01-01",
+      "review_by": "2026-09-01",
+      "owner": "compliance"
+    }
+  ]
+}

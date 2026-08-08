@@ -1,0 +1,78 @@
+{% extends "base.html" %}
+{% set active = "home" %}
+{% block title %}ContextCore — Documents{% endblock %}
+{% block body %}
+<h1>Ingest a document</h1>
+<p class="lede">Paste text or upload a file. ContextCore chunks it, builds
+a TF-IDF vector index, and lets you ask questions — every answer cites the exact
+passages it came from. Retrieval runs fully locally; a generative answer via Claude
+is layered on when an API key and credit are available.</p>
+
+<div class="card">
+  <label>Title</label>
+  <input type="text" id="title" placeholder="e.g. Sovereign Stack — Phase 1 notes">
+  <label>Document text</label>
+  <textarea id="text" placeholder="Paste the document here…"></textarea>
+  <div class="or">— or —</div>
+  <label>Upload a file ({{ supported_extensions }})</label>
+  <input type="file" id="file" accept=".txt,.md,.pdf,.docx,.xlsx,.pptx,.csv,.eml,.png,.jpg,.jpeg">
+  <button id="ingest">Ingest &amp; index</button>
+  <div id="err" class="err hidden"></div>
+</div>
+
+{% if collections %}
+<h2 class="section">Collections</h2>
+<p class="lede">A collection pools retrieval across many documents as one persistent corpus —
+the same engine as a single document, just spanning more sources. This is where a
+structured analysis mode (like release-strategy queries) plugs into the retrieval
+pipeline instead of a bespoke rules engine.</p>
+<div class="doc-list">
+  {% for c in collections %}
+  <a class="doc-card" href="/collection/{{ c.category }}">
+    <div class="dc-title">{{ c.category }}</div>
+    <div class="muted" style="font-size:12px">{{ c.doc_count }} documents · {{ c.chunk_count }} chunks</div>
+  </a>
+  {% endfor %}
+</div>
+{% endif %}
+
+<h2 class="section">Indexed documents</h2>
+<div class="doc-list" id="doc-list">
+{% if not docs %}<p class="muted" id="no-docs">Nothing indexed yet.</p>{% endif %}
+  {% for d in docs %}
+  <a class="doc-card" href="/doc/{{ d.doc_id }}" id="doc-{{ d.doc_id }}">
+    <div class="dc-title">{{ d.title }}</div>
+    <div class="muted" style="font-size:12px">{{ d.chunks }} chunks</div>
+    <div class="mono dc-id">{{ d.doc_id }}</div>
+  </a>
+  {% endfor %}
+</div>
+{% endblock %}
+{% block scripts %}
+<script src="{{ url_for('static', filename='ingest.js') }}"></script>
+<script>
+/* ingestion could be happening from another tab or script — poll quietly so
+   newly-indexed documents show up here without a refresh. */
+function esc(s){ const d = document.createElement("div"); d.textContent = s == null ? "" : String(s); return d.innerHTML; }
+async function pollDocs(){
+  try {
+    const res = await fetch('/api/documents/latest?limit=5');
+    if (!res.ok) return;
+    const data = await res.json();
+    const list = document.getElementById('doc-list');
+    const noDocs = document.getElementById('no-docs');
+    data.docs.slice().reverse().forEach((d) => {
+      if (document.getElementById('doc-' + d.doc_id)) return;
+      if (noDocs) noDocs.remove();
+      const a = document.createElement('a');
+      a.className = 'doc-card new-doc'; a.href = '/doc/' + d.doc_id; a.id = 'doc-' + d.doc_id;
+      a.innerHTML = `<div class="dc-title">${esc(d.title)}</div>
+        <div class="muted" style="font-size:12px">${d.chunks} chunks</div>
+        <div class="mono dc-id">${esc(d.doc_id)}</div>`;
+      list.insertBefore(a, list.firstChild);
+    });
+  } catch (e) { /* offline — skip this tick */ }
+}
+setInterval(pollDocs, 12000);
+</script>
+{% endblock %}

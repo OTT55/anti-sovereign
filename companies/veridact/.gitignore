@@ -1,0 +1,11 @@
+# For device attestation, Veridact holds no signing secret — devices sign,
+# Veridact only verifies (decisions/0002). decisions/0010 adds a separate,
+# second kind of key: Veridact's OWN self-signed C2PA signing certificate,
+# used to emit standard C2PA manifests (Veridact vouching for what it
+# directly observed at capture — timestamp, device, challenge — not
+# forging a device's own attestation). Auto-generated on first use; never
+# committed, same reasoning as the runtime database below.
+c2pa_signing/
+*.db
+__pycache__/
+.venv/

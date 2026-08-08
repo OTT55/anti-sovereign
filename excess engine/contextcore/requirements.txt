@@ -1,0 +1,14 @@
+networkx>=3.3
+pytest>=8.0
+
+# Multi-format ingest — each format-specific library's only job is producing
+# plain text; the chunk/index pipeline after that is unchanged.
+pymupdf>=1.24      # .pdf
+python-docx>=1.1   # .docx
+openpyxl>=3.1      # .xlsx
+python-pptx>=1.0   # .pptx
+# .csv and .eml use the Python standard library — no extra dependency.
+
+# Optional — enables the Claude-composed answer layer, entity/relationship
+# extraction, and conflict detection. All fall back gracefully without it.
+# anthropic>=0.40

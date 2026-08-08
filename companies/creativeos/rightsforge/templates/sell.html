@@ -1,0 +1,119 @@
+{% extends "base.html" %}
+{% block title %}List something{% endblock %}
+{% block nav_market %}on{% endblock %}
+
+{% block body %}
+<div style="max-width:640px; margin:0 auto;">
+  <p class="eyebrow">RightsForge · List</p>
+  <h1 style="margin:.2em 0;">What are you listing?</h1>
+  <p class="muted">Assets license instantly to many buyers. IP is negotiated — one buyer, exclusive.</p>
+
+  <div class="typepick">
+    <label><input type="radio" name="ltype" value="asset" checked onchange="setType('asset')">
+      <div class="tt">🎨 Asset</div><div class="tm">Music, SFX, LUTs, VFX, templates…</div>
+    </label>
+    <label><input type="radio" name="ltype" value="ip" onchange="setType('ip')">
+      <div class="tt">📜 IP</div><div class="tm">Script, novel, pilot, game concept…</div>
+    </label>
+  </div>
+
+  <div class="card pad stack">
+    <label class="fld"><span>Title *</span><input id="f-title" placeholder="e.g. “Umber” LUT pack"></label>
+    <div class="fgrid">
+      <label class="fld" id="cat-wrap"><span>Category</span>
+        <select id="f-category">
+          {% for c in asset_cats %}<option value="{{ c }}">{{ c|capitalize }}</option>{% endfor %}
+        </select>
+      </label>
+      <label class="fld"><span>Provenance ID <span class="faint tiny">(optional)</span></span>
+        <input id="f-provenance" placeholder="FV-2026-…"></label>
+    </div>
+    <label class="fld"><span>Description</span><textarea id="f-desc" placeholder="What is it? What makes it good?"></textarea></label>
+    <label class="fld"><span>File <span class="faint tiny">(optional — the actual asset or an excerpt/script; gets SHA-256 hashed and is only downloadable by you or a buyer who's paid)</span></span>
+      <input id="f-file" type="file"></label>
+
+    <div id="asset-block">
+      <p class="eyebrow" style="margin:6px 0 8px;">License tiers</p>
+      <div id="tier-rows"></div>
+      <button class="btn btn-ghost btn-sm" type="button" onclick="addTierRow()">+ Add tier</button>
+    </div>
+
+    <div id="ip-block" class="hidden">
+      <p class="eyebrow" style="margin:6px 0 8px;">Deal terms</p>
+      <div id="term-rows"></div>
+      <button class="btn btn-ghost btn-sm" type="button" onclick="addTermRow()">+ Add term</button>
+    </div>
+
+    <div class="row" style="justify-content:flex-end; margin-top:6px;">
+      <button class="btn btn-primary" onclick="publish()">Publish listing</button>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+const ASSET_CATS = {{ asset_cats|tojson }};
+const IP_FORMATS = {{ ip_formats|tojson }};
+let curType = 'asset';
+
+function setType(t){
+  curType = t;
+  document.getElementById('asset-block').classList.toggle('hidden', t !== 'asset');
+  document.getElementById('ip-block').classList.toggle('hidden', t !== 'ip');
+  const sel = document.getElementById('f-category');
+  sel.innerHTML = (t === 'asset' ? ASSET_CATS : IP_FORMATS)
+    .map(c => `<option value="${c}">${c.replace('_',' ').replace(/^./, s=>s.toUpperCase())}</option>`).join('');
+}
+
+function addTierRow(name, price){
+  const row = document.createElement('div'); row.className = 'rowform';
+  row.innerHTML = `<input class="tier-name" placeholder="Tier name (e.g. Commercial)" value="${name||''}">
+    <input class="tier-price" type="number" min="1" placeholder="Price £" value="${price||''}">
+    <span class="x" onclick="this.parentElement.remove()">✕</span>`;
+  document.getElementById('tier-rows').appendChild(row);
+}
+function addTermRow(kind, price){
+  const row = document.createElement('div'); row.className = 'rowform';
+  row.innerHTML = `<select class="term-kind"><option value="option">Option</option><option value="license">License</option><option value="purchase">Purchase</option></select>
+    <input class="term-price" type="number" min="1" placeholder="Price £" value="${price||''}">
+    <span class="x" onclick="this.parentElement.remove()">✕</span>`;
+  if(kind) row.querySelector('.term-kind').value = kind;
+  document.getElementById('term-rows').appendChild(row);
+}
+addTierRow('Personal / royalty-free', 29);
+addTierRow('Commercial', 89);
+addTermRow('option', 2000);
+addTermRow('purchase', 20000);
+
+async function publish(){
+  const title = document.getElementById('f-title').value.trim();
+  if(!title){ toast('A title is required','err'); return; }
+  const fd = new FormData();
+  fd.append('listing_type', curType);
+  fd.append('title', title);
+  fd.append('category', document.getElementById('f-category').value);
+  fd.append('description', document.getElementById('f-desc').value.trim());
+  fd.append('provenance_id', document.getElementById('f-provenance').value.trim());
+  const file = document.getElementById('f-file').files[0];
+  if(file) fd.append('file', file);
+  if(curType === 'asset'){
+    const tiers = [...document.querySelectorAll('#tier-rows .rowform')].map(r => ({
+      name: r.querySelector('.tier-name').value.trim(),
+      price: r.querySelector('.tier-price').value,
+    })).filter(t => t.name && t.price);
+    fd.append('tiers_json', JSON.stringify(tiers));
+  } else {
+    const terms = [...document.querySelectorAll('#term-rows .rowform')].map(r => ({
+      kind: r.querySelector('.term-kind').value,
+      price: r.querySelector('.term-price').value,
+    })).filter(t => t.price);
+    fd.append('terms_json', JSON.stringify(terms));
+  }
+  const { ok, data } = await postForm('/api/listing', fd);
+  if(!ok || !data.ok){ toast(data.error || 'Could not publish','err'); return; }
+  toast('Listed','ok');
+  setTimeout(function(){ location.href = '/listing/' + data.id; }, 450);
+}
+</script>
+{% endblock %}

@@ -1,0 +1,218 @@
+{% extends "base.html" %}
+{% block title %}{{ l.title }}{% endblock %}
+{% block nav_market %}on{% endblock %}
+
+{% block body %}
+<a class="navlink" href="/?mode={{ l.listing_type }}" style="margin-left:-12px;">← Marketplace</a>
+
+<div class="hero" style="margin:14px 0 20px;">
+  <div class="row" style="gap:9px; flex-wrap:wrap;">
+    <span class="badge mode">{{ 'Asset' if l.listing_type=='asset' else 'IP' }}</span>
+    {% if l.category %}<span class="badge filled">{{ l.category.replace('_',' ')|capitalize }}</span>{% endif %}
+    {% if l.listing_type=='ip' and l.status != 'listed' %}<span class="badge" style="background:color-mix(in srgb,var(--danger) 14%,transparent); color:var(--danger);"><span class="dot"></span>{{ l.status|capitalize }}</span>{% endif %}
+    {% if l.seller_handle %}<a class="badge fv" href="{{ framevault_url }}/@{{ l.seller_handle }}" target="_blank" rel="noopener">✦ @{{ l.seller_handle }} ↗</a>{% endif %}
+  </div>
+  <h1 style="margin:.2em 0;">{{ l.title }}</h1>
+  <p class="muted" style="max-width:64ch;">{{ l.description }}</p>
+  <p class="faint tiny" style="margin-top:8px;">
+    Listed by {{ l.seller_name }}
+    {% if rating and rating.reputation is not none %}
+      · <span class="stars">{{ '★' * (rating.reputation|round(0,'floor')|int) }}</span> {{ rating.reputation }}
+      <span title="Their overall FrameVault reputation across everything they've sold, hired, or delivered — not specific to this listing, and doesn't mean the reviewer bought this exact item.">({{ rating.review_count }} review{{ '' if rating.review_count == 1 else 's' }} · seller's overall rating)</span>
+    {% endif %}
+    {% if l.provenance_id %} · provenance <span class="mono">{{ l.provenance_id }}</span>{% endif %}
+  </p>
+  {% if l.stored_name %}
+  <div class="row spread" style="margin-top:12px;border:1px solid var(--line);border-radius:var(--radius);padding:10px 14px;">
+    <div>
+      <span class="tiny">📎 {{ l.filename }}</span>
+      <span class="faint tiny"> · {{ (l.bytes / 1048576) | round(1) }}MB</span>
+      <div class="faint tiny mono" style="margin-top:4px;" title="SHA-256 — verify what you receive matches this">{{ l.content_hash[:16] }}…</div>
+    </div>
+    {% if can_dl %}
+    <a class="btn btn-primary btn-sm" href="/api/listing/{{ l.id }}/download">Download</a>
+    {% else %}
+    <span class="faint tiny">License this to unlock the file</span>
+    {% endif %}
+  </div>
+  {% endif %}
+</div>
+
+{% if l.listing_type == 'asset' %}
+<div class="fgrid">
+  <div class="card pad">
+    <p class="eyebrow" style="margin-bottom:12px;">License options</p>
+    <div class="terms">
+      {% for t in l.tiers %}
+      <div class="term">
+        <span class="k">{{ t['name'] }}</span>
+        <span class="row" style="gap:12px;">
+          <span class="v">£{{ t['price'] }}</span>
+          {% if me %}<button class="btn btn-primary btn-sm" onclick="license({{ t['id'] }})" {{ 'disabled' if me.handle==l.seller_handle }}>License</button>{% endif %}
+        </span>
+      </div>
+      {% endfor %}
+    </div>
+    {% if not me %}<p class="faint tiny" style="margin-top:12px;"><a href="/login" style="color:var(--accent);font-weight:600;">Log in</a> to license this asset.</p>{% endif %}
+    {% if me and me.handle==l.seller_handle %}<p class="faint tiny" style="margin-top:12px;">This is your listing.</p>{% endif %}
+    <div id="license-result"></div>
+  </div>
+
+  <div class="card pad">
+    <p class="eyebrow" style="margin-bottom:12px;">Royalty split</p>
+    {% if l.splits %}
+      {% for s in l.splits %}
+      <div class="splitrow"><span>{{ s['payee_name'] }}</span><span class="mono">{{ s['payee_pct'] }}%</span></div>
+      <div class="splitbar"><i style="width:{{ s['payee_pct'] }}%"></i></div>
+      {% endfor %}
+      <p class="faint tiny" style="margin:0;">Splits pay out automatically on every license — no manual invoicing.</p>
+    {% else %}
+      <p class="muted tiny" style="margin:0;">All proceeds go to {{ l.seller_name }}.</p>
+    {% endif %}
+    <p class="faint tiny" style="margin-top:16px;"><span id="license-count">{{ l.license_count }}</span> license{{ '' if l.license_count==1 else 's' }} sold so far.</p>
+  </div>
+</div>
+
+{% else %}
+<div class="fgrid">
+  <div class="card pad">
+    <p class="eyebrow" style="margin-bottom:12px;">Deal terms</p>
+    <div id="deal-slot">
+    {% set deal_visible = l.deal and me and (me.handle==l.seller_handle or me.handle==l.deal['buyer_handle']) %}
+    {% if deal_visible %}
+      {% set idx = flow.index(l.deal['status']) %}
+      <div class="flow" id="deal-flow" data-kind="{{ l.deal['kind'] }}">
+        {% for s in flow %}
+          {% set i = loop.index0 %}
+          <div class="step {{ 'done' if i < idx else ('now' if i == idx else '') }}">
+            <span class="bub">{{ '✓' if i < idx else loop.index }}</span>{{ s|capitalize }}
+          </div>
+          {% if not loop.last %}<span class="bar {{ 'done' if i < idx }}"></span>{% endif %}
+        {% endfor %}
+      </div>
+      {# The buyer's identity and the negotiated price are private to the two
+         parties in the deal — a random visitor only ever sees "Optioned" /
+         "Sold" on the card below, never who or for how much. #}
+      <p class="muted tiny">{{ l.deal['kind']|capitalize }} · @{{ l.deal['buyer_handle'] or l.deal['buyer_name'] }} · £{{ '{:,}'.format(l.deal['price']) }}</p>
+      <div id="deal-creditnote">
+      {% if l.deal['credit_note'] %}<p class="tiny {{ 'muted' if l.deal['credited'] else 'faint' }}" style="margin:8px 0;">{% if l.deal['credited'] %}✓ {% endif %}{{ l.deal['credit_note'] }}</p>{% endif %}
+      </div>
+      <div id="deal-advance-area">
+      {% if l.deal['status'] != 'paid' %}
+        <button class="btn btn-primary btn-sm" onclick="advanceDeal({{ l.deal['id'] }})">Mark {{ flow[idx+1] }} →</button>
+        {% if flow[idx+1] == 'paid' %}<span class="faint tiny" style="margin-left:10px;">Payment writes the credit to FrameVault.</span>{% endif %}
+      {% else %}
+        <span class="badge open"><span class="dot"></span>Complete</span>
+      {% endif %}
+      </div>
+      <div id="deal-result"></div>
+    {% elif l.status != 'listed' %}
+      {# Sold/optioned to someone else, and the viewer isn't a party to that
+         deal — say plainly why there's nothing to click, instead of just
+         quietly hiding the Start button and leaving a bare price list. #}
+      <p class="muted tiny" style="margin:0;">This listing is no longer available — it's already <strong>{{ l.status }}</strong>. IP deals are exclusive: once one closes, the listing locks for everyone else.</p>
+    {% else %}
+      <div class="terms">
+        {% for t in l.terms %}
+        <div class="term">
+          <span class="k">{{ t['kind'] }}</span>
+          <span class="row" style="gap:12px;">
+            <span class="v">£{{ '{:,}'.format(t['price']) }}</span>
+            {% if me %}<button class="btn btn-primary btn-sm" onclick="startDeal('{{ t['kind'] }}')" {{ 'disabled' if me.handle==l.seller_handle }}>Start</button>{% endif %}
+          </span>
+        </div>
+        {% endfor %}
+      </div>
+      {% if not me %}<p class="faint tiny" style="margin-top:12px;"><a href="/login" style="color:var(--accent);font-weight:600;">Log in</a> to start a deal.</p>{% endif %}
+      {% if me and me.handle==l.seller_handle %}<p class="faint tiny" style="margin-top:12px;">This is your listing.</p>{% endif %}
+    {% endif %}
+    </div>
+  </div>
+
+  <div class="card pad">
+    <p class="eyebrow" style="margin-bottom:12px;">Interest</p>
+    <p class="muted tiny" style="margin:0 0 8px;">Exclusive rights — once optioned or purchased, this listing locks.</p>
+    <p class="faint tiny" style="margin:0;">Status: <strong style="color:var(--ink);" id="listing-status">{{ l.status|capitalize }}</strong></p>
+  </div>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block scripts %}
+<script>
+const IP_FLOW = ["proposed", "agreed", "paid"];
+function esc(s){ const d = document.createElement("div"); d.textContent = s == null ? "" : String(s); return d.innerHTML; }
+
+async function license(tierId){
+  const { ok, data } = await postJSON('/api/listing/{{ l.id }}/license', { tier_id: tierId });
+  if(!ok || !data.ok){ toast(data.error || 'Could not license','err'); return; }
+  const box = document.getElementById('license-result');
+  box.innerHTML = data.credited
+    ? '<div class="result"><strong>Licensed — and the credit landed.</strong>' +
+      '<p class="muted tiny" style="margin:7px 0 0;">A verified <span class="mono">asset.licensed</span> credit was written to the seller\'s FrameVault.</p>' +
+      '<p style="margin:11px 0 0;"><a class="btn btn-primary btn-sm" href="' + data.public_url + '" target="_blank" rel="noopener">See their profile ↗</a></p></div>'
+    : '<div class="result plain"><strong>Licensed.</strong><p class="muted tiny" style="margin:7px 0 0;">' + esc(data.note||'') + '</p></div>';
+  toast('Licensed','ok');
+  const countEl = document.getElementById('license-count');
+  if (countEl) countEl.textContent = String(Number(countEl.textContent) + 1);
+}
+
+async function startDeal(kind){
+  const { ok, data } = await postJSON('/api/listing/{{ l.id }}/deal', { kind });
+  if(!ok || !data.ok){ toast(data.error || 'Could not start deal','err'); return; }
+  toast('Deal started','ok');
+  const stepsHtml = IP_FLOW.map((s, i) => {
+    const cls = i === 0 ? 'now' : '';
+    const bar = i < IP_FLOW.length - 1 ? '<span class="bar"></span>' : '';
+    return `<div class="step ${cls}"><span class="bub">${i + 1}</span>${s.charAt(0).toUpperCase() + s.slice(1)}</div>${bar}`;
+  }).join('');
+  document.getElementById('deal-slot').innerHTML = `
+    <div class="flow" id="deal-flow" data-kind="${kind}">${stepsHtml}</div>
+    <p class="muted tiny">${kind.charAt(0).toUpperCase() + kind.slice(1)} · you · deal #${data.deal_id}</p>
+    <div id="deal-creditnote"></div>
+    <div id="deal-advance-area">
+      <button class="btn btn-primary btn-sm" onclick="advanceDeal(${data.deal_id})">Mark ${IP_FLOW[1]} →</button>
+    </div>
+    <div id="deal-result"></div>`;
+}
+
+async function advanceDeal(did){
+  const { ok, data } = await postJSON('/api/deal/' + did + '/advance', {});
+  if(!ok || !data.ok){ toast(data.error || 'Could not advance','err'); return; }
+  toast(data.status === 'paid' ? 'Deal complete' : ('Deal → ' + data.status), 'ok');
+
+  const idx = IP_FLOW.indexOf(data.status);
+  const flowEl = document.getElementById('deal-flow');
+  if (flowEl) {
+    const steps = flowEl.querySelectorAll('.step');
+    const bars = flowEl.querySelectorAll('.bar');
+    steps.forEach((el, i) => {
+      el.classList.toggle('done', i < idx);
+      el.classList.toggle('now', i === idx);
+      el.querySelector('.bub').textContent = i < idx ? '✓' : String(i + 1);
+    });
+    bars.forEach((el, i) => el.classList.toggle('done', i < idx));
+  }
+
+  const advanceArea = document.getElementById('deal-advance-area');
+  if (data.status === 'paid') {
+    if (advanceArea) advanceArea.innerHTML = '<span class="badge open"><span class="dot"></span>Complete</span>';
+    // mirrors the backend: a purchase sells the listing outright, anything
+    // else (option/license) just locks it as optioned
+    const kind = flowEl ? flowEl.dataset.kind : '';
+    const statusEl = document.getElementById('listing-status');
+    if (statusEl) statusEl.textContent = kind === 'purchase' ? 'Sold' : 'Optioned';
+    const box = document.getElementById('deal-result');
+    if (box) {
+      box.innerHTML = data.credited
+        ? '<div class="result"><strong>Paid — and the credit landed.</strong>' +
+          '<p class="muted tiny" style="margin:7px 0 0;">' + esc(data.note||'') + '</p>' +
+          '<p style="margin:11px 0 0;"><a class="btn btn-primary btn-sm" href="' + data.public_url + '" target="_blank" rel="noopener">See their profile ↗</a></p></div>'
+        : '<div class="result plain"><strong>Paid.</strong><p class="muted tiny" style="margin:7px 0 0;">' + esc(data.note||'') + '</p></div>';
+    }
+  } else if (advanceArea) {
+    advanceArea.innerHTML = `<button class="btn btn-primary btn-sm" onclick="advanceDeal(${did})">Mark ${IP_FLOW[idx + 1]} →</button>`;
+  }
+}
+</script>
+{% endblock %}

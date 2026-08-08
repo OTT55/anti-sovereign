@@ -1,0 +1,23 @@
+# Cinematic OTT — dependencies (Phase 0)
+# Target interpreter: Python 3.13 (see README). Install into a venv:
+#   py -3.13 -m venv .venv  &&  .venv\Scripts\activate  &&  pip install -r requirements.txt
+
+# --- schema + validation ---
+pydantic>=2
+
+# --- executor: pure image math ---
+numpy
+opencv-python-headless   # headless: this is a CLI/pipeline tool, never opens GUI windows
+pillow
+
+# --- segmentation models (CPU is fine) ---
+ultralytics          # YOLOv8-seg: person / objects
+mediapipe            # face mesh + selfie segmentation
+
+# --- analyzer / planner / critic (vision LLM, via OpenRouter) ---
+openai               # OpenRouter speaks the OpenAI-compatible chat completions API
+python-dotenv        # loads OPENROUTER_API_KEY from .env
+
+# --- tooling ---
+pytest
+rich                 # readable CLI output / logs

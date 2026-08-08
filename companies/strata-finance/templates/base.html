@@ -1,0 +1,22 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}Strata Finance{% endblock %}</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+  <header class="top">
+    <div class="brand"><b>Strata&nbsp;Finance</b><span>Capital Settlement</span></div>
+    <nav>
+      <a href="/" class="{{ 'active' if active=='deals' }}">Deals</a>
+    </nav>
+  </header>
+  <div class="wrap">
+    {% block body %}{% endblock %}
+  </div>
+  <footer>Strata Finance · Sovereign Stack · every cent, settled and accounted</footer>
+  {% block scripts %}{% endblock %}
+</body>
+</html>

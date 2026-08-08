@@ -1,0 +1,299 @@
+<title>CreativeOS — Ecosystem Map</title>
+<style>
+  :root{
+    --bg-0:#08090B; --bg-1:#0E1013; --bg-2:#14171B; --bg-3:#1C2026; --line:#262B33;
+    --text-hi:#F4F6F8; --text-mid:#A6AEBB; --text-lo:#6B7480;
+    --accent:#7C5CFF; --accent-hi:#9B82FF; --accent-dim:rgba(124,92,255,.14);
+    --framevault:#7C5CFF; --filmcrew:#3DA9FC; --rightsforge:#F4A259;
+    --creatorstack:#FF5C87; --studio:#B47CFF;
+    --font-sans:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    --font-mono:"SF Mono","JetBrains Mono","Fira Code",ui-monospace,Menlo,Consolas,monospace;
+    --r-sm:8px; --r-md:12px; --r-lg:18px;
+    --sel:var(--accent);
+  }
+  *{box-sizing:border-box}
+  #root{
+    background:var(--bg-0); color:var(--text-hi); font-family:var(--font-sans);
+    line-height:1.5; -webkit-font-smoothing:antialiased; position:relative;
+    min-height:100vh; overflow-x:hidden;
+  }
+  canvas#stars{position:fixed; inset:0; width:100%; height:100%; z-index:0; pointer-events:none}
+  .wrap{position:relative; z-index:1; max-width:1120px; margin:0 auto; padding:0 24px}
+  .eyebrow{font-size:11px; letter-spacing:.18em; text-transform:uppercase; color:var(--text-lo); font-weight:600}
+
+  /* Hero */
+  header.hero{padding:96px 0 60px; text-align:center}
+  .mark{display:inline-flex; align-items:center; gap:10px; margin-bottom:28px}
+  .mark .glyph{width:26px; height:26px; border-radius:50%;
+    background:conic-gradient(from 210deg, var(--framevault), var(--filmcrew), var(--rightsforge), var(--creatorstack), var(--framevault));
+    box-shadow:0 0 24px rgba(124,92,255,.5)}
+  .mark span{font-weight:650; letter-spacing:-.01em; font-size:16px}
+  h1{font-size:clamp(38px,7vw,72px); line-height:1.02; letter-spacing:-.035em; font-weight:680;
+    margin:0 0 20px; text-wrap:balance}
+  h1 em{font-style:normal; color:var(--text-lo)}
+  .lede{max-width:52ch; margin:0 auto; color:var(--text-mid); font-size:clamp(15px,2.2vw,19px)}
+  .lede b{color:var(--text-hi); font-weight:600}
+
+  /* Section scaffold */
+  section{padding:56px 0; border-top:1px solid var(--line)}
+  .sec-head{margin-bottom:32px; max-width:64ch}
+  .sec-head h2{font-size:clamp(22px,3.4vw,30px); letter-spacing:-.02em; margin:12px 0 10px; font-weight:640}
+  .sec-head p{color:var(--text-mid); margin:0; max-width:60ch}
+
+  /* Interactive map */
+  .map{display:grid; grid-template-columns:1fr; gap:22px}
+  @media(min-width:900px){ .map{grid-template-columns:1.15fr .85fr} }
+
+  .products{display:grid; grid-template-columns:repeat(2,1fr); gap:12px; align-content:start}
+  @media(min-width:560px){ .products{grid-template-columns:repeat(3,1fr)} }
+  @media(min-width:900px){ .products{grid-template-columns:repeat(2,1fr)} }
+
+  .pcard{--h:var(--accent); text-align:left; background:var(--bg-2); border:1px solid var(--line);
+    border-radius:var(--r-md); padding:14px; cursor:pointer; color:inherit; font-family:inherit;
+    transition:transform .16s cubic-bezier(.2,.7,.2,1), border-color .16s, background .16s;
+    display:flex; flex-direction:column; gap:6px; position:relative; overflow:hidden}
+  .pcard:hover{transform:translateY(-2px); background:var(--bg-3)}
+  .pcard:focus-visible{outline:2px solid var(--accent); outline-offset:2px}
+  .pcard .dot{width:9px; height:9px; border-radius:50%; background:var(--h); box-shadow:0 0 10px var(--h)}
+  .pcard .pn{font-weight:620; font-size:14.5px; letter-spacing:-.01em}
+  .pcard .pl{font-size:11px; letter-spacing:.12em; text-transform:uppercase; color:var(--text-lo); font-weight:600}
+  .pcard[aria-pressed="true"]{border-color:var(--h); background:linear-gradient(180deg, color-mix(in srgb, var(--h) 12%, var(--bg-2)), var(--bg-2))}
+  .pcard[aria-pressed="true"]::after{content:""; position:absolute; left:0; top:0; bottom:0; width:3px; background:var(--h)}
+
+  /* Detail panel */
+  .panel{background:var(--bg-1); border:1px solid var(--line); border-radius:var(--r-lg); padding:22px; min-height:280px}
+  .panel .ph{display:flex; align-items:center; gap:10px; margin-bottom:6px}
+  .panel .ph .d{width:11px; height:11px; border-radius:50%; background:var(--sel); box-shadow:0 0 12px var(--sel)}
+  .panel .ph h3{margin:0; font-size:19px; letter-spacing:-.01em; font-weight:640}
+  .panel .role{font-size:11px; letter-spacing:.12em; text-transform:uppercase; color:var(--text-lo); font-weight:600; margin-bottom:14px}
+  .panel .desc{color:var(--text-mid); font-size:14.5px; margin:0 0 18px}
+  .panel .desc b{color:var(--text-hi); font-weight:600}
+  .flowlabel{font-size:11px; letter-spacing:.14em; text-transform:uppercase; color:var(--text-lo); font-weight:600; margin:0 0 8px}
+  .event{font-family:var(--font-mono); font-size:12.5px; color:var(--sel); background:color-mix(in srgb, var(--sel) 12%, transparent);
+    border:1px solid color-mix(in srgb, var(--sel) 34%, transparent); border-radius:var(--r-sm); padding:6px 10px; display:inline-block; margin-bottom:12px}
+  .chain{display:flex; flex-direction:column; gap:7px; margin:0; padding:0; list-style:none}
+  .chain li{display:flex; align-items:baseline; gap:9px; font-size:13.5px; color:var(--text-mid)}
+  .chain li .svc{color:var(--text-hi); font-weight:600; min-width:112px}
+  .chain li .arw{color:var(--sel)}
+
+  /* Spine band */
+  .spine{margin-top:26px}
+  .spine .cap{display:flex; align-items:center; justify-content:space-between; margin-bottom:12px; flex-wrap:wrap; gap:8px}
+  .spine .cap .t{font-weight:640; letter-spacing:-.01em}
+  .spine .cap .hint{font-size:12.5px; color:var(--text-lo)}
+  .chips{display:flex; flex-wrap:wrap; gap:9px}
+  .chip{font-size:12.5px; padding:8px 12px; border-radius:999px; border:1px solid var(--line);
+    background:var(--bg-2); color:var(--text-mid); transition:all .18s cubic-bezier(.2,.7,.2,1); font-weight:500}
+  .chip.on{color:#fff; border-color:var(--sel); background:color-mix(in srgb, var(--sel) 22%, var(--bg-2));
+    box-shadow:0 0 0 1px color-mix(in srgb,var(--sel) 40%,transparent), 0 6px 18px color-mix(in srgb,var(--sel) 22%,transparent);
+    transform:translateY(-1px)}
+  .chip .k{font-family:var(--font-mono); font-size:10.5px; opacity:.6; margin-left:2px}
+
+  /* Proof surfaces */
+  .proof{display:grid; grid-template-columns:1fr; gap:16px}
+  @media(min-width:760px){ .proof{grid-template-columns:repeat(3,1fr)} }
+  .pf{background:var(--bg-2); border:1px solid var(--line); border-radius:var(--r-md); padding:20px}
+  .pf .n{font-family:var(--font-mono); font-size:12px; color:var(--accent-hi); font-weight:600}
+  .pf h4{margin:10px 0 8px; font-size:16px; letter-spacing:-.01em; font-weight:620}
+  .pf p{margin:0; color:var(--text-mid); font-size:13.5px}
+  .pf p .m{color:var(--text-hi); font-weight:600}
+
+  /* Layer legend */
+  .layers{display:flex; flex-wrap:wrap; gap:10px; margin-top:4px}
+  .lg{display:inline-flex; align-items:center; gap:7px; font-size:12.5px; color:var(--text-mid)}
+  .lg i{width:8px; height:8px; border-radius:50%; display:inline-block}
+
+  footer{padding:44px 0 72px; color:var(--text-lo); font-size:13px; border-top:1px solid var(--line); text-align:center}
+  footer b{color:var(--text-mid); font-weight:600}
+
+  @media(prefers-reduced-motion:reduce){ *{transition:none!important; animation:none!important} }
+</style>
+
+<div id="root">
+  <canvas id="stars" aria-hidden="true"></canvas>
+
+  <div class="wrap">
+    <header class="hero">
+      <div class="mark"><span class="glyph"></span><span>CreativeOS</span></div>
+      <h1>One platform.<br><em>Not five companies.</em></h1>
+      <p class="lede">Five integrated products for creative professionals, sharing a single spine —
+        one login, one identity, one payments layer. <b>Select a product below</b> to watch exactly
+        which shared services it uses, and how one action ripples across the ecosystem.</p>
+    </header>
+  </div>
+
+  <div class="wrap">
+    <section style="border-top:none">
+      <div class="sec-head">
+        <div class="eyebrow">The ecosystem</div>
+        <h2>Thin products, one thick spine</h2>
+        <p>Each product is a focused experience layer. Everything that looks like infrastructure —
+          identity, payments, search, trust — lives in the shared spine and is built once. That's
+          what makes five products behave as one platform.</p>
+        <div class="layers" id="layers"></div>
+      </div>
+
+      <div class="map">
+        <div class="products" id="products" role="group" aria-label="CreativeOS products"></div>
+        <div class="panel" id="panel" aria-live="polite"></div>
+      </div>
+
+      <div class="spine">
+        <div class="cap">
+          <span class="t">Shared spine — services built once</span>
+          <span class="hint">Highlighted chips are the services the selected product depends on</span>
+        </div>
+        <div class="chips" id="chips"></div>
+      </div>
+    </section>
+
+    <section>
+      <div class="sec-head">
+        <div class="eyebrow">The payoff</div>
+        <h2>Where consolidation actually shows</h2>
+        <p>Three surfaces span every product at once. If these feel seamless, the one-platform thesis
+          is proven — each is only possible because everything flows through the same spine.</p>
+      </div>
+      <div class="proof">
+        <div class="pf">
+          <div class="n">01 · Home</div>
+          <h4>One activity feed</h4>
+          <p>A <span class="m">FilmCrew</span> offer, a <span class="m">RightsForge</span> royalty and a
+            <span class="m">CreatorStack</span> deadline in one stream — because they all flow through
+            the event bus.</p>
+        </div>
+        <div class="pf">
+          <div class="n">02 · ⌘K</div>
+          <h4>One search box</h4>
+          <p>Type a name and see their profile, their projects and their licensable assets in one
+            ranked list. <span class="m">One index, many products.</span></p>
+        </div>
+        <div class="pf">
+          <div class="n">03 · Wallet</div>
+          <h4>One balance</h4>
+          <p>Earnings from hires, licenses, IP deals and prizes aggregate into a single wallet.
+            <span class="m">One relationship, three income streams.</span></p>
+        </div>
+      </div>
+    </section>
+
+    <footer>
+      <b>CreativeOS</b> — the operating system for creative professionals · architecture prototype ·
+      FrameVault is the root of the identity graph
+    </footer>
+  </div>
+</div>
+
+<script>
+(function(){
+  var HUES={framevault:'#7C5CFF',filmcrew:'#3DA9FC',rightsforge:'#F4A259',creatorstack:'#FF5C87',studio:'#B47CFF'};
+  var SPINE=[
+    ['identity','Identity & Profiles'],['permissions','Permissions'],['payments','Payments & Wallet'],
+    ['notifications','Notifications'],['search','Search'],['messaging','Messaging'],
+    ['media','Media Storage'],['reputation','Reputation'],['eventbus','Event Bus'],['provenance','Provenance']
+  ];
+  var LAYERS=[
+    ['Identity','#7C5CFF'],['Collaboration','#3DA9FC'],['Rights','#F4A259'],
+    ['Contests','#FF5C87'],['Workspace','#B47CFF']
+  ];
+  var PRODUCTS=[
+    {key:'framevault',name:'FrameVault',layer:'Identity',
+     desc:'The root. Verified creator profiles, portfolios, reputation and transparent AI-contribution history. Every other product reads from and writes to it — it <b>is</b> the identity spine’s front-end.',
+     uses:['identity','media','reputation','provenance','search'],
+     event:'framevault.receives', chain:[['—','Enriched by every other product','']]},
+    {key:'filmcrew',name:'FilmCrew',layer:'Collaboration',
+     desc:'Hire creatives, assemble production teams, run contracts and messaging. Every completed job flows back into <b>FrameVault</b> automatically.',
+     uses:['identity','messaging','payments','permissions','notifications','reputation','eventbus'],
+     event:'hire.completed',
+     chain:[['FrameVault','appends the job to project history','▸'],['Reputation','updates the creator’s score','▸'],['Payments','releases escrow to the wallet','▸'],['Notifications','tells the creator','▸']]},
+    {key:'rightsforge',name:'RightsForge',layer:'Rights',
+     desc:'One rights marketplace, two deal modes. License music, SFX, LUTs, VFX, templates, stock and voice assets instantly, with royalty splits built in — or option, license, and sell original IP (scripts, novels, comics, pilots, game concepts). Originally two products (StoryForge + RightsHub); merged, because they were the same engine underneath.',
+     uses:['identity','media','payments','search','provenance','eventbus'],
+     event:'asset.licensed / ip.optioned',
+     chain:[['Payments','splits the fee (assets) or holds escrow (IP)','▸'],['Provenance','records the license or deal','▸'],['FrameVault','updates earnings or history','▸'],['Notifications','confirms the sale or deal','▸']]},
+    {key:'creatorstack',name:'CreatorStack',layer:'Contests',
+     desc:'Brands post creative challenges; creators submit concepts. Winning concepts become funded productions — talent discovered through ideas, not résumés.',
+     uses:['identity','media','notifications','payments','reputation','eventbus'],
+     event:'challenge.won',
+     chain:[['Reputation','credits the win','▸'],['FrameVault','adds it to history','▸'],['Payments','releases the prize / funding','▸']]},
+    {key:'studio',name:'OTT Studio',layer:'Workspace',
+     desc:'The cloud production workspace — projects, AI orchestration, assets and shared collaboration. Publishing pushes work out to the ecosystem.',
+     uses:['identity','media','permissions','search','provenance','eventbus'],
+     event:'project.published',
+     chain:[['Search','indexes the published work','▸'],['FrameVault','adds it to the portfolio','▸'],['Provenance','stamps authorship','▸']]}
+  ];
+
+  var root=document.getElementById('root');
+  var elProducts=document.getElementById('products');
+  var elChips=document.getElementById('chips');
+  var elPanel=document.getElementById('panel');
+  var elLayers=document.getElementById('layers');
+  var current=PRODUCTS[0];
+
+  LAYERS.forEach(function(l){
+    var s=document.createElement('span'); s.className='lg';
+    s.innerHTML='<i style="background:'+l[1]+'"></i>'+l[0];
+    elLayers.appendChild(s);
+  });
+
+  SPINE.forEach(function(s){
+    var c=document.createElement('div'); c.className='chip'; c.dataset.k=s[0];
+    c.innerHTML=s[1]+' <span class="k">'+s[0]+'</span>';
+    elChips.appendChild(c);
+  });
+
+  PRODUCTS.forEach(function(p){
+    var b=document.createElement('button');
+    b.className='pcard'; b.style.setProperty('--h',HUES[p.key]);
+    b.setAttribute('aria-pressed','false');
+    b.innerHTML='<span class="dot"></span><span class="pn">'+p.name+'</span><span class="pl">'+p.layer+'</span>';
+    b.addEventListener('click',function(){ select(p); });
+    p._el=b; elProducts.appendChild(b);
+  });
+
+  function select(p){
+    current=p;
+    root.style.setProperty('--sel',HUES[p.key]);
+    PRODUCTS.forEach(function(q){ q._el.setAttribute('aria-pressed', q===p?'true':'false'); });
+    Array.prototype.forEach.call(elChips.children,function(c){
+      c.classList.toggle('on', p.uses.indexOf(c.dataset.k)>-1);
+    });
+    var chainHtml = p.chain.map(function(r){
+      return '<li><span class="arw">'+(r[2]||'')+'</span><span class="svc">'+r[0]+'</span><span>'+r[1]+'</span></li>';
+    }).join('');
+    var eventHtml = p.event==='framevault.receives'
+      ? '<span class="event">every event → FrameVault</span>'
+      : '<span class="event">emits &nbsp;'+p.event+'</span>';
+    elPanel.innerHTML =
+      '<div class="ph"><span class="d"></span><h3>'+p.name+'</h3></div>'+
+      '<div class="role">'+p.layer+' layer</div>'+
+      '<p class="desc">'+p.desc+'</p>'+
+      '<p class="flowlabel">'+(p.event==='framevault.receives'?'It listens':'When its core action fires')+'</p>'+
+      eventHtml+
+      '<ul class="chain">'+chainHtml+'</ul>';
+  }
+  select(current);
+
+  /* Ambient constellation — subtle, reduced-motion aware */
+  var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion:reduce)').matches;
+  var cv=document.getElementById('stars'), ctx=cv.getContext('2d'), W,H,dots=[];
+  function resize(){ W=cv.width=window.innerWidth*devicePixelRatio; H=cv.height=window.innerHeight*devicePixelRatio; }
+  resize(); window.addEventListener('resize',resize);
+  var N=Math.min(70, Math.floor(window.innerWidth/22));
+  for(var i=0;i<N;i++){ dots.push({x:Math.random()*W,y:Math.random()*H,vx:(Math.random()-.5)*.08*devicePixelRatio,vy:(Math.random()-.5)*.08*devicePixelRatio}); }
+  function draw(){
+    ctx.clearRect(0,0,W,H);
+    for(var i=0;i<dots.length;i++){
+      var d=dots[i]; d.x+=d.vx; d.y+=d.vy;
+      if(d.x<0||d.x>W)d.vx*=-1; if(d.y<0||d.y>H)d.vy*=-1;
+      for(var j=i+1;j<dots.length;j++){
+        var e=dots[j], dx=d.x-e.x, dy=d.y-e.y, dist=Math.sqrt(dx*dx+dy*dy), max=120*devicePixelRatio;
+        if(dist<max){ ctx.strokeStyle='rgba(124,92,255,'+(0.10*(1-dist/max))+')'; ctx.lineWidth=1; ctx.beginPath(); ctx.moveTo(d.x,d.y); ctx.lineTo(e.x,e.y); ctx.stroke(); }
+      }
+      ctx.fillStyle='rgba(166,174,187,.35)'; ctx.beginPath(); ctx.arc(d.x,d.y,1.1*devicePixelRatio,0,7); ctx.fill();
+    }
+    if(!reduce) requestAnimationFrame(draw);
+  }
+  draw();
+})();
+</script>

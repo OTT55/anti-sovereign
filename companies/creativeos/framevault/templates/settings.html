@@ -1,0 +1,105 @@
+{% extends "base.html" %}
+{% block title %}Settings{% endblock %}
+{% block nav_settings %}on{% endblock %}
+
+{% block body %}
+<div class="row spread wrap-w" style="margin-bottom:24px;">
+  <div>
+    <p class="eyebrow">Settings</p>
+    <h1 style="margin:.2em 0;">How you appear publicly</h1>
+    <p class="muted">Changes here only take effect when you click Save — nothing here changes just from visiting.</p>
+  </div>
+  <a href="/dashboard" class="btn btn-ghost">← Dashboard</a>
+</div>
+
+<div class="grid-2">
+  <!-- Profile editor -->
+  <div class="card">
+    <div class="card-h"><p class="eyebrow">Profile</p><h3 style="margin-top:4px;">Headline, bio, availability</h3></div>
+    <div class="card-b stack">
+      <label class="fld"><span>Headline</span>
+        <input id="p-headline" value="{{ profile['headline'] }}"></label>
+      <label class="fld"><span>Bio</span>
+        <textarea id="p-bio">{{ profile['bio'] }}</textarea></label>
+      <div class="field-grid">
+        <label class="fld"><span>Location</span>
+          <input id="p-location" value="{{ profile['location'] }}"></label>
+        <label class="fld"><span>Availability</span>
+          <select id="p-avail">
+            {% for v in ['open','selective','booked'] %}
+            <option value="{{ v }}" {{ 'selected' if profile['availability']==v else '' }}>{{ v|capitalize }}</option>
+            {% endfor %}
+          </select></label>
+      </div>
+      <div class="row spread">
+        <span class="faint tiny" id="p-note"></span>
+        <button id="saveProfile" class="btn btn-primary btn-sm">Save profile</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Skills -->
+  <div class="card">
+    <div class="card-h"><p class="eyebrow">Craft</p><h3 style="margin-top:4px;">Skills</h3></div>
+    <div class="card-b stack">
+      <div id="skills" class="row wrap-w">
+        {% for s in skills %}
+        <span class="chip" data-id="{{ s['id'] }}">{{ s['skill'] }} · <span class="faint">{{ s['level'] }}</span></span>
+        {% endfor %}
+      </div>
+      <div class="row" style="gap:8px;">
+        <input id="s-skill" placeholder="Add a skill…" class="grow">
+        <select id="s-level" style="width:auto;">
+          <option>Beginner</option><option selected>Intermediate</option>
+          <option>Advanced</option><option>Expert</option>
+        </select>
+        <button id="addSkill" class="btn btn-ghost btn-sm">Add</button>
+      </div>
+      <p class="muted tiny" style="margin-top:4px;">Adding or removing a skill takes effect immediately — there's nothing to accidentally half-save here, each chip is its own action.</p>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+/* ---- profile save (only on click — nothing autosaves) ---- */
+document.getElementById("saveProfile").addEventListener("click", async () => {
+  const body = {
+    headline: val("p-headline"), bio: val("p-bio"),
+    location: val("p-location"), availability: val("p-avail"),
+  };
+  const { ok } = await postJSON("/api/profile", body);
+  document.getElementById("p-note").textContent = ok ? "Saved." : "";
+  toast(ok ? "Profile saved" : "Save failed", ok ? "ok" : "err");
+});
+
+/* ---- skills ---- */
+document.getElementById("addSkill").addEventListener("click", addSkill);
+document.getElementById("s-skill").addEventListener("keydown", e => { if (e.key === "Enter") addSkill(); });
+async function addSkill() {
+  const skill = val("s-skill"), level = val("s-level");
+  if (!skill) { toast("Enter a skill name", "err"); return; }
+  const { ok, data } = await postJSON("/api/skills", { skill, level });
+  if (!ok || !data.ok) { toast(data.error || "Failed", "err"); return; }
+  const chip = document.createElement("span");
+  chip.className = "chip"; chip.dataset.id = data.id;
+  chip.innerHTML = `${escapeHtml(data.skill)} · <span class="faint">${escapeHtml(data.level)}</span> <span class="x" title="Remove">✕</span>`;
+  chip.querySelector(".x").onclick = () => removeSkill(data.id, chip);
+  document.getElementById("skills").appendChild(chip);
+  document.getElementById("s-skill").value = "";
+}
+async function removeSkill(id, el) {
+  const { ok } = await del(`/api/skills/${id}`);
+  if (ok) el.remove(); else toast("Couldn't remove skill", "err");
+}
+document.querySelectorAll('#skills .chip[data-id]').forEach(chip => {
+  const id = chip.dataset.id; if (!id) return;
+  const x = document.createElement("span"); x.className = "x"; x.title = "Remove"; x.textContent = "✕";
+  x.onclick = () => removeSkill(id, chip); chip.appendChild(document.createTextNode(" ")); chip.appendChild(x);
+});
+
+function val(id){ return document.getElementById(id).value.trim(); }
+function escapeHtml(s){ return String(s ?? "").replace(/[&<>"']/g, c => ({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;" }[c])); }
+</script>
+{% endblock %}

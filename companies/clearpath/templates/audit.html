@@ -1,0 +1,92 @@
+{% extends "base.html" %}
+{% set active = "audit" %}
+{% block title %}Clearpath — Audit log{% endblock %}
+{% block body %}
+<h1>Audit log</h1>
+<p class="lede">Every routing decision, hash-chained. Each entry commits to the hash
+of the entry before it, so removing or altering any past decision breaks the
+chain and is immediately detectable.</p>
+
+<div class="card" style="display:flex;align-items:center;gap:12px">
+  {% if chain_ok %}
+    <span class="pill" style="background:rgba(78,212,155,.14);color:var(--ok)">Chain intact</span>
+    <span class="muted">All <span id="entry-count">{{ entries|length }}</span> entries verify against their predecessor.</span>
+  {% else %}
+    <span class="pill" style="background:rgba(224,102,102,.14);color:var(--bad)">Chain broken</span>
+    <span class="muted">Integrity check failed — the log has been altered.</span>
+  {% endif %}
+</div>
+
+<div id="entries">
+{% if not entries %}
+  <p class="muted" id="no-entries">No decisions recorded yet. Route a transfer to create the first entry.</p>
+{% endif %}
+
+{% for e in entries %}
+<div class="card audit-entry" id="entry-{{ e.case_id }}" data-case="{{ e.case_id }}">
+  <div class="audit-head">
+    <span class="verdict-sm badge-{{ 'ok' if e.payload.decision=='ALLOW' else ('warn' if e.payload.decision=='REVIEW' else ('info' if e.payload.decision=='INSUFFICIENT_FACTS' else 'bad')) }}">{{ e.payload.decision }}</span>
+    <span class="mono">{{ e.case_id }}</span>
+    <span class="muted" style="margin-left:auto;font-size:12px">{{ e.created_at }}</span>
+  </div>
+  <div class="muted" style="font-size:13px;margin:8px 0">
+    {{ e.payload.facts.asset_type }} · ${{ '{:,.0f}'.format(e.payload.facts.value) }} ·
+    {{ e.payload.facts.origin }} → {{ e.payload.facts.destination }}
+    {% if e.payload.facts.contains_pii %} · PII{% endif %}
+  </div>
+  {% for f in e.payload.findings %}
+    <div class="finding-sm">{{ f.rule }} — <span class="muted">{{ f.basis }}</span></div>
+  {% endfor %}
+  <div class="hash" style="font-size:11px;margin-top:8px">↳ {{ e.entry_hash }}</div>
+</div>
+{% endfor %}
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+/* the log is shared — another case could be routed elsewhere between page
+   loads. Poll quietly and prepend anything genuinely new, matching the
+   "hash-chained, always visible" identity rather than a static snapshot. */
+function esc(s){ const d = document.createElement("div"); d.textContent = s == null ? "" : String(s); return d.innerHTML; }
+async function pollAudit(){
+  try {
+    const res = await fetch('/api/audit/latest?limit=5');
+    if (!res.ok) return;
+    const data = await res.json();
+    const countEl = document.getElementById('entry-count');
+    if (countEl && countEl.textContent !== String(data.total)) {
+      countEl.textContent = String(data.total);
+      countEl.classList.remove('pulse'); void countEl.offsetWidth; countEl.classList.add('pulse');
+    }
+    const container = document.getElementById('entries');
+    const noEntries = document.getElementById('no-entries');
+    data.entries.slice().reverse().forEach((e) => {
+      if (document.getElementById('entry-' + e.case_id)) return; // already shown
+      if (noEntries) noEntries.remove();
+      const decisionCls = e.payload.decision === 'ALLOW' ? 'ok'
+        : e.payload.decision === 'REVIEW' ? 'warn'
+        : e.payload.decision === 'INSUFFICIENT_FACTS' ? 'info' : 'bad';
+      const findingsHtml = (e.payload.findings || []).map((f) =>
+        `<div class="finding-sm">${esc(f.rule)} — <span class="muted">${esc(f.basis)}</span></div>`).join('');
+      const div = document.createElement('div');
+      div.className = 'card audit-entry new-entry'; div.id = 'entry-' + e.case_id; div.dataset.case = e.case_id;
+      div.innerHTML = `
+        <div class="audit-head">
+          <span class="verdict-sm badge-${decisionCls}">${esc(e.payload.decision)}</span>
+          <span class="mono">${esc(e.case_id)}</span>
+          <span class="muted" style="margin-left:auto;font-size:12px">${esc(e.created_at)}</span>
+        </div>
+        <div class="muted" style="font-size:13px;margin:8px 0">
+          ${esc(e.payload.facts.asset_type)} · $${Number(e.payload.facts.value).toLocaleString()} ·
+          ${esc(e.payload.facts.origin)} → ${esc(e.payload.facts.destination)}
+          ${e.payload.facts.contains_pii ? ' · PII' : ''}
+        </div>
+        ${findingsHtml}
+        <div class="hash" style="font-size:11px;margin-top:8px">↳ ${esc(e.entry_hash)}</div>`;
+      container.insertBefore(div, container.firstChild);
+    });
+  } catch (e) { /* offline — skip this tick */ }
+}
+setInterval(pollAudit, 12000);
+</script>
+{% endblock %}

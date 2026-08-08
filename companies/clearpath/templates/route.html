@@ -1,0 +1,84 @@
+{% extends "base.html" %}
+{% set active = "route" %}
+{% block title %}Clearpath — Route{% endblock %}
+{% block body %}
+<h1>Route a transfer</h1>
+<p class="lede">Describe a proposed cross-border transfer of value or content.
+Clearpath runs it through its compliance rule set and returns a routing
+decision — <span class="badge-ok">ALLOW</span>,
+<span class="badge-warn">REVIEW</span>, <span class="badge-bad">BLOCK</span>, or
+<span class="badge-info">NEEDS INFO</span> if a fact you left as "Unknown" was
+load-bearing for the outcome — with the exact rules that fired and what to
+remediate. The decision is written to a tamper-evident audit log.</p>
+<p class="muted" style="font-size:12px;margin-top:-18px">Ruleset
+<span class="mono">{{ ruleset.pack }}@{{ ruleset.version }}</span></p>
+
+<div class="card">
+  <div class="grid2">
+    <div>
+      <label>Asset type</label>
+      <select id="asset_type">
+        {% for a in asset_types %}<option value="{{ a }}">{{ a }}</option>{% endfor %}
+      </select>
+    </div>
+    <div>
+      <label>Value (USD)</label>
+      <input type="text" id="value" placeholder="0" value="0">
+    </div>
+    <div>
+      <label>Origin jurisdiction</label>
+      <select id="origin">
+        {% for code, name in jurisdictions.items() %}<option value="{{ code }}">{{ name }} ({{ code }})</option>{% endfor %}
+      </select>
+    </div>
+    <div>
+      <label>Destination jurisdiction</label>
+      <select id="destination">
+        {% for code, name in jurisdictions.items() %}<option value="{{ code }}" {{ 'selected' if code=='EU' }}>{{ name }} ({{ code }})</option>{% endfor %}
+      </select>
+    </div>
+  </div>
+
+  <div class="grid3 flags">
+    <div>
+      <label>Contains personal data (PII)?</label>
+      <select id="contains_pii">
+        <option value="">Unknown</option>
+        <option value="true">Yes</option>
+        <option value="false">No</option>
+      </select>
+    </div>
+    <div>
+      <label>Counterparty KYC-verified?</label>
+      <select id="party_verified">
+        <option value="">Unknown</option>
+        <option value="true">Yes</option>
+        <option value="false">No</option>
+      </select>
+    </div>
+    <div>
+      <label>Provenance attestation attached?</label>
+      <select id="provenance_attached">
+        <option value="">Unknown</option>
+        <option value="true">Yes</option>
+        <option value="false">No</option>
+      </select>
+    </div>
+  </div>
+  <p class="muted" style="font-size:12px;margin-top:8px">Leave a flag on
+  <b>Unknown</b> if you genuinely don't know yet — Clearpath will tell you
+  when not knowing changes the answer, instead of quietly assuming "No".</p>
+
+  <button id="route">Evaluate transfer</button>
+  <div id="err" class="err hidden"></div>
+</div>
+
+<div id="result" class="cert hidden">
+  <div class="verdict" id="verdict"></div>
+  <div class="kv"><div class="k">Case ID</div><div class="v" id="c_case"></div></div>
+  <div class="kv"><div class="k">Evaluated (UTC)</div><div class="v" id="c_time"></div></div>
+  <div id="findings"></div>
+  <div class="kv"><div class="k">Audit entry hash (chains to previous)</div><div class="v hash" id="c_hash"></div></div>
+</div>
+{% endblock %}
+{% block scripts %}<script src="{{ url_for('static', filename='route.js') }}"></script>{% endblock %}

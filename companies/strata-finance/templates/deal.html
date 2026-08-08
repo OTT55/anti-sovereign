@@ -1,0 +1,77 @@
+{% extends "base.html" %}
+{% set active = "deals" %}
+{% block title %}{{ deal.name }} — Strata Finance{% endblock %}
+{% macro money(cents) %}${{ '{:,.2f}'.format(cents / 100) }}{% endmacro %}
+{% block body %}
+<a href="/" class="muted" style="text-decoration:none;font-size:13px">← Deals</a>
+<h1 style="margin-top:8px">{{ deal.name }}</h1>
+<p class="lede"><span class="mono">{{ deal.deal_id }}</span></p>
+
+<h2 class="section">Waterfall</h2>
+<div class="waterfall">
+  {% for t in deal.tiers %}
+  <div class="wtier">
+    <span class="wt-index">{{ loop.index }}</span>
+    <div class="wt-body">
+      {% if t.kind == 'fee' %}
+        <b>Fee</b> — {{ t.percent }}% to {{ t.party }} <span class="muted">(off the top)</span>
+      {% elif t.kind == 'recoup' %}
+        <b>Recoupment</b> — {{ t.party }} up to {{ money(t.cap_cents) }}
+        <div class="recoup-bar">
+          {% set pct = (recouped[loop.index0] / t.cap_cents * 100) if t.cap_cents else 0 %}
+          <div class="recoup-fill" style="width: {{ [pct, 100]|min }}%"></div>
+        </div>
+        <div class="muted" style="font-size:12px">{{ money(recouped[loop.index0]) }} of {{ money(t.cap_cents) }} recouped</div>
+      {% elif t.kind == 'split' %}
+        <b>Backend split</b> — {% for p, pc in t.weights.items() %}{{ p }} {{ pc }}%{% if not loop.last %} · {% endif %}{% endfor %}
+      {% endif %}
+    </div>
+  </div>
+  {% endfor %}
+</div>
+
+<h2 class="section">Settle a payment</h2>
+<div class="card">
+  <label>Gross amount received (USD)</label>
+  <div class="row">
+    <input type="text" id="amount" placeholder="e.g. 100000">
+    <button id="settle" data-deal="{{ deal.deal_id }}">Run waterfall</button>
+  </div>
+  <div id="err" class="err hidden"></div>
+  <div id="receipt" class="receipt hidden">
+    <div class="r-head">Settlement <span class="mono" id="r_id"></span></div>
+    <div id="r_lines"></div>
+    <div class="r-total">Gross <span id="r_gross"></span> · distributed in full</div>
+  </div>
+</div>
+
+{% if totals %}
+<h2 class="section">Cumulative payouts</h2>
+<div class="card totals">
+  {% for party, cents in totals.items() %}
+  <div class="total-row"><span>{{ party }}</span><span class="mono">{{ money(cents) }}</span></div>
+  {% endfor %}
+</div>
+{% endif %}
+
+<h2 class="section">Ledger</h2>
+{% if not settlements %}<p class="muted">No settlements yet.</p>{% endif %}
+{% for s in settlements %}
+<div class="card ledger">
+  <div class="ledger-head">
+    <span class="mono">{{ s.settlement_id }}</span>
+    <span class="muted" style="margin-left:auto;font-size:12px">{{ s.created_at }}</span>
+  </div>
+  <div class="ledger-gross">Gross received <b>{{ money(s.gross_cents) }}</b></div>
+  <table class="ledger-table">
+    {% for ln in s.lines %}
+    <tr><td>{{ ln.tier_label }}</td><td class="party">{{ ln.party }}</td><td class="amt mono">{{ money(ln.amount_cents) }}</td></tr>
+    {% endfor %}
+    {% if s.holdback_cents %}
+    <tr><td>Holdback (undistributed)</td><td class="party">—</td><td class="amt mono">{{ money(s.holdback_cents) }}</td></tr>
+    {% endif %}
+  </table>
+</div>
+{% endfor %}
+{% endblock %}
+{% block scripts %}<script src="{{ url_for('static', filename='deal.js') }}"></script>{% endblock %}

@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>CreativeOS</title>
+<meta http-equiv="refresh" content="0; url=home.html">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/creativeos.css">
+<script>(function(){ try{ var t=localStorage.getItem('ott-theme'); if(!t){ t=matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light'; } document.documentElement.setAttribute('data-theme',t); }catch(e){} })();</script>
+<style>
+  .boot{height:100vh; display:grid; place-items:center; text-align:center}
+  .boot .glyph{width:44px; height:44px; border-radius:50%; margin:0 auto 18px;
+    background:conic-gradient(from 210deg,var(--framevault),var(--filmcrew),var(--rightsforge),var(--creatorstack),var(--framevault));
+    box-shadow:0 0 30px rgba(124,92,255,.5); animation:spin 1.4s linear infinite}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  .boot b{font-size:18px; letter-spacing:-.01em}
+  .boot p{color:var(--text-lo); font-size:13px; margin-top:6px}
+  @media(prefers-reduced-motion:reduce){.boot .glyph{animation:none}}
+</style>
+</head>
+<body>
+<div class="boot">
+  <div>
+    <div class="glyph"></div>
+    <b>CreativeOS</b>
+    <p>Opening your workspace…</p>
+    <p style="margin-top:14px"><a href="home.html" style="color:var(--accent-hi)">Enter →</a></p>
+  </div>
+</div>
+</body>
+</html>

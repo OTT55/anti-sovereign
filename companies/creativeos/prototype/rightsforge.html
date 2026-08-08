@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>CreativeOS — RightsForge</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/creativeos.css">
+<script>(function(){ try{ var t=localStorage.getItem('ott-theme'); if(!t){ t=matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light'; } document.documentElement.setAttribute('data-theme',t); }catch(e){} })();</script>
+</head>
+<body>
+<main class="pane" data-view="rightsforge">
+  <div class="inner" style="--h:var(--rightsforge)">
+    <div class="phdr">
+      <div>
+        <div class="prod" style="--h:var(--rightsforge)"><span class="pdot"></span>RightsForge · Rights marketplace</div>
+        <h1>List it once. License it, option it, sell it.</h1>
+        <p class="sub">One marketplace, two deal modes — instant asset licenses, and negotiated IP deals. Originally two products (StoryForge + RightsHub); merged, because they're the same engine underneath. Every deal is escrow/royalty-backed and logged to your FrameVault.</p>
+      </div>
+      <button class="btn hue" style="--h:var(--rightsforge)" data-toast="List something — prototype stub">+ List something</button>
+    </div>
+
+    <div class="grid stats" style="margin-top:22px">
+      <div class="stat"><div class="n">£1,212</div><div class="l cap">Earnings (all-time)</div><div class="d">+£28 this week</div></div>
+      <div class="stat"><div class="n">34</div><div class="l cap">Active licenses</div></div>
+      <div class="stat"><div class="n">9</div><div class="l cap">Listings</div><div class="src">6 assets · 3 IP</div></div>
+      <div class="stat"><div class="n">2</div><div class="l cap">Collaborators paid</div><div class="src">via splits</div></div>
+    </div>
+
+    <div class="toolbar">
+      <div class="tabs" id="modeTabs">
+        <button class="tab on hue" style="--h:var(--rightsforge)" data-mode="asset">Assets</button>
+        <button class="tab" data-mode="ip">IP</button>
+      </div>
+      <div class="field" id="searchField">🔎 Search assets…</div>
+    </div>
+
+    <!-- ================= ASSET MODE ================= -->
+    <div id="mode-asset">
+      <div class="toolbar" style="margin-top:0">
+        <div class="tabs">
+          <button class="tab on hue" style="--h:var(--rightsforge)">All</button>
+          <button class="tab" data-toast="Filtering to Music">Music</button>
+          <button class="tab" data-toast="Filtering to SFX">SFX</button>
+          <button class="tab" data-toast="Filtering to LUTs">LUTs</button>
+          <button class="tab" data-toast="Filtering to VFX">VFX</button>
+          <button class="tab" data-toast="Filtering to Templates">Templates</button>
+          <button class="tab" data-toast="Filtering to Voice">Voice</button>
+        </div>
+      </div>
+
+      <section class="blk">
+        <div class="blkhead"><h2>Your best-seller — "Umber" LUT pack</h2><span class="cap">Rights-managed</span></div>
+        <div class="split2">
+          <div class="card" style="--h:var(--rightsforge)">
+            <div class="cover" style="aspect-ratio:21/9; border-radius:var(--r-sm); background:linear-gradient(135deg,#2a1810,#3a2a12 45%,#132520); display:grid; place-items:center; position:relative">
+              <span class="tagtl" style="--h:var(--rightsforge)">10 LUTs · .cube</span>
+              <span style="font-size:28px; opacity:.5">🎨</span>
+            </div>
+            <h1 style="font-size:20px; margin-top:14px">"Umber" — warm cinematic LUT pack</h1>
+            <p class="sub" style="margin-top:8px">Ten hand-built color grades tuned for skin tones in low, practical light — the same looks OTT used on "Nightshift". Tested across Log profiles from major camera systems.</p>
+            <div class="skills" style="margin-top:14px">
+              <span class="skill">S-Log3</span><span class="skill">V-Log</span><span class="skill">C-Log</span><span class="skill">Rec.709</span>
+            </div>
+          </div>
+          <div>
+            <div class="card">
+              <div class="cap" style="margin-bottom:12px">License options</div>
+              <div class="kv"><span class="k">Personal / royalty-free</span><span class="v">£29</span></div>
+              <div class="kv"><span class="k">Commercial</span><span class="v">£89</span></div>
+              <div class="kv"><span class="k">Studio (unlimited seats)</span><span class="v">£240</span></div>
+              <button class="btn hue" style="--h:var(--rightsforge); width:100%; justify-content:center; margin-top:16px" data-toast="License flow — splits royalties, emits asset.licensed">License now</button>
+            </div>
+            <div class="card" style="margin-top:16px">
+              <div class="cap" style="margin-bottom:12px">Royalty split</div>
+              <div class="kv"><span class="k">OTT <span class="muted">· author</span></span><span class="v">70%</span></div>
+              <div class="progress" style="--h:var(--rightsforge); margin:8px 0 14px"><i style="width:70%"></i></div>
+              <div class="kv"><span class="k">Kojo Mensah <span class="muted">· grade assist</span></span><span class="v">30%</span></div>
+              <div class="progress" style="--h:var(--rightsforge); margin:8px 0 4px"><i style="width:30%"></i></div>
+              <p class="muted" style="font-size:12px; margin:12px 0 0">Splits pay out automatically on every license — no manual invoicing.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="blk">
+        <div class="blkhead"><h2>Browse the marketplace</h2></div>
+        <div class="cards c3">
+          <div class="uc" style="--h:var(--rightsforge)"><div class="cover" style="--tb:linear-gradient(135deg,#132520,#0d1714); flex-direction:column; gap:8px"><span class="tagtl">Music</span><span class="tagtr">2:41</span><div class="wave" style="--h:var(--rightsforge); width:80%"><i style="height:40%"></i><i style="height:70%"></i><i style="height:55%"></i><i style="height:90%"></i><i style="height:45%"></i><i style="height:75%"></i><i style="height:60%"></i><i style="height:85%"></i><i style="height:35%"></i><i style="height:65%"></i><i style="height:50%"></i><i style="height:80%"></i></div></div><div class="body"><div class="t">"Low Tide" — ambient bed</div><div class="m">Cinematic · loopable</div><div class="foot"><span class="who"><span class="av">NV</span>Nova</span><span class="price" style="color:var(--rightsforge)">£39</span></div></div></div>
+          <div class="uc" style="--h:var(--rightsforge)"><div class="cover" style="--tb:linear-gradient(135deg,#0f2320,#0a1512)"><span class="tagtl">VFX</span><span class="tagtr">4K</span><span class="ic">✨</span></div><div class="body"><div class="t">Practical light leaks</div><div class="m">24 clips · ProRes</div><div class="foot"><span class="who"><span class="av">HL</span>Halo</span><span class="price" style="color:var(--rightsforge)">£55</span></div></div></div>
+          <div class="uc" style="--h:var(--rightsforge)"><div class="cover" style="--tb:linear-gradient(135deg,#14231f,#0d1613)"><span class="tagtl">Voice</span><span class="tagtr">EN-GB</span><span class="ic">🎙️</span></div><div class="body"><div class="t">Narration — "documentary calm"</div><div class="m">Licensed voice · per-project</div><div class="foot"><span class="who"><span class="av">SO</span>Sena O.</span><span class="price" style="color:var(--rightsforge)">£120</span></div></div></div>
+        </div>
+      </section>
+
+      <div class="banner" style="--h:var(--rightsforge)">🔗 <span><b>Cross-product loop:</b> a license emits <code style="font-family:var(--font-mono);color:var(--rightsforge)">asset.licensed</code> — Payments splits the fee across royalty holders, Provenance records it, and FrameVault earnings update.</span></div>
+    </div>
+
+    <!-- ================= IP MODE ================= -->
+    <div id="mode-ip" style="display:none">
+      <div class="toolbar" style="margin-top:0">
+        <div class="tabs">
+          <button class="tab on hue" style="--h:var(--rightsforge)">All formats</button>
+          <button class="tab" data-toast="Filtering to Scripts">Scripts</button>
+          <button class="tab" data-toast="Filtering to Pilots">Pilots</button>
+          <button class="tab" data-toast="Filtering to Novels">Novels</button>
+          <button class="tab" data-toast="Filtering to Comics">Comics</button>
+          <button class="tab" data-toast="Filtering to Game concepts">Game concepts</button>
+        </div>
+      </div>
+
+      <section class="blk">
+        <div class="blkhead"><h2>Featured listing</h2><span class="cap">Your work</span></div>
+        <div class="split2">
+          <div class="card" style="--h:var(--rightsforge)">
+            <div style="display:flex; gap:8px; flex-wrap:wrap; margin-bottom:12px">
+              <span class="pill hue" style="--h:var(--rightsforge)">TV Pilot</span>
+              <span class="pill">Sci-fi · noir</span>
+              <span class="pill warn"><span class="dotv"></span>Optioned</span>
+            </div>
+            <h1 style="font-size:22px">"The Archivist"</h1>
+            <p class="sub" style="margin-top:10px">In a city that has outlawed forgetting, a state archivist discovers a memory that was never meant to be recorded — and that someone is willing to erase her to bury it. A tense, world-heavy pilot about who controls the past.</p>
+            <div style="margin:18px 0 6px" class="cap">Sample &amp; materials</div>
+            <div class="rows">
+              <div class="lrow" style="--h:var(--rightsforge)"><div class="av">📄</div><div class="grow"><div class="t">Pilot script — 58 pages</div><div class="m">PDF · watermarked preview</div></div><button class="btn sec sm" data-toast="Opening protected preview">Read sample</button></div>
+              <div class="lrow" style="--h:var(--rightsforge)"><div class="av">🗺️</div><div class="grow"><div class="t">Series bible — 12 pages</div><div class="m">World, characters, season arc</div></div><button class="btn sec sm">Preview</button></div>
+            </div>
+          </div>
+          <div>
+            <div class="card">
+              <div class="cap" style="margin-bottom:12px">Deal terms</div>
+              <div class="kv"><span class="k">Option (12 months)</span><span class="v">£4,000</span></div>
+              <div class="kv"><span class="k">Exclusive license</span><span class="v">£18,000</span></div>
+              <div class="kv"><span class="k">Full buyout</span><span class="v">£45,000</span></div>
+              <div class="kv"><span class="k">Author</span><span class="v">OTT · @ott</span></div>
+              <div class="kv"><span class="k">Provenance</span><span class="v" style="font-family:var(--font-mono);font-size:12px">sha256 ✓</span></div>
+              <button class="btn hue" style="--h:var(--rightsforge); width:100%; justify-content:center; margin-top:16px" data-toast="Deal flow — escrow-backed, emits ip.optioned">Start a deal</button>
+              <p class="muted" style="font-size:12px; margin:12px 0 0; text-align:center">Escrow-backed · closing emits <code style="font-family:var(--font-mono);color:var(--rightsforge)">ip.optioned</code></p>
+            </div>
+            <div class="card" style="margin-top:16px">
+              <div class="cap" style="margin-bottom:10px">Interest</div>
+              <div class="kv"><span class="k">Views this month</span><span class="v">312</span></div>
+              <div class="kv"><span class="k">Bookmarks</span><span class="v">14</span></div>
+              <div class="kv"><span class="k">Active inquiries</span><span class="v" style="color:var(--rightsforge)">2</span></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="blk">
+        <div class="blkhead"><h2>Discover IP</h2><span class="cap">Fresh to the marketplace</span></div>
+        <div class="cards c3">
+          <div class="uc" style="--h:var(--rightsforge)"><div class="cover" style="--tb:linear-gradient(135deg,#2a2114,#171208)"><span class="tagtl">Feature script</span><span class="ic">📜</span></div><div class="body"><div class="t">"Saltwater"</div><div class="m">Drama · a diver returns to a drowned town</div><div class="foot"><span class="who"><span class="av">EF</span>Elin F.</span><span class="price" style="color:var(--rightsforge)">Option £3k</span></div></div></div>
+          <div class="uc" style="--h:var(--rightsforge)"><div class="cover" style="--tb:linear-gradient(135deg,#2a1a20,#160f12)"><span class="tagtl">Graphic novel</span><span class="ic">🖊️</span></div><div class="body"><div class="t">"Vellum City"</div><div class="m">Cyber-noir · complete 4-issue arc</div><div class="foot"><span class="who"><span class="av">RJ</span>R. Juno</span><span class="price" style="color:var(--rightsforge)">License £9k</span></div></div></div>
+          <div class="uc" style="--h:var(--rightsforge)"><div class="cover" style="--tb:linear-gradient(135deg,#1f2414,#12140a)"><span class="tagtl">Game concept</span><span class="ic">🎮</span></div><div class="body"><div class="t">"The Long Tide"</div><div class="m">Narrative survival · pitch + vertical slice</div><div class="foot"><span class="who"><span class="av">MK</span>M. Kade</span><span class="price" style="color:var(--rightsforge)">Sale £22k</span></div></div></div>
+        </div>
+      </section>
+
+      <div class="banner" style="--h:var(--rightsforge)">🔗 <span><b>Cross-product loop:</b> optioning a listing emits <code style="font-family:var(--font-mono);color:var(--rightsforge)">ip.optioned</code> — it lands on the writer's FrameVault and can spin up a real project in FilmCrew + OTT Studio.</span></div>
+    </div>
+  </div>
+</main>
+<script src="assets/shell.js"></script>
+<script>
+  (function(){
+    var tabs = document.querySelectorAll('#modeTabs .tab');
+    var asset = document.getElementById('mode-asset');
+    var ip = document.getElementById('mode-ip');
+    var search = document.getElementById('searchField');
+    tabs.forEach(function(btn){
+      btn.addEventListener('click', function(){
+        tabs.forEach(function(b){ b.classList.remove('on','hue'); });
+        btn.classList.add('on','hue');
+        var mode = btn.getAttribute('data-mode');
+        asset.style.display = mode==='asset' ? '' : 'none';
+        ip.style.display = mode==='ip' ? '' : 'none';
+        search.textContent = mode==='asset' ? '🔎 Search assets…' : '🔎 Search loglines, genres…';
+      });
+    });
+  })();
+</script>
+</body>
+</html>

@@ -1,0 +1,93 @@
+{% extends "base.html" %}
+{% block title %}Marketplace{% endblock %}
+{% block nav_market %}on{% endblock %}
+
+{% block body %}
+<div class="row spread wrap-w" style="gap:16px;">
+  <div>
+    <p class="eyebrow">RightsForge · Rights marketplace</p>
+    <h1 style="margin:.2em 0;">List it once. License it, option it, sell it.</h1>
+    <p class="muted">One marketplace, two deal modes — instant asset licenses, and negotiated IP deals.
+      Every completed deal writes a verified credit onto the seller's FrameVault.</p>
+  </div>
+  {% if me %}
+  <a class="btn btn-primary" href="/sell">+ List something</a>
+  {% else %}
+  <a class="btn btn-primary" href="/login">Log in to sell</a>
+  {% endif %}
+</div>
+
+<div class="stats">
+  <div class="stat"><div class="n" id="stat-assets">{{ stats.assets }}</div><div class="l">Assets listed</div></div>
+  <div class="stat"><div class="n" id="stat-ip">{{ stats.ip }}</div><div class="l">IP listed</div></div>
+  <div class="stat"><div class="n" id="stat-deals">{{ stats.deals }}</div><div class="l">Deals closed</div></div>
+</div>
+
+<div class="modes">
+  <a href="/?mode=asset" class="{{ 'on' if mode=='asset' }}">Assets</a>
+  <a href="/?mode=ip" class="{{ 'on' if mode=='ip' }}">IP</a>
+</div>
+
+<div class="cats">
+  <a href="/?mode={{ mode }}" class="{{ 'on' if not cat }}">All</a>
+  {% for c in cats %}
+  <a href="/?mode={{ mode }}&cat={{ c }}" class="{{ 'on' if cat==c }}">{{ c.replace('_',' ')|capitalize }}</a>
+  {% endfor %}
+</div>
+
+<div class="grid" style="margin-top:8px;">
+  {% for l in listings %}
+  <a class="lcard" href="/listing/{{ l.id }}">
+    <div class="cov">
+      <span class="tl">{{ l.category.replace('_',' ')|capitalize if l.category else (mode|capitalize) }}</span>
+      {% if mode == 'asset' %}🎨{% else %}📜{% endif %}
+    </div>
+    <div class="body">
+      <div class="t">{{ l.title }}</div>
+      <div class="m">
+        {% if l.seller_handle %}by @{{ l.seller_handle }}{% else %}by {{ l.seller_name }}{% endif %}
+        {% if mode=='ip' and l.status != 'listed' %} · <span style="color:var(--danger);">{{ l.status|capitalize }}</span>{% endif %}
+      </div>
+      <div class="foot">
+        {% if mode == 'asset' %}
+          <span class="price">from £{{ l.tiers[0]['price'] if l.tiers else '—' }}</span>
+          {% if l.license_count %}<span class="faint tiny">{{ l.license_count }} license{{ '' if l.license_count==1 else 's' }}</span>{% endif %}
+        {% else %}
+          <span class="price">from £{{ '{:,}'.format(l.terms[0]['price']) if l.terms else '—' }}</span>
+          {% if l.seller_handle %}<span class="badge fv" style="font-size:.68rem;">FrameVault</span>{% endif %}
+        {% endif %}
+      </div>
+    </div>
+  </a>
+  {% else %}
+  <p class="muted">Nothing here yet{% if cat %} in “{{ cat }}”{% endif %}.</p>
+  {% endfor %}
+</div>
+
+<div class="note">
+  🔗 <b>The cross-product loop:</b> an asset license emits <code class="mono">asset.licensed</code>;
+  an IP deal emits <code class="mono">ip.optioned</code> / <code class="mono">ip.licensed</code> /
+  <code class="mono">ip.purchased</code> depending on the deal. Either way, FrameVault gets a signed,
+  verifiable credit — the seller's identity gets richer every time something sells.
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+async function pollMarketStats(){
+  try {
+    const r = await fetch('/api/marketplace/stats');
+    if (!r.ok) return;
+    const s = await r.json();
+    [['stat-assets','assets'],['stat-ip','ip'],['stat-deals','deals']].forEach(([id,key]) => {
+      const el = document.getElementById(id);
+      if (el && el.textContent !== String(s[key])) {
+        el.textContent = String(s[key]);
+        el.classList.remove('pulse'); void el.offsetWidth; el.classList.add('pulse');
+      }
+    });
+  } catch (e) { /* offline — skip this tick */ }
+}
+setInterval(pollMarketStats, 12000);
+</script>
+{% endblock %}

@@ -1,0 +1,4 @@
+rightsforge.db
+__pycache__/
+.venv/
+static/uploads/

@@ -1,0 +1,79 @@
+{% extends "base.html" %}
+{% set active = "verify" %}
+{% block title %}Veridact — Verify{% endblock %}
+{% block body %}
+<div class="ev-head">
+  <h1>Verify a file</h1>
+  <p class="lede">Drop in a file and Veridact examines it — against its own capture manifests, or
+    against a camera's own C2PA credential. It returns one of a few honest answers, and it never
+    claims something is fake, only what it can and can't prove.</p>
+</div>
+
+<div class="ev-tabs" role="tablist" aria-label="Verification method">
+  <button type="button" class="ev-tab on" id="tab-veridact" role="tab" aria-selected="true" aria-controls="panel-veridact">
+    Veridact manifest
+  </button>
+  <button type="button" class="ev-tab" id="tab-c2pa" role="tab" aria-selected="false" aria-controls="panel-c2pa">
+    Camera's C2PA credential
+  </button>
+</div>
+
+<div class="ev-grid">
+  <div class="ev-dropzone" id="dropzone" tabindex="0" role="button" aria-label="Choose or drop a file to verify">
+    <input type="file" id="file" class="ev-file-input" aria-hidden="true" tabindex="-1">
+    <div class="ev-dz-empty" id="dz-empty">
+      <div class="ev-dz-icon" aria-hidden="true">⇪</div>
+      <p><b>Drop a file</b> or click to choose</p>
+      <p class="ev-dz-hint">Photo or video, any format</p>
+    </div>
+    <div class="ev-dz-file hidden" id="dz-file">
+      <div class="ev-dz-thumb" id="dz-thumb" aria-hidden="true">◆</div>
+      <div class="ev-dz-meta">
+        <div class="ev-dz-name" id="dz-name"></div>
+        <div class="hash" id="filehash"></div>
+      </div>
+      <button type="button" class="ev-dz-clear" id="dz-clear" aria-label="Remove file">✕</button>
+    </div>
+  </div>
+
+  <div class="ev-analysis">
+    <section class="ev-panel" id="panel-veridact" role="tabpanel" aria-labelledby="tab-veridact">
+      <div id="analysis" aria-live="polite">
+        <div class="ev-empty-state" id="analysis-empty">
+          <p class="muted">Choose a file to begin. Veridact fingerprints it and looks for a
+          matching signed capture manifest.</p>
+        </div>
+        <div id="result" class="cert hidden"></div>
+      </div>
+
+      <details class="ev-advanced">
+        <summary class="muted">Have a proof code? Enter it directly</summary>
+        <label for="manifest_id">Manifest ID</label>
+        <input type="text" id="manifest_id" class="mono" placeholder="VD-XXXXXXXXXXXX">
+        <div id="manifest_id_note" class="pill hidden" style="margin-top:8px"></div>
+      </details>
+
+      <button id="check" class="btn-primary-lg" disabled>Analyze evidence</button>
+      <div id="err" class="err hidden" role="alert"></div>
+    </section>
+
+    <section class="ev-panel hidden" id="panel-c2pa" role="tabpanel" aria-labelledby="tab-c2pa">
+      <p class="ev-panel-note">Many newer cameras and phones (Leica, Sony, Nikon, Canon, some
+        Samsung Galaxy models) sign photos themselves, in hardware, using the industry-standard
+        <b>C2PA</b> — the same idea as Veridact's own scheme, built into the camera instead. This
+        checks for <em>that</em> credential, independent of Veridact's own signing
+        (decisions/0007).</p>
+      <div id="c2pa_analysis" aria-live="polite">
+        <div class="ev-empty-state" id="c2pa-analysis-empty">
+          <p class="muted">Choose a file to begin. Veridact reads its container for an embedded
+          C2PA manifest.</p>
+        </div>
+        <div id="c2pa_result" class="cert hidden"></div>
+      </div>
+      <button id="check_c2pa" class="btn-primary-lg" disabled>Check for C2PA credential</button>
+      <div id="c2pa_err" class="err hidden" role="alert"></div>
+    </section>
+  </div>
+</div>
+{% endblock %}
+{% block scripts %}<script src="{{ url_for('static', filename='verify.js') }}"></script>{% endblock %}

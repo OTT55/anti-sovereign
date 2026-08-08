@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}FrameVault{% endblock %} · FrameVault</title>
+  <meta name="description" content="FrameVault — verified identity and signed provenance for creative work. Who made this, when, with whom, and how much of it was AI.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{{ url_for('static', filename='app.css') }}">
+</head>
+<body>
+  <nav class="nav">
+    <div class="wrap nav-inner">
+      <a href="/dashboard" class="brand">
+        <span class="mark" aria-hidden="true"></span>
+        FrameVault <small>CreativeOS</small>
+      </a>
+      <div class="nav-links" id="navLinks">
+        {% if me %}
+        <a href="/dashboard" class="{% block nav_dash %}{% endblock %}">Dashboard</a>
+        <a href="/@{{ me['handle'] }}" class="{% block nav_public %}{% endblock %}">My page</a>
+        <a href="/settings" class="{% block nav_settings %}{% endblock %}">Settings</a>
+        {% endif %}
+        <a href="/verify" class="{% block nav_verify %}{% endblock %}">Verify</a>
+      </div>
+      <div class="grow"></div>
+      <button class="icon-btn" onclick="openPalette()" title="Search (Ctrl/Cmd+K)" aria-label="Search everything">🔍</button>
+      <button class="icon-btn" onclick="toggleTheme()" title="Toggle light / dark" aria-label="Toggle theme">
+        <span id="theme-icon">☾</span>
+      </button>
+      {% if me %}
+      <form method="post" action="/logout" style="margin:0;">
+        <button class="btn btn-quiet btn-sm" type="submit" title="Log out">Log out</button>
+      </form>
+      {% else %}
+      <a href="/login" class="btn btn-ghost btn-sm">Log in</a>
+      {% endif %}
+      <button class="icon-btn nav-toggle" id="navToggle" onclick="toggleNav()" aria-label="Menu" aria-expanded="false" aria-controls="navLinks">☰</button>
+    </div>
+  </nav>
+
+  <main class="wrap" style="padding-top:32px;padding-bottom:24px;">
+    {% block body %}{% endblock %}
+  </main>
+
+  <footer class="foot wrap">
+    FrameVault — the identity &amp; provenance layer of CreativeOS ·
+    every record is SHA-256 hashed in your browser and HMAC-signed by the registry.
+  </footer>
+
+  <div id="toasts"></div>
+
+  <div class="palette-scrim hidden" id="paletteScrim" onclick="closePalette()"></div>
+  <div class="palette hidden" id="palette" role="dialog" aria-label="Search creators and works" aria-modal="true">
+    <div class="palette-input-row">
+      <span class="palette-icon" aria-hidden="true">🔍</span>
+      <input type="text" id="paletteInput" placeholder="Search creators, registered works…" autocomplete="off">
+      <span class="kbd">esc</span>
+    </div>
+    <div class="palette-results" id="paletteResults"></div>
+  </div>
+
+  <script src="{{ url_for('static', filename='app.js') }}"></script>
+  {% block scripts %}{% endblock %}
+</body>
+</html>

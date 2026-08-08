@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% set active = "verify" %}
+{% block title %}Canonchain — Verify{% endblock %}
+{% block body %}
+<h1>Verify a hash</h1>
+<p class="lede">Paste a SHA-256 hash to check whether it is in the registry. If it is,
+Canonchain returns the registration record <em>and</em> a Merkle inclusion proof
+that mathematically links the hash to the registry root — so you don't have to
+trust this server, only the math.</p>
+
+<div class="card">
+  <label>SHA-256 hash (64 hex characters)</label>
+  <input type="text" id="hashinput" class="mono" placeholder="e2fc714c4727ee9395f324cd2e7f331f…">
+  <button id="check">Verify</button>
+  <div id="err" class="err hidden"></div>
+</div>
+
+<div id="none" class="card hidden" style="border-color:var(--bad)">
+  <span class="pill" style="background:rgba(224,102,102,.14);color:var(--bad)">Not registered</span>
+  <p class="muted" style="margin:12px 0 0">This hash is not in the Canonchain registry.</p>
+</div>
+
+<div id="cert" class="cert hidden">
+  <div class="seal">CANON<br>CHAIN</div>
+  <h2>Registration Found</h2>
+  <div id="verdict" style="font-size:13px"></div>
+  <div class="kv"><div class="k">Registry ID</div><div class="v" id="c_id"></div></div>
+  <div class="kv"><div class="k">Creator</div><div class="v" id="c_creator"></div></div>
+  <div class="kv"><div class="k">Work</div><div class="v" id="c_file"></div></div>
+  <div class="kv"><div class="k">SHA-256</div><div class="v hash" id="c_hash"></div></div>
+  <div class="kv"><div class="k">Registered (UTC)</div><div class="v" id="c_time"></div></div>
+  <div class="kv"><div class="k">Merkle root · leaf <span id="c_index"></span> of <span id="c_size"></span></div><div class="v hash" id="c_root"></div></div>
+  <div class="kv"><div class="k">Inclusion proof</div><div class="proof" id="c_proof"></div></div>
+</div>
+{% endblock %}
+{% block scripts %}<script src="{{ url_for('static', filename='verify.js') }}"></script>{% endblock %}

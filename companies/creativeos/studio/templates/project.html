@@ -1,0 +1,260 @@
+{% extends "base.html" %}
+{% block title %}{{ p.name }}{% endblock %}
+{% block nav_home %}on{% endblock %}
+
+{% block body %}
+<a class="navlink" href="/workspace/{{ ws.id }}" style="margin-left:-12px;">← {{ ws.name }}</a>
+
+<div class="hero" style="margin:14px 0 20px;">
+  <div class="row spread wrap-w">
+    <div>
+      <div class="row" style="gap:9px;">
+        <h1 style="margin:0;">{{ p.name }}</h1>
+        <span class="badge {{ 'open' if p.status=='active' else 'filled' }}" id="project-status-badge">{{ 'Active' if p.status=='active' else 'Published' }}</span>
+      </div>
+      <p class="muted" style="margin:6px 0 0;">{{ ws.name }}</p>
+    </div>
+    {% if p.status == 'active' %}
+    <button class="btn btn-primary" onclick="publish()">Publish</button>
+    {% endif %}
+  </div>
+  <div id="publish-result"></div>
+</div>
+
+<div class="fgrid" style="display:grid; gap:20px; grid-template-columns:1.3fr 1fr;">
+  <div class="card pad">
+    <p class="eyebrow" style="margin-bottom:10px;">Asset tray</p>
+    <div class="assets" id="assets">
+      {% for a in assets %}
+      <div class="asset" id="asset-{{ a['id'] }}">
+        <div class="asset-view" id="asset-view-{{ a['id'] }}">
+          <span class="ic" id="asset-ic-{{ a['id'] }}">{% if a['kind']=='video' %}🎞️{% elif a['kind']=='image' %}🖼️{% elif a['kind']=='audio' %}🎵{% else %}📄{% endif %}</span>
+          <span id="asset-link-{{ a['id'] }}">
+          {% if a['stored_name'] %}
+          <a class="lb" href="/static/uploads/{{ a['stored_name'] }}" download="{{ a['filename'] }}" style="text-decoration:none;color:inherit;">{{ a['label'] }}</a>
+          <span class="faint tiny">{{ (a['bytes'] / 1048576) | round(1) }}MB</span>
+          {% else %}
+          <span class="lb">{{ a['label'] }}</span>
+          <span class="faint tiny">no file</span>
+          {% endif %}
+          </span>
+          <span class="kd" id="asset-kd-{{ a['id'] }}">{{ a['kind'] }}</span>
+          <div class="asset-actions">
+            <button class="btn btn-ghost btn-sm" onclick="openAssetEdit({{ a['id'] }})">Edit</button>
+            <button class="btn btn-danger btn-sm" onclick="deleteAsset({{ a['id'] }})" title="Delete asset">🗑</button>
+          </div>
+        </div>
+        <div class="asset-edit hidden" id="asset-edit-{{ a['id'] }}">
+          <input id="asset-edit-label-{{ a['id'] }}" value="{{ a['label']|e }}" placeholder="Label">
+          <select id="asset-edit-kind-{{ a['id'] }}">
+            {% for k in asset_kinds %}<option value="{{ k }}" {{ 'selected' if k==a['kind'] else '' }}>{{ k|capitalize }}</option>{% endfor %}
+          </select>
+          <input id="asset-edit-file-{{ a['id'] }}" type="file">
+          <span class="faint tiny">Leave the file blank to keep the current one.</span>
+          <div class="row">
+            <button class="btn btn-primary btn-sm" onclick="saveAssetEdit({{ a['id'] }})">Save</button>
+            <button class="btn btn-ghost btn-sm" onclick="closeAssetEdit({{ a['id'] }})">Cancel</button>
+          </div>
+        </div>
+      </div>
+      {% else %}
+      <p class="muted tiny" id="no-assets">No assets yet.</p>
+      {% endfor %}
+    </div>
+    <div class="rowform" style="margin-top:14px;flex-wrap:wrap;">
+      <input id="asset-label" placeholder="Label (defaults to filename)">
+      <select id="asset-kind"><option value="">Auto-detect</option>{% for k in asset_kinds %}<option value="{{ k }}">{{ k|capitalize }}</option>{% endfor %}</select>
+      <input id="asset-file" type="file" style="flex:1 1 100%;">
+      <button class="btn btn-ghost btn-sm" onclick="addAsset()" style="flex:0 0 auto;">Add</button>
+    </div>
+  </div>
+
+  <div class="card pad">
+    <p class="eyebrow" style="margin-bottom:10px;">AI jobs</p>
+    <div id="jobs">
+    {% for j in jobs %}
+    <div class="jobrow" id="job-{{ j['id'] }}">
+      <span class="jicon">🤖</span>
+      <div>
+        <div class="jt">{{ j['kind'] }}</div>
+        <div class="jm" id="job-status-{{ j['id'] }}">{{ j['status']|capitalize }}</div>
+      </div>
+      <span class="jstatus" id="job-action-{{ j['id'] }}">
+        {% if j['status'] == 'done' %}<span class="badge open"><span class="dot"></span>Done</span>
+        {% else %}<button class="btn btn-ghost btn-sm" onclick="advanceJob({{ j['id'] }})">Mark {{ 'running' if j['status']=='queued' else 'done' }} →</button>{% endif %}
+      </span>
+    </div>
+    {% else %}
+    <p class="muted tiny" id="no-jobs">No jobs queued.</p>
+    {% endfor %}
+    </div>
+    <div class="row" style="gap:8px; margin-top:14px;">
+      <select id="job-preset">{% for k in presets %}<option value="{{ k }}">{{ k }}</option>{% endfor %}</select>
+      <button class="btn btn-ghost btn-sm" onclick="queueJob()">Queue</button>
+    </div>
+    <p class="faint tiny" style="margin-top:10px;">AI does the mechanical passes. No AI actually runs here — this is a real workflow state machine, not a simulated call. The creative decisions stay yours.</p>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+const JOB_FLOW = ["queued", "running", "done"];
+const KIND_ICON = { video: "🎞️", image: "🖼️", audio: "🎵" };
+function esc(s){ const d = document.createElement("div"); d.textContent = s == null ? "" : String(s); return d.innerHTML; }
+function guessKind(mime){ if (!mime) return "video"; if (mime.startsWith("image/")) return "image"; if (mime.startsWith("audio/")) return "audio"; return "video"; }
+
+async function addAsset(){
+  const label = document.getElementById('asset-label').value.trim();
+  const file = document.getElementById('asset-file').files[0];
+  if(!label && !file){ toast('Enter a label or choose a file','err'); return; }
+  let kind = document.getElementById('asset-kind').value;
+  const fd = new FormData();
+  fd.append('label', label);
+  fd.append('kind', kind);
+  if(file) fd.append('file', file);
+  const { ok, data } = await postForm('/api/project/{{ p.id }}/asset', fd);
+  if(!ok || !data.ok){ toast(data.error || 'Could not add','err'); return; }
+  toast('Asset added','ok');
+
+  if (!kind) kind = file ? guessKind(file.type) : 'video';
+  const finalLabel = label || (file ? file.name : '');
+  const noAssets = document.getElementById('no-assets'); if (noAssets) noAssets.remove();
+  const div = document.createElement('div');
+  div.className = 'asset'; div.id = 'asset-' + data.id;
+  const linkHtml = file
+    ? `<a class="lb" href="${URL.createObjectURL(file)}" download="${esc(file.name)}" style="text-decoration:none;color:inherit;">${esc(finalLabel)}</a><span class="faint tiny">${(file.size/1048576).toFixed(1)}MB</span>`
+    : `<span class="lb">${esc(finalLabel)}</span><span class="faint tiny">no file</span>`;
+  const kindOptions = {{ asset_kinds|tojson }}.map(k =>
+    `<option value="${k}"${k===kind?' selected':''}>${k.charAt(0).toUpperCase()+k.slice(1)}</option>`).join('');
+  div.innerHTML = `
+    <div class="asset-view" id="asset-view-${data.id}">
+      <span class="ic" id="asset-ic-${data.id}">${KIND_ICON[kind] || "📄"}</span>
+      <span id="asset-link-${data.id}">${linkHtml}</span>
+      <span class="kd" id="asset-kd-${data.id}">${kind}</span>
+      <div class="asset-actions">
+        <button class="btn btn-ghost btn-sm" onclick="openAssetEdit(${data.id})">Edit</button>
+        <button class="btn btn-danger btn-sm" onclick="deleteAsset(${data.id})" title="Delete asset">🗑</button>
+      </div>
+    </div>
+    <div class="asset-edit hidden" id="asset-edit-${data.id}">
+      <input id="asset-edit-label-${data.id}" value="${esc(finalLabel)}" placeholder="Label">
+      <select id="asset-edit-kind-${data.id}">${kindOptions}</select>
+      <input id="asset-edit-file-${data.id}" type="file">
+      <span class="faint tiny">Leave the file blank to keep the current one.</span>
+      <div class="row">
+        <button class="btn btn-primary btn-sm" onclick="saveAssetEdit(${data.id})">Save</button>
+        <button class="btn btn-ghost btn-sm" onclick="closeAssetEdit(${data.id})">Cancel</button>
+      </div>
+    </div>`;
+  document.getElementById('assets').appendChild(div);
+  document.getElementById('asset-label').value = '';
+  document.getElementById('asset-file').value = '';
+}
+
+function openAssetEdit(aid){
+  const view = document.getElementById('asset-view-' + aid);
+  const edit = document.getElementById('asset-edit-' + aid);
+  if (view) view.classList.add('hidden');
+  if (edit) edit.classList.remove('hidden');
+}
+
+function closeAssetEdit(aid){
+  const view = document.getElementById('asset-view-' + aid);
+  const edit = document.getElementById('asset-edit-' + aid);
+  if (edit) edit.classList.add('hidden');
+  if (view) view.classList.remove('hidden');
+}
+
+async function saveAssetEdit(aid){
+  const label = document.getElementById('asset-edit-label-' + aid).value.trim();
+  const kind = document.getElementById('asset-edit-kind-' + aid).value;
+  const fileInput = document.getElementById('asset-edit-file-' + aid);
+  const file = fileInput.files[0];
+  if (!label) { toast('A label is required', 'err'); return; }
+  const fd = new FormData();
+  fd.append('label', label);
+  fd.append('kind', kind);
+  if (file) fd.append('file', file);
+  const { ok, data } = await postForm('/api/asset/' + aid, fd);
+  if (!ok || !data.ok) { toast(data.error || 'Could not save', 'err'); return; }
+  toast('Asset updated', 'ok');
+  const icEl = document.getElementById('asset-ic-' + aid);
+  if (icEl) icEl.textContent = KIND_ICON[kind] || '📄';
+  const kdEl = document.getElementById('asset-kd-' + aid);
+  if (kdEl) kdEl.textContent = kind;
+  const linkSlot = document.getElementById('asset-link-' + aid);
+  if (linkSlot) {
+    if (file) {
+      linkSlot.innerHTML = `<a class="lb" href="${URL.createObjectURL(file)}" download="${esc(file.name)}" style="text-decoration:none;color:inherit;">${esc(label)}</a><span class="faint tiny">${(file.size/1048576).toFixed(1)}MB</span>`;
+    } else {
+      const lbEl = linkSlot.querySelector('.lb');
+      if (lbEl) lbEl.textContent = label;
+    }
+  }
+  fileInput.value = '';
+  closeAssetEdit(aid);
+}
+
+async function deleteAsset(aid){
+  if (!confirm('Delete this asset? This cannot be undone.')) return;
+  const { ok, data } = await postJSON('/api/asset/' + aid + '/delete', {});
+  if (!ok || !data.ok) { toast(data.error || 'Could not delete', 'err'); return; }
+  toast('Asset deleted', 'ok');
+  const el = document.getElementById('asset-' + aid);
+  if (el) el.remove();
+  const host = document.getElementById('assets');
+  if (host && !host.querySelector('.asset')) {
+    host.insertAdjacentHTML('beforeend', '<p class="muted tiny" id="no-assets">No assets yet.</p>');
+  }
+}
+
+async function queueJob(){
+  const kind = document.getElementById('job-preset').value;
+  const { ok, data } = await postJSON('/api/project/{{ p.id }}/job', { kind });
+  if(!ok || !data.ok){ toast(data.error || 'Could not queue','err'); return; }
+  toast('Job queued','ok');
+  const noJobs = document.getElementById('no-jobs'); if (noJobs) noJobs.remove();
+  const row = document.createElement('div');
+  row.className = 'jobrow'; row.id = 'job-' + data.id;
+  row.innerHTML = `
+    <span class="jicon">🤖</span>
+    <div><div class="jt">${esc(kind)}</div><div class="jm" id="job-status-${data.id}">Queued</div></div>
+    <span class="jstatus" id="job-action-${data.id}"><button class="btn btn-ghost btn-sm" onclick="advanceJob(${data.id})">Mark running →</button></span>`;
+  document.getElementById('jobs').appendChild(row);
+}
+
+async function advanceJob(jid){
+  const { ok, data } = await postJSON('/api/job/' + jid + '/advance', {});
+  if(!ok || !data.ok){ toast(data.error || 'Could not advance','err'); return; }
+  toast('Job → ' + data.status, 'ok');
+  const statusEl = document.getElementById('job-status-' + jid);
+  if (statusEl) statusEl.textContent = data.status.charAt(0).toUpperCase() + data.status.slice(1);
+  const actionEl = document.getElementById('job-action-' + jid);
+  if (actionEl) {
+    if (data.status === 'done') {
+      actionEl.innerHTML = '<span class="badge open"><span class="dot"></span>Done</span>';
+    } else {
+      const idx = JOB_FLOW.indexOf(data.status);
+      actionEl.innerHTML = `<button class="btn btn-ghost btn-sm" onclick="advanceJob(${jid})">Mark ${JOB_FLOW[idx + 1]} →</button>`;
+    }
+  }
+}
+
+async function publish(){
+  const { ok, data } = await postJSON('/api/project/{{ p.id }}/publish', {});
+  if(!ok || !data.ok){ toast(data.error || 'Could not publish','err'); return; }
+  const box = document.getElementById('publish-result');
+  box.innerHTML = data.credited
+    ? '<div class="result"><strong>Published — and the credit landed.</strong>' +
+      '<p class="muted tiny" style="margin:7px 0 0;">A verified <span class="mono">project.published</span> credit was written to your FrameVault.</p>' +
+      '<p style="margin:11px 0 0;"><a class="btn btn-primary btn-sm" href="' + data.public_url + '" target="_blank" rel="noopener">See your profile ↗</a></p></div>'
+    : '<div class="result plain"><strong>Published.</strong><p class="muted tiny" style="margin:7px 0 0;">' + esc(data.note||'') + '</p></div>';
+  toast('Published','ok');
+  const publishBtn = document.querySelector('button[onclick="publish()"]');
+  if (publishBtn) publishBtn.remove();
+  const badge = document.getElementById('project-status-badge');
+  if (badge) { badge.className = 'badge filled'; badge.textContent = 'Published'; }
+}
+</script>
+{% endblock %}

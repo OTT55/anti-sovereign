@@ -1,0 +1,69 @@
+{% extends "base.html" %}
+{% block title %}Talent{% endblock %}
+{% block nav_talent %}on{% endblock %}
+
+{% block body %}
+<div style="margin-bottom:6px;">
+  <p class="eyebrow">FilmCrew · Discovery</p>
+  <h1 style="margin:.2em 0;">Talent directory</h1>
+  <p class="muted">Find creatives and invite them to an open role. Verified FrameVault creators rank first.</p>
+</div>
+
+<form method="get" action="/talent" class="row" style="gap:10px; margin:18px 0 4px;">
+  <input name="q" value="{{ q }}" placeholder="Search by name, craft or location…" style="max-width:420px;">
+  <button class="btn btn-primary" type="submit">Search</button>
+  {% if q %}<a class="btn btn-quiet btn-sm" href="/talent">Clear</a>{% endif %}
+</form>
+
+<div class="tgrid" style="margin-top:18px;">
+  {% for t in talent %}
+  <div class="tcard" style="--h1:{{ (t['id'] * 137) % 360 }}; --h2:{{ (t['id'] * 137 + 42) % 360 }};">
+    <div class="top">
+      <div class="av">{{ t['name'][0]|upper }}</div>
+      <div class="grow">
+        <div class="row" style="gap:8px; flex-wrap:wrap;">
+          <strong>{{ t['name'] }}</strong>
+        </div>
+        <div class="faint tiny">{{ t['craft'] }}{% if t['location'] %} · {{ t['location'] }}{% endif %}</div>
+      </div>
+    </div>
+    <p class="muted tiny" style="margin:0;">{{ t['bio'] }}</p>
+    {% if t['on_fv'] %}
+    <a class="btn btn-ghost btn-sm" href="{{ framevault_url }}/@{{ t['handle'] }}" target="_blank" rel="noopener" style="align-self:flex-start;">✦ View portfolio ↗</a>
+    {% else %}
+    <span class="faint tiny">Not on FrameVault yet — no portfolio to show.</span>
+    {% endif %}
+    <div class="foot">
+      <span class="fee" style="font-size:1rem;">£{{ '{:,}'.format(t['rate']) }}<span class="faint tiny" style="font-weight:400;"> / day</span></span>
+      {% if me and open_roles %}
+      <div class="row" style="gap:7px;">
+        <select id="role-{{ t['id'] }}" style="width:auto; padding:7px 10px; font-size:.82rem;">
+          {% for r in open_roles %}<option value="{{ r['id'] }}">{{ r['ptitle'] }} — {{ r['title'] }}</option>{% endfor %}
+        </select>
+        <button class="btn btn-primary btn-sm" onclick="invite({{ t['id'] }})">Invite</button>
+      </div>
+      {% elif me %}
+      <span class="faint tiny">No open roles</span>
+      {% endif %}
+    </div>
+  </div>
+  {% else %}
+  <p class="muted">No one matches “{{ q }}”.</p>
+  {% endfor %}
+</div>
+
+{% if not me %}
+<div class="note" style="margin-top:24px;">Log in with your FrameVault account to invite talent to your productions.</div>
+{% endif %}
+{% endblock %}
+
+{% block scripts %}
+<script>
+async function invite(tid){
+  const sel = document.getElementById('role-' + tid);
+  const { ok, data } = await postJSON('/api/talent/' + tid + '/invite', { role_id: sel.value });
+  if(!ok || !data.ok){ toast(data.error || 'Could not invite','err'); return; }
+  toast(data.message || 'Invited','ok');
+}
+</script>
+{% endblock %}

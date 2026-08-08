@@ -1,0 +1,4 @@
+# The duplicate of the repo-root companies/ tree that predates this folder.
+# Engine work lives in the sibling engine folders; this copy is not ours to track.
+companies/
+design-system/

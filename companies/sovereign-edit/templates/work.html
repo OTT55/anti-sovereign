@@ -1,0 +1,75 @@
+{% extends "base.html" %}
+{% set active = "archive" %}
+{% block title %}{{ work.title }} — Sovereign Edit{% endblock %}
+{% block body %}
+<a href="/" class="muted" style="text-decoration:none;font-size:13px">← Archive</a>
+<h1 style="margin-top:8px">{{ work.title }}</h1>
+<p class="lede">dir. {{ work.director }} · <span class="mono">{{ work.work_id }}</span></p>
+
+<div class="cert {{ 'result-ok' if summary.chain_intact else 'result-bad' }}">
+  <div class="seal">SOV<br>EDIT</div>
+  <h2>Certificate of Lineage</h2>
+  {% if summary.chain_intact %}
+    <div class="badge-ok" style="font-weight:700">✓ Lineage intact — {{ summary.step_count }} steps, unbroken</div>
+  {% else %}
+    <div class="badge-bad" style="font-weight:700">✗ Lineage broken at step #{{ summary.chain_broken_at }}</div>
+    <div class="muted" style="font-size:13px">Everything from that step onward can no longer be trusted.</div>
+  {% endif %}
+  <div class="kv"><div class="k">Registered (UTC)</div><div class="v">{{ work.created_at }}</div></div>
+  <div class="kv"><div class="k">Approved master</div>
+    <div class="v">{% if summary.master_seq is not none %}Step #{{ summary.master_seq }}{% else %}<span class="muted">none designated yet</span>{% endif %}</div></div>
+  <div class="kv"><div class="k">Lineage hash</div><div class="v hash">{{ summary.lineage_hash }}</div></div>
+</div>
+
+<h2 class="section">Production lineage</h2>
+<div class="chain">
+  {% for s in chain %}
+  <div class="block {{ 'is-master' if s.is_master }}">
+    <div class="block-head">
+      <span class="seq">#{{ s.seq }}</span>
+      <span class="step-type">{{ s.step_type }}</span>
+      {% if s.is_master %}<span class="master-tag">APPROVED MASTER</span>{% endif %}
+      <span class="muted" style="margin-left:auto;font-size:12px">{{ s.created_at }}</span>
+    </div>
+    <div class="block-body">
+      <div><span class="muted">by</span> {{ s.actor }}{% if s.tool %} <span class="muted">· using</span> {{ s.tool }}{% endif %}</div>
+      {% if s.notes %}<div class="muted" style="font-size:13px;margin-top:4px">{{ s.notes }}</div>{% endif %}
+      {% if s.filename %}<div style="font-size:13px;margin-top:4px" class="mono">{{ s.filename }}</div>{% endif %}
+      {% if s.file_hash %}<div class="hash" style="font-size:11px;margin-top:4px">{{ s.file_hash }}</div>{% endif %}
+      {% if s.file_hash and not s.is_master %}
+        <button class="btn-sm mark-master" data-seq="{{ s.seq }}" data-work="{{ work.work_id }}">Mark as approved master</button>
+      {% endif %}
+      <div class="hash blockhash">▪ {{ s.block_hash }}</div>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+
+<div class="card">
+  <h3 style="margin-top:0">Log a production step</h3>
+  <div class="grid2">
+    <div>
+      <label>Step</label>
+      <select id="step_type">{% for t in step_types %}<option>{{ t }}</option>{% endfor %}</select>
+    </div>
+    <div>
+      <label>Who did it</label>
+      <input type="text" id="actor" placeholder="e.g. Colourist — J. Doe">
+    </div>
+    <div>
+      <label>Tool</label>
+      <input type="text" id="tool" placeholder="e.g. DaVinci Resolve">
+    </div>
+    <div>
+      <label>The file it produced <span class="muted">(hashed locally)</span></label>
+      <input type="file" id="file">
+    </div>
+  </div>
+  <div id="filehash" class="hash hidden" style="margin-top:8px"></div>
+  <label>Notes</label>
+  <input type="text" id="notes" placeholder="What changed at this step?">
+  <button id="addstep" data-work="{{ work.work_id }}">Append step</button>
+  <div id="err" class="err hidden"></div>
+</div>
+{% endblock %}
+{% block scripts %}<script src="{{ url_for('static', filename='work.js') }}"></script>{% endblock %}

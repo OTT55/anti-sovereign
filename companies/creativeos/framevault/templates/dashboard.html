@@ -1,0 +1,265 @@
+{% extends "base.html" %}
+{% block title %}Dashboard{% endblock %}
+{% block nav_dash %}on{% endblock %}
+
+{% block body %}
+<div class="row spread wrap-w" style="margin-bottom:24px;">
+  <div>
+    <p class="eyebrow">Your creator identity</p>
+    <h1 style="margin:.2em 0;">{{ user['display_name'] }}
+      {% if user['verified'] %}<span class="badge verified" style="vertical-align:middle;">✓ Verified</span>{% endif %}
+    </h1>
+    <p class="muted">Signed in as <span class="mono">@{{ user['handle'] }}</span> · this is your private control room.</p>
+  </div>
+  <a href="/@{{ user['handle'] }}" class="btn btn-ghost">View public page ↗</a>
+</div>
+
+<div class="grid-2">
+  <!-- LEFT: register + records ------------------------------------------- -->
+  <div class="stack">
+
+    <!-- Register a work -->
+    <div class="card">
+      <div class="card-h">
+        <p class="eyebrow">Register a work</p>
+        <h2 style="margin-top:4px;">Create a signed proof of authorship</h2>
+        <p class="muted tiny" style="margin-top:4px;">Your file is fingerprinted (SHA-256) in your browser — it never leaves your device. Only the fingerprint &amp; details are stored, then signed.</p>
+      </div>
+      <div class="card-b stack">
+        <div id="drop" class="drop">
+          <div class="big" id="dropTitle">Drop your file here</div>
+          <div class="muted tiny" style="margin-top:6px;" id="dropSub">…or click to choose. Video, image, audio, PDF — anything.</div>
+          <input id="file" type="file" class="hidden">
+        </div>
+        <div id="hashline" class="hidden">
+          <span class="faint tiny">FINGERPRINT</span>
+          <p class="hash" id="hashval"></p>
+        </div>
+
+        <div class="field-grid">
+          <label class="fld" style="grid-column:1/-1;"><span>Title *</span>
+            <input id="w-title" placeholder="e.g. Nightshift — final grade">
+          </label>
+          <label class="fld"><span>Your role</span>
+            <input id="w-role" placeholder="Director of Photography">
+          </label>
+          <label class="fld"><span>Contributors</span>
+            <input id="w-contrib" placeholder="You, plus collaborators…">
+          </label>
+          <label class="fld" style="grid-column:1/-1;"><span>AI disclosure</span>
+            <textarea id="w-ai" placeholder="Be transparent: what, if anything, did AI touch? e.g. “No generative AI. AI used only for proxy transcode.”"></textarea>
+          </label>
+        </div>
+        <div class="row spread">
+          <span class="faint tiny" id="w-note"></span>
+          <button id="register" class="btn btn-primary" disabled>Sign &amp; register</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Records -->
+    <div class="card">
+      <div class="card-h row spread">
+        <div><p class="eyebrow">Portfolio &amp; provenance</p>
+          <h2 style="margin-top:4px;">Your registered works</h2></div>
+        <span class="chip"><strong id="recCount">{{ records|length }}</strong>&nbsp;records</span>
+      </div>
+      <div class="card-b">
+        <div id="records" class="work-grid">
+          {% for r in records %}
+          {% set mime = r['mime'] or '' %}
+          <div class="work-card" data-hash="{{ r['content_hash'] }}">
+            <div class="work-cover" style="background:linear-gradient(135deg, #{{ r['content_hash'][0:6] }}, #{{ r['content_hash'][14:20] }});">
+              <span class="wtype">{% if mime.startswith('image/') %}🖼{% elif mime.startswith('video/') %}🎬{% elif mime.startswith('audio/') %}🎵{% elif mime == 'application/pdf' %}📄{% else %}◆{% endif %}</span>
+            </div>
+            <div class="work-body">
+              <span class="work-rid">{{ r['registry_id'] }}</span>
+              <div class="work-title">{{ r['title'] }}</div>
+              <div class="work-meta">{{ r['role'] }}{% if r['contributors'] %} · {{ r['contributors'] }}{% endif %}</div>
+              {% if r['ai_disclosure'] and not (r['ai_disclosure']|lower).startswith('no') and 'no generative' not in r['ai_disclosure']|lower %}
+                <span class="badge ai" style="align-self:flex-start;">AI disclosed</span>
+              {% else %}<span class="badge ok" style="align-self:flex-start;">No generative AI</span>{% endif %}
+              {% if r['ai_disclosure'] %}<div class="work-meta">{{ r['ai_disclosure'] }}</div>{% endif %}
+              <div class="work-meta mono">{{ r['created_at'] }}</div>
+              <div class="work-foot">
+                <span class="hash grow" title="{{ r['content_hash'] }}">{{ r['content_hash'][:14] }}…</span>
+                <button class="btn btn-quiet btn-sm" onclick="copyText('{{ r['content_hash'] }}','Hash')">Copy</button>
+                <a class="btn btn-quiet btn-sm" href="/verify?hash={{ r['content_hash'] }}">Verify ↗</a>
+              </div>
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+        {% if not records %}<p class="muted" id="emptyRecs">No works registered yet — register your first above.</p>{% endif %}
+      </div>
+    </div>
+  </div>
+
+  <!-- RIGHT: profile + skills + reputation ------------------------------- -->
+  <div class="stack">
+
+    <!-- Reputation snapshot -->
+    <div class="card pad">
+      <p class="eyebrow">Reputation</p>
+      <div class="row" style="gap:16px;margin-top:8px;align-items:baseline;">
+        <div class="stat" id="stat-reputation">{{ reputation if reputation is not none else '—' }}</div>
+        <div class="muted tiny" id="stat-reviewline">
+          {% if reputation is not none %}
+            <span class="stars">{{ '★' * (reputation|round(0,'floor')|int) }}</span><br>
+            from <span id="stat-reviewcount">{{ review_count }}</span> review{{ '' if review_count == 1 else 's' }}
+          {% else %}No reviews yet{% endif %}
+        </div>
+      </div>
+      <p class="muted tiny" style="margin-top:10px;">Computed from real review events — always explainable, never a guessed number.</p>
+    </div>
+
+    <!-- Profile + skills moved to /settings — this page is for registering work, -->
+    <!-- not for a form that sits open and editable every time you visit. -->
+    <div class="card pad">
+      <p class="eyebrow">Profile &amp; skills</p>
+      <p class="muted tiny" style="margin-top:6px;">Headline, bio, availability, and skills moved to Settings — a page you visit on purpose to change how you appear, not one you pass through constantly.</p>
+      <a href="/settings" class="btn btn-ghost btn-sm" style="margin-top:10px;">Go to Settings →</a>
+    </div>
+  </div>
+</div>
+
+<!-- Receipt modal -->
+<div id="receipt" class="hidden" style="position:fixed;inset:0;z-index:150;background:rgba(0,0,0,.45);display:grid;place-items:center;padding:20px;">
+  <div class="card" style="max-width:520px;width:100%;box-shadow:var(--shadow-lg);">
+    <div class="card-h row spread">
+      <span class="badge ok"><span class="dot"></span>Registered &amp; signed</span>
+      <button class="icon-btn" onclick="document.getElementById('receipt').classList.add('hidden')">✕</button>
+    </div>
+    <div class="card-b stack" id="receiptBody"></div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+/* ---- register a work ---- */
+const drop = document.getElementById("drop");
+const fileInput = document.getElementById("file");
+const registerBtn = document.getElementById("register");
+let currentFile = null, currentHash = null;
+
+drop.addEventListener("click", () => fileInput.click());
+["dragover","dragenter"].forEach(e => drop.addEventListener(e, ev => { ev.preventDefault(); drop.classList.add("hot"); }));
+["dragleave","drop"].forEach(e => drop.addEventListener(e, ev => { ev.preventDefault(); drop.classList.remove("hot"); }));
+drop.addEventListener("drop", ev => { if (ev.dataTransfer.files[0]) takeFile(ev.dataTransfer.files[0]); });
+fileInput.addEventListener("change", () => { if (fileInput.files[0]) takeFile(fileInput.files[0]); });
+
+async function takeFile(file) {
+  currentFile = file;
+  document.getElementById("dropTitle").textContent = file.name;
+  document.getElementById("dropSub").textContent = `${fmtBytes(file.size)} · ${file.type || "unknown type"} · hashing…`;
+  currentHash = await sha256File(file);
+  document.getElementById("hashval").textContent = currentHash;
+  document.getElementById("hashline").classList.remove("hidden");
+  document.getElementById("dropSub").textContent = `${fmtBytes(file.size)} · ${file.type || "unknown type"} · fingerprinted locally ✓`;
+  if (!val("w-title")) document.getElementById("w-title").value = file.name.replace(/\.[^.]+$/, "");
+  registerBtn.disabled = false;
+}
+
+registerBtn.addEventListener("click", async () => {
+  if (!currentHash) { toast("Choose a file first", "err"); return; }
+  const title = val("w-title");
+  if (!title) { toast("A title is required", "err"); return; }
+  registerBtn.disabled = true; registerBtn.textContent = "Signing…";
+  const body = {
+    content_hash: currentHash, title,
+    role: val("w-role"), contributors: val("w-contrib"), ai_disclosure: val("w-ai"),
+    filename: currentFile?.name || "", mime: currentFile?.type || "", bytes: currentFile?.size || 0,
+  };
+  const { ok, status, data } = await postJSON("/api/provenance", body);
+  registerBtn.textContent = "Sign & register";
+  if (!ok || !data.ok) {
+    toast(data.error || "Registration failed", "err");
+    registerBtn.disabled = false;
+    return;
+  }
+  showReceipt(data.record);
+  prependRecord(data.record, body);
+  resetForm();
+});
+
+function showReceipt(r) {
+  document.getElementById("receiptBody").innerHTML = `
+    <p class="rid">${r.registry_id}</p>
+    <h2 style="margin:.1em 0;">${escapeHtml(r.title)}</h2>
+    <p class="muted tiny">Registered ${r.created_at}</p>
+    <hr class="sep">
+    <div><span class="faint tiny">CONTENT HASH</span><p class="hash">${r.content_hash}</p></div>
+    <div><span class="faint tiny">REGISTRY SIGNATURE</span><p class="hash">${r.signature}</p></div>
+    <div class="row" style="gap:8px;margin-top:6px;">
+      <button class="btn btn-ghost btn-sm" onclick="copyText('${r.content_hash}','Hash')">Copy hash</button>
+      <a class="btn btn-primary btn-sm" href="/verify?hash=${r.content_hash}">Verify it ↗</a>
+    </div>`;
+  document.getElementById("receipt").classList.remove("hidden");
+  toast("Work registered & signed", "ok");
+}
+
+function prependRecord(r, body) {
+  const empty = document.getElementById("emptyRecs"); if (empty) empty.remove();
+  const aiBadge = /^no\b|no generative/i.test(body.ai_disclosure || "")
+    ? `<span class="badge ok" style="align-self:flex-start;">No generative AI</span>`
+    : (body.ai_disclosure ? `<span class="badge ai" style="align-self:flex-start;">AI disclosed</span>` : `<span class="badge ok" style="align-self:flex-start;">No generative AI</span>`);
+  const mime = body.mime || "";
+  const wtype = mime.startsWith("image/") ? "🖼" : mime.startsWith("video/") ? "🎬" : mime.startsWith("audio/") ? "🎵" : mime === "application/pdf" ? "📄" : "◆";
+  const h = r.content_hash;
+  const div = document.createElement("div");
+  div.className = "work-card"; div.dataset.hash = h;
+  div.innerHTML = `
+    <div class="work-cover" style="background:linear-gradient(135deg, #${h.slice(0,6)}, #${h.slice(14,20)});">
+      <span class="wtype">${wtype}</span>
+    </div>
+    <div class="work-body">
+      <span class="work-rid">${r.registry_id}</span>
+      <div class="work-title">${escapeHtml(r.title)}</div>
+      <div class="work-meta">${escapeHtml(body.role || "")}${body.contributors ? " · " + escapeHtml(body.contributors) : ""}</div>
+      ${aiBadge}
+      ${body.ai_disclosure ? `<div class="work-meta">${escapeHtml(body.ai_disclosure)}</div>` : ""}
+      <div class="work-meta mono">${r.created_at}</div>
+      <div class="work-foot">
+        <span class="hash grow" title="${h}">${h.slice(0,14)}…</span>
+        <button class="btn btn-quiet btn-sm" onclick="copyText('${h}','Hash')">Copy</button>
+        <a class="btn btn-quiet btn-sm" href="/verify?hash=${h}">Verify ↗</a>
+      </div>
+    </div>`;
+  const list = document.getElementById("records");
+  list.insertBefore(div, list.firstChild);
+  const c = document.getElementById("recCount"); c.textContent = String(Number(c.textContent) + 1);
+}
+
+function resetForm() {
+  currentFile = null; currentHash = null;
+  ["w-title","w-role","w-contrib","w-ai"].forEach(id => document.getElementById(id).value = "");
+  document.getElementById("hashline").classList.add("hidden");
+  document.getElementById("dropTitle").textContent = "Drop your file here";
+  document.getElementById("dropSub").textContent = "…or click to choose. Video, image, audio, PDF — anything.";
+  registerBtn.disabled = true;
+}
+
+/* ---- utils ---- */
+function val(id){ return document.getElementById(id).value.trim(); }
+function escapeHtml(s){ return String(s ?? "").replace(/[&<>"']/g, c => ({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;" }[c])); }
+document.getElementById("receipt").addEventListener("click", e => { if (e.target.id === "receipt") e.target.classList.add("hidden"); });
+
+/* ---- live stats: reputation/records feel alive as credits land from other
+   CreativeOS apps (FilmCrew, RightsForge, CreatorStack), not a static snapshot ---- */
+async function pollDashboardStats(){
+  try {
+    const r = await fetch('/api/dashboard/stats');
+    if (!r.ok) return;
+    const s = await r.json();
+    const repEl = document.getElementById('stat-reputation');
+    const repText = s.reputation != null ? String(s.reputation) : '—';
+    if (repEl && repEl.textContent !== repText) { repEl.textContent = repText; pulse(repEl); }
+    const recEl = document.getElementById('recCount');
+    if (recEl && recEl.textContent !== String(s.records)) { recEl.textContent = String(s.records); pulse(recEl); }
+  } catch (e) { /* offline — skip this tick */ }
+}
+function pulse(el){ el.classList.remove('pulse'); void el.offsetWidth; el.classList.add('pulse'); }
+setInterval(pollDashboardStats, 12000);
+</script>
+{% endblock %}

@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}Canonchain{% endblock %}</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <script>
+    (function(){ try{ var t=localStorage.getItem('ott-theme'); if(!t){ t=matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light'; } document.documentElement.setAttribute('data-theme',t); }catch(e){} })();
+  </script>
+</head>
+<body>
+  <header class="top">
+    <div class="brand"><b>Canonchain</b><span>Rights Registry</span></div>
+    <nav>
+      <a href="/" class="{{ 'active' if active=='register' }}">Register</a>
+      <a href="/verify" class="{{ 'active' if active=='verify' }}">Verify</a>
+    </nav>
+    <button class="theme-toggle" onclick="openPalette()" title="Quick actions (Ctrl/Cmd+K)" style="margin-right:8px">&#128269;</button>
+    <button class="theme-toggle" onclick="ottToggleTheme()" title="Toggle light / dark"><span id="theme-icon">&#9789;</span></button>
+  </header>
+
+  <div class="palette-scrim hidden" id="paletteScrim" onclick="closePalette()"></div>
+  <div class="palette hidden" id="palette" role="dialog" aria-label="Quick actions" aria-modal="true">
+    <div class="palette-input-row">
+      <span class="palette-icon" aria-hidden="true">&#128269;</span>
+      <input type="text" id="paletteInput" placeholder="Register a work, verify a hash…" autocomplete="off">
+      <span class="kbd">esc</span>
+    </div>
+    <div class="palette-results" id="paletteResults"></div>
+  </div>
+  <script>
+    function ottToggleTheme(){
+      var next = (document.documentElement.getAttribute('data-theme')==='dark') ? 'light' : 'dark';
+      document.documentElement.setAttribute('data-theme', next);
+      try{ localStorage.setItem('ott-theme', next); }catch(e){}
+      var icon = document.getElementById('theme-icon');
+      if(icon) icon.innerHTML = next==='dark' ? '&#9789;' : '&#9788;';
+    }
+    document.addEventListener('DOMContentLoaded', function(){
+      var icon = document.getElementById('theme-icon');
+      if(icon) icon.innerHTML = document.documentElement.getAttribute('data-theme')==='dark' ? '&#9789;' : '&#9788;';
+    });
+
+    /* ---- command palette: quick jumps, since Canonchain is deliberately a
+       two-page ceremony (register, verify), not a browsable directory ---- */
+    (function(){
+      var COMMANDS = [
+        { label: 'Register a new work', sub: 'Fingerprint a file and claim first registration', url: '/' },
+        { label: 'Verify a hash', sub: 'Check whether a SHA-256 is already in the registry', url: '/verify' },
+      ];
+      var selIdx = 0, filtered = COMMANDS;
+      function els(){ return { scrim: document.getElementById('paletteScrim'), panel: document.getElementById('palette'), input: document.getElementById('paletteInput'), list: document.getElementById('paletteResults') }; }
+      window.openPalette = function(){
+        var e = els(); if(!e.scrim) return;
+        e.scrim.classList.remove('hidden'); e.panel.classList.remove('hidden');
+        e.input.value = ''; filtered = COMMANDS; selIdx = 0; render(); e.input.focus();
+      };
+      window.closePalette = function(){
+        var e = els(); if(e.scrim) e.scrim.classList.add('hidden'); if(e.panel) e.panel.classList.add('hidden');
+      };
+      function render(){
+        var host = els().list; if(!host) return;
+        host.innerHTML = filtered.map(function(c, i){
+          return '<a class="palette-row' + (i===0?' sel':'') + '" href="' + c.url + '" data-i="' + i + '">' +
+            '<span class="palette-title">' + c.label + '</span><span class="palette-sub">' + c.sub + '</span></a>';
+        }).join('') || '<div class="palette-empty">No matching action.</div>';
+      }
+      function highlight(){ var host = els().list; if(!host) return; [].slice.call(host.querySelectorAll('.palette-row')).forEach(function(el,i){ el.classList.toggle('sel', i===selIdx); }); }
+      document.addEventListener('DOMContentLoaded', function(){
+        var input = els().input; if(!input) return;
+        input.addEventListener('input', function(){
+          var q = input.value.trim().toLowerCase();
+          filtered = COMMANDS.filter(function(c){ return c.label.toLowerCase().indexOf(q) > -1; });
+          selIdx = 0; render();
+        });
+        input.addEventListener('keydown', function(e){
+          if(e.key === 'ArrowDown'){ e.preventDefault(); selIdx = Math.min(selIdx+1, filtered.length-1); highlight(); }
+          else if(e.key === 'ArrowUp'){ e.preventDefault(); selIdx = Math.max(selIdx-1, 0); highlight(); }
+          else if(e.key === 'Enter'){ e.preventDefault(); var c = filtered[selIdx]; if(c) window.location.href = c.url; }
+          else if(e.key === 'Escape'){ closePalette(); }
+        });
+      });
+      document.addEventListener('keydown', function(e){
+        if((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k'){
+          e.preventDefault();
+          var p = els().panel;
+          if(p && !p.classList.contains('hidden')) closePalette(); else openPalette();
+        } else if(e.key === 'Escape'){
+          var p2 = els().panel; if(p2 && !p2.classList.contains('hidden')) closePalette();
+        }
+      });
+    })();
+  </script>
+  <div class="wrap">
+    {% block body %}{% endblock %}
+  </div>
+  <footer>Canonchain · Sovereign Stack · verified origin is the only scarce asset</footer>
+  {% block scripts %}{% endblock %}
+</body>
+</html>

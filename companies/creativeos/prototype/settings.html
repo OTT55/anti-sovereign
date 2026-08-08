@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>CreativeOS — Settings</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/creativeos.css">
+<script>(function(){ try{ var t=localStorage.getItem('ott-theme'); if(!t){ t=matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light'; } document.documentElement.setAttribute('data-theme',t); }catch(e){} })();</script>
+<style>
+  .toggle{width:38px; height:22px; border-radius:999px; background:var(--bg-3); border:1px solid var(--line); position:relative; cursor:pointer; flex:0 0 auto; transition:.16s}
+  .toggle::after{content:""; position:absolute; top:2px; left:2px; width:16px; height:16px; border-radius:50%; background:var(--text-mid); transition:.16s}
+  .toggle.on{background:var(--accent); border-color:var(--accent)}
+  .toggle.on::after{left:18px; background:#fff}
+  .setrow{display:flex; align-items:center; gap:14px; padding:14px 0; border-bottom:1px solid var(--line)}
+  .setrow:last-child{border-bottom:none}
+  .setrow .grow{flex:1}
+</style>
+</head>
+<body>
+<main class="pane" data-view="settings">
+  <div class="inner" style="--h:var(--home)">
+    <div class="prod" style="--h:var(--home)"><span class="pdot"></span>Settings</div>
+    <h1>One account, everywhere</h1>
+    <p class="sub">Your identity, wallet, notifications and permissions are shared across all six products. Change something once and every room in CreativeOS reflects it — that's the point of a single spine.</p>
+
+    <div class="split2" style="margin-top:24px">
+      <div>
+        <section class="card">
+          <div class="blkhead" style="margin-bottom:6px"><h2>Notifications</h2><span class="cap">Per-product, one centre</span></div>
+          <div class="setrow"><div class="grow"><div style="font-weight:600;font-size:14px">FilmCrew — offers &amp; contracts</div><div class="muted" style="font-size:12.5px">In-app + email</div></div><div class="toggle on" data-toast="Toggled (prototype)"></div></div>
+          <div class="setrow"><div class="grow"><div style="font-weight:600;font-size:14px">RightsForge — royalties &amp; inquiries</div><div class="muted" style="font-size:12.5px">In-app + email</div></div><div class="toggle on" data-toast="Toggled (prototype)"></div></div>
+          <div class="setrow"><div class="grow"><div style="font-weight:600;font-size:14px">CreatorStack — deadlines</div><div class="muted" style="font-size:12.5px">In-app + push</div></div><div class="toggle on" data-toast="Toggled (prototype)"></div></div>
+        </section>
+
+        <section class="card" style="margin-top:16px">
+          <div class="blkhead" style="margin-bottom:6px"><h2>Permissions &amp; roles</h2><span class="cap">RBAC + per-resource</span></div>
+          <div class="setrow"><div class="grow"><div style="font-weight:600;font-size:14px">Your role</div><div class="muted" style="font-size:12.5px">Creator — can list IP, apply to roles, sell assets, enter challenges</div></div><span class="pill hue" style="--h:var(--accent)">Creator</span></div>
+          <div class="setrow"><div class="grow"><div style="font-weight:600;font-size:14px">"Halcyon" workspace</div><div class="muted" style="font-size:12.5px">Shared with Aria (editor), Kojo (editor), Sena (viewer)</div></div><button class="btn sec sm" data-toast="Manage grants — resource_grants table">Manage</button></div>
+          <div class="setrow"><div class="grow"><div style="font-weight:600;font-size:14px">Public creator page</div><div class="muted" style="font-size:12.5px">/@ott — visible without login</div></div><div class="toggle on" data-toast="Toggled (prototype)"></div></div>
+        </section>
+      </div>
+
+      <div>
+        <section class="card">
+          <div class="cap" style="margin-bottom:12px">Account</div>
+          <div class="kv"><span class="k">Signed in as</span><span class="v">OTT · @ott</span></div>
+          <div class="kv"><span class="k">Email</span><span class="v" style="font-size:12.5px">ott@creativeos.app</span></div>
+          <div class="kv"><span class="k">Verification</span><span class="v" style="color:var(--ok)">✓ Verified</span></div>
+          <div class="kv"><span class="k">Auth</span><span class="v">Passkey + Google</span></div>
+          <button class="btn sec sm" style="margin-top:14px; width:100%; justify-content:center" data-toast="Account editor — prototype stub">Edit account</button>
+        </section>
+
+        <section class="card" style="margin-top:16px">
+          <div class="cap" style="margin-bottom:12px">Wallet &amp; payouts</div>
+          <div class="pmenu" style="width:auto"><div style="font-size:24px;font-weight:700;letter-spacing:-.02em">£3,412.00</div></div>
+          <div class="kv" style="margin-top:10px"><span class="k">FilmCrew</span><span class="v">£1,940</span></div>
+          <div class="kv"><span class="k">RightsForge</span><span class="v">£1,212</span></div>
+          <div class="kv"><span class="k">CreatorStack</span><span class="v">£260</span></div>
+          <button class="btn sec sm" style="margin-top:14px; width:100%; justify-content:center" data-toast="Payout — prohibited action in prototype; handled by user">Withdraw</button>
+        </section>
+
+        <section class="card" style="margin-top:16px">
+          <div class="cap" style="margin-bottom:10px">Design language</div>
+          <p class="muted" style="font-size:13px; margin:0">Every product you just navigated shares this one stylesheet and this one shell. That's not a coincidence — it's the architecture.</p>
+        </section>
+      </div>
+    </div>
+  </div>
+</main>
+<script src="assets/shell.js"></script>
+<script>
+  document.addEventListener('click',function(e){ var t=e.target.closest('.toggle'); if(t) t.classList.toggle('on'); });
+</script>
+</body>
+</html>

@@ -1,0 +1,665 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>CreativeOS</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg-0:#0B0A09;--bg-1:#131110;--bg-2:#1A1715;--bg-3:#241F1C;--line:#2E2926;--line-2:#403933;
+  --text-hi:#F6F1EA;--text-mid:#AEA49A;--text-lo:#7A6F65;
+  --accent:#E5482D;--accent-hi:#FF6242;--accent-dim:rgba(229,72,45,.15);
+  --framevault:#E5482D;--filmcrew:#F5892B;--rightsforge:#C0311C;--creatorstack:#F26B1D;--studio:#E8A020;--home:#AEA49A;--feed:#E5482D;--reels:#E5482D;--discover:#F5892B;--learn:#E9B949;
+  --ok:#E9B949;--warn:#F5892B;--err:#E5482D;
+  --font-sans:"IBM Plex Sans",-apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif;
+  --font-display:"Space Grotesk","IBM Plex Sans",sans-serif;
+  --font-mono:"IBM Plex Mono",ui-monospace,Menlo,Consolas,monospace;
+  --scroll:#2b2521;--scroll-h:#3a332d;--sel:rgba(229,72,45,.32);
+}
+body[data-theme="light"]{
+  --bg-0:#F1EBE2;--bg-1:#FBF7F1;--bg-2:#FFFFFF;--bg-3:#EFE8DD;--line:#E2D9CB;--line-2:#CFC3B2;
+  --text-hi:#1C1613;--text-mid:#5E554C;--text-lo:#938779;
+  --accent:#D0381F;--accent-hi:#E5482D;--accent-dim:rgba(208,56,31,.12);
+  --framevault:#C63A22;--filmcrew:#CE6C18;--rightsforge:#A82E1A;--creatorstack:#CF561A;--studio:#B47C12;--home:#5E554C;--feed:#C63A22;--reels:#C63A22;--discover:#CE6C18;--learn:#A67C15;
+  --ok:#8A7314;--warn:#CE6C18;--err:#C63A22;
+  --scroll:#d8cdbd;--scroll-h:#c3b6a2;--sel:rgba(208,56,31,.2);
+}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%}
+body{background:var(--bg-0);color:var(--text-hi);font-family:var(--font-sans);line-height:1.5;-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility;transition:background .25s ease,color .25s ease}
+#root{height:100%}
+h1,h2{font-family:var(--font-display);font-weight:600}
+a{color:var(--accent);text-decoration:none}
+a:hover{color:var(--accent-hi)}
+button{font-family:inherit}
+input,textarea{font-family:inherit}
+::selection{background:var(--sel)}
+::-webkit-scrollbar{width:10px;height:10px}
+::-webkit-scrollbar-thumb{background:var(--scroll);border-radius:8px;border:2px solid var(--bg-0)}
+::-webkit-scrollbar-thumb:hover{background:var(--scroll-h)}
+@keyframes rise{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+@keyframes fadein{from{opacity:0}to{opacity:1}}
+@keyframes pop{0%{transform:scale(1)}40%{transform:scale(1.4)}100%{transform:scale(1)}}
+@keyframes eq{0%,100%{transform:scaleY(.35)}50%{transform:scaleY(1)}}
+@keyframes drift{0%{background-position:0% 50%}100%{background-position:120% 50%}}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes shimmer{0%{transform:translateX(-120%)}100%{transform:translateX(220%)}}
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script>
+/* ============================================================
+   CreativeOS — full app (social + course + six products)
+   Implemented from the Claude Design import (CreativeOS.dc.html).
+   Dependency-free SPA: state -> renderVals() -> view() -> DOM.
+   ============================================================ */
+(function(){
+  var root=document.getElementById('root');
+
+  /* ---- per-render handler registry + helpers ---- */
+  var H=[];
+  function A(fn){ H.push(fn); return H.length-1; }
+  function hv(str){ return 'data-hover="'+encodeURIComponent(str)+'"'; }
+  function esc(v){ return String(v==null?'':v).replace(/&/g,'&amp;').replace(/"/g,'&quot;'); }
+
+  /* ---- state ---- */
+  var _t,_wl,_ty;
+  var state={
+    view:'home', reel:0, cmd:false, q:'', notif:false, pmenu:false, toast:'',
+    likes:{}, follows:{maya:true, kestrel:true}, saved:{},
+    commentsPost:null, draft:'', added:{}, dtab:'all', muted:true,
+    fvTab:'work', sfTab:'all', rhTab:'luts', msgThread:0, msgDraft:'', msgAdded:{},
+    unread:3, w:(typeof window!=='undefined'?window.innerWidth:1280),
+    theme:(typeof localStorage!=='undefined'&&localStorage.getItem('cos-theme'))||'dark'
+  };
+
+  function setState(patch){ var p=typeof patch==='function'?patch(state):patch; for(var k in p) state[k]=p[k]; render(); }
+
+  /* ---- actions ---- */
+  function toast(m){ setState({toast:m}); clearTimeout(_t); _t=setTimeout(function(){ setState({toast:''}); },2200); }
+  function nav(v){ setState({view:v, cmd:false, notif:false, pmenu:false}); }
+  function like(id){ setState(function(s){ var l=Object.assign({},s.likes); l[id]=!l[id]; return {likes:l}; }); }
+  function follow(h,name){ var on=!state.follows[h]; setState(function(s){ var f=Object.assign({},s.follows); f[h]=!f[h]; return {follows:f}; }); toast(on?('Following '+(name||h)):('Unfollowed '+(name||h))); }
+  function save(id){ setState(function(s){ var v=Object.assign({},s.saved); v[id]=!v[id]; return {saved:v}; }); toast(state.saved[id]?'Saved':'Removed from saved'); }
+  function openComments(id){ setState({commentsPost:id, notif:false, pmenu:false}); }
+  function closeComments(){ setState({commentsPost:null, draft:''}); }
+  function postComment(){ var d=state.draft.trim(); if(!d) return; var id=state.commentsPost; setState(function(s){ var a=Object.assign({},s.added); a[id]=(a[id]||[]).concat([{name:'OTT',initials:'O',time:'now',text:d,grad:'linear-gradient(135deg,var(--accent),#8a1e0e)'}]); return {added:a, draft:''}; }); }
+  function sendMsg(){ var d=state.msgDraft.trim(); if(!d) return; var th=state.msgThread; setState(function(s){ var a=Object.assign({},s.msgAdded); a[th]=(a[th]||[]).concat([{me:true,text:d}]); return {msgAdded:a, msgDraft:''}; }); }
+  function toggleTheme(){ setState(function(s){ var t=s.theme==='dark'?'light':'dark'; document.body.dataset.theme=t; try{localStorage.setItem('cos-theme',t);}catch(e){} return {theme:t}; }); }
+
+  /* ---- data ---- */
+  var PEOPLE={
+    maya:{name:'Maya Rún',handle:'maya',role:'Director',initials:'MR',verified:true,grad:'linear-gradient(135deg,#E5482D,#8a1e0e)'},
+    kestrel:{name:'Studio Kestrel',handle:'kestrel',role:'Production company',initials:'SK',verified:true,grad:'linear-gradient(135deg,#F5892B,#9a4a12)'},
+    ivo:{name:'Ivo Lindqvist',handle:'ivo',role:'Colorist',initials:'IL',verified:false,grad:'linear-gradient(135deg,#E9B949,#8a6414)'},
+    nadia:{name:'Nadia Okonkwo',handle:'nadia',role:'Cinematographer',initials:'NO',verified:true,grad:'linear-gradient(135deg,#F26B1D,#8a3410)'},
+    theo:{name:'Theo Marchetti',handle:'theo',role:'Composer',initials:'TM',verified:false,grad:'linear-gradient(135deg,#E5482D,#7a1c10)'},
+    priya:{name:'Priya Anand',handle:'priya',role:'VFX artist',initials:'PA',verified:true,grad:'linear-gradient(135deg,#E8A020,#8a5410)'}
+  };
+  var COVERS=[
+    'background:radial-gradient(120% 90% at 20% 10%,#4a1e10,#160a06),linear-gradient(135deg,#5a2410,#160a06)',
+    'background:radial-gradient(120% 90% at 80% 15%,#5a2e0a,#1a0e04),linear-gradient(135deg,#7a3e10,#1a0e04)',
+    'background:radial-gradient(120% 90% at 30% 20%,#5a3a1a,#1f1408),linear-gradient(135deg,#7a4e1e,#241708)',
+    'background:radial-gradient(120% 90% at 70% 10%,#4a1410,#1a0806),linear-gradient(135deg,#5c1a14,#1a0806)',
+    'background:radial-gradient(120% 90% at 25% 15%,#5a1810,#210a06),linear-gradient(135deg,#7a2414,#260d0a)',
+    'background:radial-gradient(120% 90% at 75% 20%,#5a3e14,#1a1206),linear-gradient(135deg,#7a5418,#1a1206)'
+  ];
+  function avatar(p,size,ring){ var s=size||36; return 'width:'+s+'px;height:'+s+'px;border-radius:50%;background:'+p.grad+';display:grid;place-items:center;font-size:'+(s*0.34)+'px;font-weight:700;color:#fff;flex:0 0 auto;cursor:pointer'+(ring?';box-shadow:0 0 0 2px var(--bg-2),0 0 0 4px '+ring:''); }
+  function chip(hue,label){ return {label:label, style:'font-size:10.5px;font-weight:700;letter-spacing:.03em;text-transform:uppercase;padding:2px 8px;border-radius:999px;color:'+hue+';background:color-mix(in srgb,'+hue+' 14%,transparent);border:1px solid color-mix(in srgb,'+hue+' 34%,transparent)'}; }
+
+  /* ---- computed props for the current state ---- */
+  function renderVals(){
+    var s=state, W=s.w;
+    var desktop=W>=980, tablet=W>=760&&W<980, mobile=W<760, compact=!desktop;
+    var P=PEOPLE, C=COVERS;
+    var likedOf=function(id){return !!s.likes[id];}, folOf=function(h){return !!s.follows[h];};
+
+    var appStyle = compact
+      ? 'display:flex;flex-direction:column;height:100vh;background:var(--bg-0)'
+      : "display:grid;grid-template-columns:216px 1fr;grid-template-rows:56px 1fr;grid-template-areas:'brand bar' 'rail pane';height:100vh;background:var(--bg-0)";
+    var barStyle = (compact?'':'grid-area:bar;')+'display:flex;align-items:center;gap:10px;padding:0 14px;height:56px;flex:0 0 auto;border-bottom:1px solid var(--line);background:var(--bg-1);z-index:20';
+    var paneStyle = (compact?'flex:1;':'grid-area:pane;')+'overflow-y:auto;position:relative';
+
+    var HUE={home:'var(--home)',reels:'var(--reels)',discover:'var(--discover)',framevault:'var(--framevault)',filmcrew:'var(--filmcrew)',rightsforge:'var(--rightsforge)',creatorstack:'var(--creatorstack)',studio:'var(--studio)',learn:'var(--learn)',settings:'var(--text-lo)',messages:'var(--accent)'};
+    var RAIL=[
+      {grp:'Social'},{v:'home',label:'Home'},{v:'reels',label:'Reels'},{v:'discover',label:'Discover'},
+      {grp:'Workspace'},{v:'framevault',label:'FrameVault'},
+      {grp:'Products'},{v:'filmcrew',label:'FilmCrew'},{v:'rightsforge',label:'RightsForge'},{v:'creatorstack',label:'CreatorStack'},{v:'studio',label:'OTT Studio'},{v:'learn',label:'Learn'},
+      {sp:true},{v:'settings',label:'Settings'}
+    ];
+    var navItems=RAIL.map(function(n){
+      if(n.grp) return {isGroup:true,isItem:false,label:n.grp,wrapStyle:'padding:10px 8px 3px',hoverStyle:'',dotStyle:'',onClick:function(){}};
+      if(n.sp) return {isGroup:false,isItem:false,label:'',wrapStyle:'flex:1',hoverStyle:'',dotStyle:'',onClick:function(){}};
+      var active=n.v===s.view, hue=HUE[n.v];
+      return {isGroup:false,isItem:true,label:n.label,onClick:function(){nav(n.v);},
+        wrapStyle:'display:flex;align-items:center;gap:11px;padding:9px 10px;border-radius:8px;cursor:pointer;font-size:14px;font-weight:500;position:relative;transition:.14s;'+(active?'background:var(--accent-dim);color:var(--text-hi);box-shadow:inset 3px 0 0 '+hue:'color:var(--text-mid)'),
+        hoverStyle:active?'':'background:var(--bg-2);color:var(--text-hi)',
+        dotStyle:'width:15px;height:15px;border-radius:5px;flex:0 0 auto;background:'+hue+';opacity:'+(active?'1':'.8')+(active?';box-shadow:0 0 12px '+hue:'')};
+    });
+
+    var mob=[{v:'home',icon:'⌂',label:'Home'},{v:'discover',icon:'⬚',label:'Discover'},{v:'reels',icon:'▶',label:'Reels'},{v:'messages',icon:'✉',label:'Inbox'},{v:'framevault',icon:'◍',label:'You'}];
+    var mobileNav=mob.map(function(m){ var on=m.v===s.view; return {icon:m.icon,label:m.label,onClick:function(){nav(m.v);},style:'display:flex;flex-direction:column;align-items:center;gap:2px;background:none;border:none;cursor:pointer;padding:6px 10px;color:'+(on?'var(--text-hi)':'var(--text-lo)')}; });
+
+    var storyOrder=['maya','kestrel','nadia','ivo','theo','priya'];
+    var stories=[{name:'Your story',initials:'O',grad:'linear-gradient(135deg,var(--accent),#8a1e0e)',own:true}].concat(storyOrder.map(function(h){return {name:P[h].name.split(' ')[0],initials:P[h].initials,grad:P[h].grad};})).map(function(st){ return {
+      name:st.name, initials:st.initials, onClick:(function(st){return function(){toast(st.own?'Add to your story':st.name+'’s story — reel + behind-the-scenes');};})(st),
+      ringStyle:'display:grid;place-items:center;width:60px;height:60px;border-radius:50%;'+(st.own?'background:var(--bg-3);border:2px dashed var(--line)':'background:conic-gradient(from 210deg,var(--accent),var(--creatorstack),var(--rightsforge),var(--accent));padding:2px'),
+      avStyle:'width:54px;height:54px;border-radius:50%;background:'+st.grad+';display:grid;place-items:center;font-size:17px;font-weight:700;color:#fff;border:2px solid var(--bg-0)'
+    }; });
+
+    var followBtn=function(on,light){ return light
+      ? 'background:'+(on?'rgba(255,255,255,.16)':'#fff')+';color:'+(on?'#fff':'#0a0a0a')+';border:1px solid '+(on?'rgba(255,255,255,.3)':'transparent')+';font-size:12px;font-weight:700;padding:5px 12px;border-radius:999px;cursor:pointer'
+      : 'background:'+(on?'transparent':'var(--accent)')+';color:'+(on?'var(--text-mid)':'#fff')+';border:1px solid '+(on?'var(--line)':'transparent')+';font-size:12.5px;font-weight:600;padding:6px 13px;border-radius:999px;cursor:pointer;flex:0 0 auto'; };
+
+    var FEED=[
+      {id:'f1',a:'nadia',chip:chip('var(--reels)','Reel'),time:'2h',text:'Golden-hour test for “Halcyon”, shot on the 40mm. No grade yet — this is straight off the sensor.',media:0,isReel:true,mediaLabel:'Halcyon · camera test',likes:214,comments:3},
+      {id:'f2',a:'kestrel',chip:chip('var(--filmcrew)','FilmCrew'),time:'4h',text:'We’re hiring a Director of Photography for “Halcyon” — 6-day shoot, £1,200. Applications through FilmCrew.',media:1,isReel:false,mediaLabel:'Now hiring · DP',likes:88,comments:12},
+      {id:'f3',a:'ivo',chip:chip('var(--rightsforge)','RightsForge'),time:'6h',text:'Dropped a new LUT pack — “Umber”. Warm, filmic, built for skin tones. Licensed 34× this week 🙏',media:2,isReel:false,mediaLabel:'Umber LUT pack',likes:451,comments:27},
+      {id:'f4',a:'maya',chip:chip('var(--rightsforge)','RightsForge'),time:'yesterday',text:'“The Archivist” pilot just got optioned. Wild to see something that started as a RightsForge listing become a real production.',media:4,isReel:false,mediaLabel:'The Archivist · optioned',likes:672,comments:41}
+    ];
+    var feed=FEED.map(function(f){ var p=P[f.a]; var liked=likedOf(f.id), on=folOf(f.a); var cN=f.comments+((s.added[f.id]||[]).length);
+      return {id:f.id, author:p, chip:f.chip.label, chipStyle:f.chip.style, time:f.time, text:f.text, hasMedia:f.media!=null, isReel:f.isReel, mediaLabel:f.mediaLabel,
+        avStyle:avatar(p,38), mediaStyle:'position:relative;'+C[f.media]+';aspect-ratio:16/10;cursor:pointer;display:block',
+        likeN:f.likes+(liked?1:0), commentsN:cN,
+        onLike:function(){like(f.id);}, onComment:function(){openComments(f.id);}, onShare:function(){toast('Share sheet — copy link, send to a thread, or cross-post');}, onSave:function(){save(f.id);},
+        onAuthor:function(){nav('framevault');}, onOpen:function(){nav(f.isReel?'reels':'discover');}, onFollow:function(){follow(f.a,p.name);},
+        followLabel:on?'Following':'Follow', followStyle:followBtn(on,false),
+        likeBtnStyle:'display:flex;align-items:center;gap:7px;background:none;border:none;font-size:13px;font-weight:600;padding:7px 10px;border-radius:8px;cursor:pointer;color:'+(liked?'var(--creatorstack)':'var(--text-mid)'),
+        heartStyle:'font-size:16px;display:inline-block;'+(liked?'animation:pop .3s ease':''),
+        saved:!!s.saved[f.id], saveBtnStyle:'margin-left:auto;background:none;border:none;color:'+(s.saved[f.id]?'var(--rightsforge)':'var(--text-mid)')+';font-size:13px;font-weight:600;padding:7px 10px;border-radius:8px;cursor:pointer', saveLabel:s.saved[f.id]?'★ Saved':'☆ Save'};
+    });
+
+    var suggested=['nadia','theo','priya'].map(function(h){ var p=P[h], on=folOf(h);
+      return {name:p.name, role:p.role, initials:p.initials, avStyle:avatar(p,38), onOpen:function(){nav('framevault');}, onFollow:function(){follow(h,p.name);}, followLabel:on?'Following':'Follow', followStyle:followBtn(on,false)}; });
+
+    var REELS=[
+      {id:'r1',a:'nadia',caption:'Camera test for “Halcyon”. 40mm, golden hour, no grade. Swipe for the pullback.',music:'Cinematic ambient — Theo Marchetti',tags:[['var(--filmcrew)','DP role open'],['var(--rightsforge)','Umber LUT']],likes:2140,comments:64,shares:88,cover:0},
+      {id:'r2',a:'ivo',caption:'Before / after with the Umber LUT. One node, no keys. This is the whole look.',music:'Original sound — Ivo Lindqvist',tags:[['var(--rightsforge)','License £39']],likes:5310,comments:212,shares:340,cover:2},
+      {id:'r3',a:'priya',caption:'Roughed in the environment for “Cold Open”. Everything you see past the window is a matte.',music:'Drone pad — royalty-free',tags:[['var(--creatorstack)','Neon Dusk entry'],['var(--rightsforge)','Cold Open']],likes:1890,comments:96,shares:120,cover:5},
+      {id:'r4',a:'maya',caption:'One-take blocking rehearsal. We stage the whole scene before a single frame is shot.',music:'On-set audio',tags:[['var(--filmcrew)','Halcyon']],likes:3402,comments:141,shares:210,cover:1},
+      {id:'r5',a:'theo',caption:'Scoring “The Archivist” main title. Building it up one layer at a time.',music:'Theo Marchetti — WIP',tags:[['var(--rightsforge)','The Archivist']],likes:1220,comments:58,shares:44,cover:4}
+    ];
+    var reels=REELS.map(function(r,i){ var p=P[r.a]; var liked=likedOf(r.id), on=folOf(r.a); var cN=r.comments+((s.added[r.id]||[]).length);
+      return {id:r.id, active:i===s.reel, author:p, caption:r.caption, music:r.music, shares:r.shares, commentsN:cN,
+        cover:C[r.cover], progress:(((i+1)/REELS.length)*100).toFixed(0)+'%',
+        avStyle:avatar(p,32)+';border:2px solid #fff',
+        likeN:(r.likes+(liked?1:0)>=1000?((r.likes+(liked?1:0))/1000).toFixed(1)+'k':(r.likes+(liked?1:0))),
+        heartStyle:'font-size:30px;display:inline-block;color:'+(liked?'var(--creatorstack)':'#fff')+';'+(liked?'animation:pop .3s ease':''),
+        onLike:function(){like(r.id);}, onComment:function(){openComments(r.id);}, onShare:function(){toast('Reel shared');}, onAuthor:function(){nav('framevault');}, onFollow:function(){follow(r.a,p.name);}, onGo:(function(i){return function(){setState({reel:i});};})(i),
+        followLabel:on?'Following':'Follow', followStyleLight:followBtn(on,true),
+        dotStyle:'width:'+(i===s.reel?'8':'6')+'px;height:'+(i===s.reel?'22':'6')+'px;border-radius:999px;background:'+(i===s.reel?'#fff':'var(--line-2)')+';cursor:pointer;transition:.2s',
+        tags:r.tags.map(function(t){ return {label:t[1],onClick:(function(t){return function(){toast(t[1]+' — tap opens the linked room');};})(t),style:'font-size:11px;font-weight:600;padding:4px 10px;border-radius:999px;color:#fff;white-space:nowrap;background:color-mix(in srgb,'+t[0]+' 42%,rgba(0,0,0,.4));border:1px solid '+t[0]+';backdrop-filter:blur(6px);cursor:pointer'}; })
+      };
+    });
+    var reel=reels[s.reel]||reels[0];
+    var reelsStageStyle='position:relative;height:100%;display:grid;place-items:center;background:radial-gradient(120% 80% at 50% 0%,#14101f,var(--bg-0))'+(mobile?';padding-bottom:58px':(compact?';padding:24px 24px 82px':';padding:24px'));
+    var phoneStyle=mobile
+      ? 'position:relative;width:100%;height:100%;overflow:hidden'
+      : 'position:relative;width:400px;max-width:92vw;aspect-ratio:9/16;max-height:calc(100vh - 120px);border-radius:30px;overflow:hidden;border:1px solid var(--line);box-shadow:0 30px 80px rgba(0,0,0,.6)';
+
+    var DTABS=[['all','All'],['reels','Reels'],['work','Work'],['creators','Creators']];
+    var discoverTabs=DTABS.map(function(t){ var on=s.dtab===t[0]; return {label:t[1],onClick:(function(t){return function(){setState({dtab:t[0]});};})(t),style:'padding:8px 15px;border-radius:999px;font-size:13px;font-weight:600;cursor:pointer;border:1px solid '+(on?'var(--accent)':'var(--line)')+';background:'+(on?'var(--accent-dim)':'var(--bg-2)')+';color:'+(on?'var(--text-hi)':'var(--text-mid)')}; });
+    var DISC=[
+      {t:'Halcyon — camera test',by:'Nadia Okonkwo',a:'nadia',tag:'Reel',hue:'var(--reels)',reel:true,cover:0,likes:'2.1k',span:2,kind:'reels'},
+      {t:'Umber LUT — before/after',by:'Ivo Lindqvist',a:'ivo',tag:'RightsForge',hue:'var(--rightsforge)',reel:true,cover:2,likes:'5.3k',span:1,kind:'reels'},
+      {t:'The Archivist — key art',by:'Maya Rún',a:'maya',tag:'RightsForge',hue:'var(--rightsforge)',reel:false,cover:4,likes:'672',span:1,kind:'work'},
+      {t:'Cold Open — matte',by:'Priya Anand',a:'priya',tag:'VFX',hue:'var(--studio)',reel:false,cover:5,likes:'1.2k',span:1,kind:'work'},
+      {t:'Blocking rehearsal',by:'Maya Rún',a:'maya',tag:'Reel',hue:'var(--reels)',reel:true,cover:1,likes:'3.4k',span:1,kind:'reels'},
+      {t:'Main title score',by:'Theo Marchetti',a:'theo',tag:'Audio',hue:'var(--rightsforge)',reel:true,cover:3,likes:'1.2k',span:2,kind:'reels'},
+      {t:'Nightshift — stills',by:'Nadia Okonkwo',a:'nadia',tag:'Work',hue:'var(--framevault)',reel:false,cover:1,likes:'340',span:1,kind:'work'},
+      {t:'Studio Kestrel',by:'Production company',a:'kestrel',tag:'Creator',hue:'var(--filmcrew)',reel:false,cover:3,likes:'12 projects',span:1,kind:'creators'},
+      {t:'Priya Anand',by:'VFX artist',a:'priya',tag:'Creator',hue:'var(--studio)',reel:false,cover:5,likes:'follow',span:1,kind:'creators'}
+    ];
+    var discoverItems=DISC.filter(function(d){return s.dtab==='all'||d.kind===s.dtab;}).map(function(d){ return {
+      title:d.t, by:d.by, isReel:d.reel, likes:d.likes, cover:C[d.cover],
+      onOpen:(function(d){return function(){nav(d.reel?'reels':'framevault');};})(d),
+      tag:d.tag, tagStyle:'position:absolute;top:10px;left:10px;font-size:10px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;padding:3px 8px;border-radius:6px;background:rgba(8,9,11,.66);backdrop-filter:blur(6px);color:'+d.hue+';border:1px solid color-mix(in srgb,'+d.hue+' 34%,var(--line))',
+      tileStyle:'position:relative;border-radius:14px;overflow:hidden;cursor:pointer;border:1px solid var(--line);'+(desktop&&d.span===2?'grid-row:span 2;aspect-ratio:auto;min-height:340px':'aspect-ratio:4/5')+';transition:.16s'
+    }; });
+    var cols=desktop?4:(tablet?3:2);
+    var discoverGridStyle='display:grid;gap:14px;grid-template-columns:repeat('+cols+',1fr);grid-auto-flow:dense;align-items:start';
+
+    var INDEX=[
+      {t:'Maya Rún',s:'@maya · Director',type:'person',ty:'◍',prod:'FrameVault',h:'var(--framevault)',v:'framevault'},
+      {t:'Nadia Okonkwo',s:'@nadia · Cinematographer',type:'person',ty:'◍',prod:'FrameVault',h:'var(--framevault)',v:'framevault'},
+      {t:'Studio Kestrel',s:'Production company',type:'person',ty:'◍',prod:'FrameVault',h:'var(--framevault)',v:'framevault'},
+      {t:'“Halcyon”',s:'DP role open · £1,200',type:'project',ty:'🎬',prod:'FilmCrew',h:'var(--filmcrew)',v:'filmcrew'},
+      {t:'“The Archivist”',s:'Pilot · optioned',type:'IP',ty:'📜',prod:'RightsForge',h:'var(--rightsforge)',v:'rightsforge'},
+      {t:'“Umber” LUT pack',s:'Licensed 34× · royalties',type:'asset',ty:'🎨',prod:'RightsForge',h:'var(--rightsforge)',v:'rightsforge'},
+      {t:'“Neon Dusk”',s:'Brand challenge · closes 2d',type:'challenge',ty:'🏆',prod:'CreatorStack',h:'var(--creatorstack)',v:'creatorstack'},
+      {t:'Cinematography fundamentals',s:'Course · Nadia Okonkwo',type:'course',ty:'🎓',prod:'Learn',h:'var(--learn)',v:'learn'},
+      {t:'“Halcyon” cut',s:'Workspace project',type:'project',ty:'🎞️',prod:'OTT Studio',h:'var(--studio)',v:'studio'}
+    ];
+    var q=s.q.trim().toLowerCase();
+    var filtered=q?INDEX.filter(function(i){return (i.t+' '+i.s+' '+i.prod+' '+i.type).toLowerCase().indexOf(q)>-1;}):INDEX;
+    var groupsMap={}; filtered.forEach(function(i){(groupsMap[i.prod]=groupsMap[i.prod]||[]).push(i);});
+    var cmdGroups=Object.keys(groupsMap).map(function(prod){ return {prod:prod, items:groupsMap[prod].map(function(i){ return {t:i.t,s:i.s,type:i.type,ty:i.ty,h:i.h,onClick:(function(i){return function(){nav(i.v);};})(i),tyStyle:'width:26px;height:26px;border-radius:7px;display:grid;place-items:center;font-size:12px;flex:0 0 auto;background:color-mix(in srgb,'+i.h+' 18%,var(--bg-3));color:'+i.h}; })}; });
+
+    var NOTIF=[
+      {prod:'FilmCrew',h:'var(--filmcrew)',txt:'New offer for <b>“Halcyon”</b>',t:'18 minutes ago',unread:true,v:'filmcrew'},
+      {prod:'RightsForge',h:'var(--rightsforge)',txt:'<b>“Umber”</b> licensed again · +£28',t:'1 hour ago',unread:true,v:'rightsforge'},
+      {prod:'CreatorStack',h:'var(--creatorstack)',txt:'<b>“Neon Dusk”</b> closes in 2 days',t:'3 hours ago',unread:true,v:'creatorstack'},
+      {prod:'RightsForge',h:'var(--rightsforge)',txt:'Producer bookmarked <b>“The Archivist”</b>',t:'5 hours ago',unread:false,v:'rightsforge'}
+    ];
+    var notifs=NOTIF.map(function(n){ return {prod:n.prod,h:n.h,txt:n.txt,t:n.t,onClick:(function(n){return function(){nav(n.v);};})(n),
+      rowStyle:'display:flex;gap:11px;padding:12px 15px;border-bottom:1px solid var(--line);cursor:pointer;'+(n.unread&&s.unread>0?'background:var(--accent-dim)':''),
+      dotStyle:'width:8px;height:8px;border-radius:50%;margin-top:6px;flex:0 0 auto;background:'+((n.unread&&s.unread>0)?n.h+';box-shadow:0 0 8px '+n.h:'var(--text-lo)')}; });
+
+    var pmenuItems=[
+      {label:'◍  Your public page',onClick:function(){nav('framevault');}},
+      {label:'💳  Wallet & payouts',onClick:function(){toast('Wallet — one balance, four income streams');}},
+      {label:'🎓  Your courses',onClick:function(){nav('learn');}},
+      {label:'🔒  Permissions',onClick:function(){nav('settings');}},
+      {label:'⚙  Account settings',onClick:function(){nav('settings');}}
+    ];
+
+    var CBASE={
+      f1:[{a:'maya',time:'1h',text:'That 40mm is doing all the work. Gorgeous.'},{a:'ivo',time:'54m',text:'Send me the raw — I want to test Umber on this.'},{a:'kestrel',time:'12m',text:'This is exactly the tone we pitched.'}],
+      f3:[{a:'nadia',time:'3h',text:'Bought it the second it dropped.'},{a:'theo',time:'2h',text:'Pairs perfectly with the ambient pack 🎧'}],
+      r1:[{a:'ivo',time:'1h',text:'Grade this with Umber and it’s a wrap.'},{a:'priya',time:'40m',text:'The pullback reveal is so clean.'}],
+      r2:[{a:'maya',time:'2h',text:'One node?! Licensing this now.'}]
+    };
+    var cid=s.commentsPost;
+    var baseC=(CBASE[cid]||[{a:'maya',time:'2h',text:'Love this.'}]);
+    var comments=baseC.map(function(c){ var p=P[c.a]; return {name:p.name,initials:p.initials,time:c.time,text:c.text,avStyle:avatar(p,32)}; })
+      .concat((s.added[cid]||[]).map(function(c){ return {name:c.name,initials:c.initials,time:c.time,text:c.text,avStyle:'width:32px;height:32px;border-radius:50%;background:'+c.grad+';display:grid;place-items:center;font-size:11px;font-weight:700;color:#fff;flex:0 0 auto'}; }));
+    var commentsSheetStyle=(mobile
+      ? 'position:fixed;left:0;right:0;bottom:0;height:78vh;border-radius:18px 18px 0 0;'
+      : 'position:fixed;right:0;top:0;bottom:0;width:min(440px,94vw);')+'background:var(--bg-1);border:1px solid var(--line);z-index:53;display:flex;flex-direction:column;animation:rise .2s ease';
+
+    var fvTabDefs=[['work','Work'],['reels','Reels'],['provenance','Provenance'],['reviews','Reviews']];
+    var fvTabs=fvTabDefs.map(function(t){ var on=s.fvTab===t[0]; return {label:t[1],onClick:(function(t){return function(){setState({fvTab:t[0]});};})(t),style:'padding:9px 4px;border:none;background:none;cursor:pointer;font-size:14px;font-weight:600;color:'+(on?'var(--text-hi)':'var(--text-lo)')+';border-bottom:2px solid '+(on?'var(--framevault)':'transparent')+';margin-bottom:-1px'}; });
+    var fvWorkData=[['Halcyon','Director of Photography','2025',0],['Nightshift','DP · short film','2024',1],['The Archivist','Concept / key art','2024',4],['Umber tests','Color pipeline','2024',2],['Cold Open','2nd unit DP','2023',5],['Low Tide','DP · music video','2023',3]];
+    var fvWork=fvWorkData.map(function(w){ return {title:w[0],role:w[1],year:w[2],cover:C[w[3]],onOpen:(function(w){return function(){toast(w[0]+' — provenance-tagged, opens the case study');};})(w)}; });
+    var fvReels=REELS.map(function(r,i){ return {cover:C[r.cover],views:(r.likes>=1000?(r.likes/1000).toFixed(1)+'k':r.likes),onOpen:(function(i){return function(){setState({view:'reels',reel:i});};})(i)}; });
+    var fvProv=[
+      {title:'Published “Halcyon” camera test',meta:'2 days ago · via OTT Studio',hash:'0x9f2c…a41e',foot:'3 contributors · AI: proxy transcode disclosed'},
+      {title:'Licensed “Umber” LUT pack',meta:'1 week ago · via RightsForge',hash:'0x71bd…c02f',foot:'Royalty split recorded · no AI generation'},
+      {title:'Optioned “The Archivist”',meta:'3 weeks ago · via RightsForge',hash:'0x4a08…9db2',foot:'Signed option agreement · authorship verified'},
+      {title:'Won “Aurora” brand challenge',meta:'2 months ago · via CreatorStack',hash:'0x22ef…5c7a',foot:'Funded into production · credited'}
+    ];
+    var fvReviews=[
+      {a:'kestrel',stars:'★★★★★',text:'One of the most prepared DPs we’ve worked with. Every setup was blocked before we rolled.',ctx:'Hired for “Halcyon” · via FilmCrew'},
+      {a:'maya',stars:'★★★★★',text:'Understood the tone from the first conversation. The Umber grade was exactly right.',ctx:'Collaborated on “The Archivist” · via RightsForge'},
+      {a:'theo',stars:'★★★★☆',text:'Great eye and generous with feedback. Would absolutely work together again.',ctx:'“Cold Open” · via CreatorStack'}
+    ].map(function(r){ var p=P[r.a]; return {name:p.name,role:p.role,initials:p.initials,avStyle:avatar(p,28),stars:r.stars,text:r.text,ctx:r.ctx}; });
+    var fvSkills=[['Cinematography','Expert'],['Lighting','Expert'],['Color / grading','Advanced'],['Camera operation','Advanced'],['Steadicam','Intermediate'],['Drone / FPV','Intermediate']];
+    var fvGridCols=desktop?3:(tablet?3:2);
+
+    var filmApplicants=[
+      {a:'nadia',match:96,note:'Shot 3 features on the same camera package. Available for the full 6-day window.'},
+      {a:'ivo',match:88,note:'Colorist who also operates. Strong for a small crew that doubles up roles.'},
+      {a:'priya',match:79,note:'Primarily VFX but has 2nd-unit DP credits. Flexible on rate.'}
+    ].map(function(x){ var p=P[x.a]; return {name:p.name,role:p.role,initials:p.initials,avStyle:avatar(p,40),match:x.match,note:x.note,
+      onHire:(function(p){return function(){toast('Hired '+p.name+' — hire.completed → credited to their FrameVault + wallet escrow opened');};})(p),
+      onView:function(){nav('framevault');}}; });
+
+    var COURSES=[
+      {id:'c1',t:'Cinematography Fundamentals',a:'nadia',lessons:14,dur:'4h 20m',level:'Beginner',hue:'var(--framevault)',cover:0,progress:35,enrolled:true},
+      {id:'c2',t:'Color Grading with Umber',a:'ivo',lessons:9,dur:'2h 45m',level:'Intermediate',hue:'var(--rightsforge)',cover:2,progress:0,enrolled:false},
+      {id:'c3',t:'Scoring for Film',a:'theo',lessons:11,dur:'3h 10m',level:'All levels',hue:'var(--rightsforge)',cover:4,progress:0,enrolled:false},
+      {id:'c4',t:'VFX Matte Painting',a:'priya',lessons:16,dur:'5h 05m',level:'Advanced',hue:'var(--studio)',cover:5,progress:0,enrolled:false},
+      {id:'c5',t:'Directing Actors',a:'maya',lessons:8,dur:'2h 30m',level:'Intermediate',hue:'var(--creatorstack)',cover:1,progress:0,enrolled:false},
+      {id:'c6',t:'Producing a Short',a:'kestrel',lessons:12,dur:'3h 40m',level:'Beginner',hue:'var(--filmcrew)',cover:3,progress:0,enrolled:false}
+    ];
+    var courses=COURSES.map(function(c){ var p=P[c.a]; return {title:c.t,by:p.name,initials:p.initials,avStyle:avatar(p,26),lessons:c.lessons,dur:c.dur,level:c.level,cover:C[c.cover],progress:c.progress,enrolled:c.enrolled,
+      levelStyle:'font-size:10.5px;font-weight:700;letter-spacing:.03em;text-transform:uppercase;padding:2px 8px;border-radius:6px;background:rgba(8,9,11,.66);backdrop-filter:blur(6px);color:'+c.hue+';border:1px solid color-mix(in srgb,'+c.hue+' 34%,var(--line));position:absolute;top:10px;left:10px',
+      barStyle:'display:block;height:100%;width:'+c.progress+'%;background:var(--learn);border-radius:999px',
+      hasProgress:c.progress>0,
+      btnStyle:'width:100%;height:36px;border-radius:8px;border:'+(c.enrolled?'1px solid var(--line)':'none')+';background:'+(c.enrolled?'var(--bg-3)':'var(--learn)')+';color:'+(c.enrolled?'var(--text-hi)':'#04120d')+';font-weight:600;font-size:13px;cursor:pointer',
+      btnLabel:c.progress>0?'Continue · '+c.progress+'%':(c.enrolled?'Start course':'Enroll'),
+      onGo:(function(c,p){return function(){toast(c.enrolled?('Resuming “'+c.t+'” — lesson '+(Math.round(c.lessons*c.progress/100)+1)+' of '+c.lessons):('Enrolled in “'+c.t+'” by '+p.name));};})(c,p)}; });
+    var learnCols=desktop?3:(mobile?1:2);
+
+    var sfTabDefs=[['all','All'],['scripts','Scripts'],['pilots','Pilots'],['novels','Novels'],['comics','Comics']];
+    var sfTabs=sfTabDefs.map(function(t){ var on=s.sfTab===t[0]; return {label:t[1],onClick:(function(t){return function(){setState({sfTab:t[0]});};})(t),style:'padding:8px 14px;border-radius:999px;font-size:13px;font-weight:600;cursor:pointer;border:1px solid '+(on?'var(--rightsforge)':'var(--line)')+';background:'+(on?'color-mix(in srgb,var(--rightsforge) 14%,transparent)':'var(--bg-2)')+';color:'+(on?'var(--text-hi)':'var(--text-mid)')}; });
+    var SF=[
+      {id:'i1',t:'The Archivist',fmt:'pilots',type:'TV Pilot · Sci-fi',log:'A memory archivist discovers the recordings she preserves are being quietly rewritten — and one of them is her own.',by:'maya',status:'Optioned',statusHue:'var(--ok)',views:'2.4k',bookmarks:41,cover:4},
+      {id:'i2',t:'Cold Open',fmt:'scripts',type:'Feature · Thriller',log:'A live morning show is hijacked on air; the anchor has ninety minutes and a director in her ear to end it.',by:'priya',status:'Available',statusHue:'var(--rightsforge)',views:'1.1k',bookmarks:18,cover:5},
+      {id:'i3',t:'Low Tide',fmt:'novels',type:'Novel · Literary',log:'Three siblings return to a drowned village for one summer as the reservoir is drained for the last time.',by:'ivo',status:'Available',statusHue:'var(--rightsforge)',views:'880',bookmarks:12,cover:2},
+      {id:'i4',t:'Halcyon',fmt:'comics',type:'Graphic Novel · Space',log:'The last generation ship’s AI wakes its crew a century early. It will not say why.',by:'nadia',status:'In talks',statusHue:'var(--warn)',views:'1.9k',bookmarks:27,cover:0}
+    ];
+    var sfList=SF.filter(function(x){return s.sfTab==='all'||x.fmt===s.sfTab;}).map(function(x){ var p=P[x.by]; return {title:x.t,type:x.type,log:x.log,by:p.name,initials:p.initials,avStyle:avatar(p,24),status:x.status,views:x.views,bookmarks:x.bookmarks,cover:C[x.cover],
+      statusStyle:'position:absolute;top:10px;right:10px;font-size:11px;font-weight:700;padding:3px 9px;border-radius:999px;background:rgba(8,9,11,.66);backdrop-filter:blur(6px);color:'+x.statusHue+';border:1px solid color-mix(in srgb,'+x.statusHue+' 34%,var(--line))',
+      onOption:(function(x){return function(){toast('Option “'+x.t+'” — opens a deal room · emits ip.optioned to the seller’s FrameVault');};})(x),
+      onRead:(function(x){return function(){toast('Protected reading room — watermarked, view-only preview of “'+x.t+'”');};})(x)}; });
+
+    var rhTabDefs=[['luts','LUTs'],['music','Music'],['sfx','SFX'],['vfx','VFX'],['templates','Templates']];
+    var rhTabs=rhTabDefs.map(function(t){ var on=s.rhTab===t[0]; return {label:t[1],onClick:(function(t){return function(){setState({rhTab:t[0]});};})(t),style:'padding:8px 14px;border-radius:999px;font-size:13px;font-weight:600;cursor:pointer;border:1px solid '+(on?'var(--rightsforge)':'var(--line)')+';background:'+(on?'color-mix(in srgb,var(--rightsforge) 14%,transparent)':'var(--bg-2)')+';color:'+(on?'var(--text-hi)':'var(--text-mid)')}; });
+    var waveSeed=[5,8,4,9,6,10,5,7,3,8,6,9,4,7,5,10,6,4,8,5,7,9,5,6,8,4,7,5,9,6];
+    var RH=[
+      {id:'a1',t:'Umber',cat:'luts',sub:'LUT pack · 24 looks',by:'ivo',price:'£39',licenses:34,audio:false,cover:2},
+      {id:'a2',t:'Cinematic Ambient',cat:'music',sub:'Music · royalty-free',by:'theo',price:'£29',licenses:52,audio:true,cover:4},
+      {id:'a3',t:'Halcyon Impacts',cat:'sfx',sub:'SFX · 60 hits',by:'theo',price:'£19',licenses:21,audio:true,cover:1},
+      {id:'a4',t:'Nebula Mattes',cat:'vfx',sub:'VFX · 12 plates',by:'priya',price:'£49',licenses:9,audio:false,cover:5},
+      {id:'a5',t:'Title Kit',cat:'templates',sub:'Templates · 30 cards',by:'kestrel',price:'£24',licenses:16,audio:false,cover:3},
+      {id:'a6',t:'Low Tide Score',cat:'music',sub:'Music · stems',by:'theo',price:'£45',licenses:11,audio:true,cover:2}
+    ];
+    var rhList=RH.filter(function(x){return x.cat===s.rhTab;}).map(function(x){ var p=P[x.by]; return {title:x.t,sub:x.sub,by:p.name,initials:p.initials,avStyle:avatar(p,22),price:x.price,licenses:x.licenses,audio:x.audio,cover:C[x.cover],
+      bars:waveSeed.map(function(h){ return {style:'flex:1;background:var(--rightsforge);opacity:.5;border-radius:2px;min-width:2px;height:'+(h*10)+'%'}; }),
+      onLicense:(function(x){return function(){toast('Licensed “'+x.t+'” '+x.price+' — asset.licensed splits royalties automatically + logs provenance');};})(x),
+      onPreview:(function(x){return function(){toast(x.audio?'Playing preview — waveform scrub':'Live preview on a sample frame');};})(x)}; });
+
+    var CHALL=[
+      {t:'Aurora — launch film',by:'Nova Cosmetics',prize:'£8,000',entries:64,daysLeft:9,hue:'var(--creatorstack)',cover:5},
+      {t:'Field Notes — docu-short',by:'Patagonia-style brand',prize:'£4,500',entries:38,daysLeft:14,hue:'var(--rightsforge)',cover:3},
+      {t:'Loop — 15s product reel',by:'Acme Audio',prize:'£2,000',entries:112,daysLeft:5,hue:'var(--filmcrew)',cover:1}
+    ].map(function(c){ return {title:c.t,by:c.by,prize:c.prize,entries:c.entries,daysLeft:c.daysLeft,cover:C[c.cover],
+      onOpen:(function(c){return function(){toast('Open “'+c.t+'” brief — structured submission + transparent judging');};})(c)}; });
+    var leaders=[['nadia',94],['priya',89],['maya',86],['ivo',81]].map(function(l,i){ var p=P[l[0]]; return {rank:i+1,name:p.name,role:p.role,initials:p.initials,avStyle:avatar(p,30),score:l[1]}; });
+
+    var boardCols=[
+      {name:'To do',hue:'var(--text-lo)',tasks:[{t:'Lock picture — reel 3',m:'Editing · due Fri'},{t:'Sound spot',m:'Theo Marchetti'}]},
+      {name:'In progress',hue:'var(--filmcrew)',tasks:[{t:'Color pass — Umber',m:'Ivo · 60%'},{t:'VFX matte — window',m:'Priya'}]},
+      {name:'Review',hue:'var(--rightsforge)',tasks:[{t:'Title sequence v2',m:'Client review link'}]},
+      {name:'Done',hue:'var(--ok)',tasks:[{t:'Proxy transcodes',m:'AI · 214 clips'},{t:'Dailies sync',m:'Auto'}]}
+    ].map(function(col){ return {name:col.name,count:col.tasks.length,dotStyle:'width:8px;height:8px;border-radius:50%;background:'+col.hue,tasks:col.tasks.map(function(t){ return {t:t.t,m:t.m,onClick:(function(t){return function(){toast('Open task — '+t.t);};})(t)}; })}; });
+    var aiJobs=[
+      {t:'Proxy transcode',s:'214 clips · ProRes → H.264',status:'Done',hue:'var(--ok)',icon:'✓'},
+      {t:'Auto-transcription',s:'Reel 3 dialogue → SRT',status:'Running',hue:'var(--filmcrew)',icon:'◐'},
+      {t:'Rough color match',s:'Shots 12–48 → Umber',status:'Queued',hue:'var(--text-lo)',icon:'…'}
+    ].map(function(j){ return {t:j.t,s:j.s,status:j.status,icon:j.icon,badgeStyle:'font-size:11px;font-weight:700;padding:3px 9px;border-radius:999px;color:'+j.hue+';background:color-mix(in srgb,'+j.hue+' 14%,transparent);border:1px solid color-mix(in srgb,'+j.hue+' 30%,transparent)'}; });
+    var studioAssets=[0,2,4,5,1].map(function(ci,i){ return {cover:C[ci],onClick:(function(i){return function(){toast('Imported asset '+(i+1)+' — from RightsForge');};})(i)}; });
+
+    var THREADS=[
+      {a:'maya',last:'The Umber grade was exactly right.',time:'2m',unread:true,log:[{me:false,text:'Just watched the Halcyon test — stunning.'},{me:true,text:'Thank you! That’s straight off the sensor.'},{me:false,text:'The Umber grade was exactly right.'}]},
+      {a:'kestrel',last:'Sending the call sheet for day 1.',time:'1h',unread:true,log:[{me:false,text:'Offer’s in FilmCrew — £1,200 for the 6 days.'},{me:true,text:'Accepted. Excited to shoot this.'},{me:false,text:'Sending the call sheet for day 1.'}]},
+      {a:'ivo',last:'Send me the raw and I’ll test a look.',time:'3h',unread:false,log:[{me:false,text:'Loved the reel. Send me the raw and I’ll test a look.'}]},
+      {a:'theo',last:'Scoring the main title now 🎧',time:'yesterday',unread:false,log:[{me:true,text:'How’s the Archivist theme coming?'},{me:false,text:'Scoring the main title now 🎧'}]}
+    ];
+    var threads=THREADS.map(function(t,i){ var p=P[t.a]; var on=i===s.msgThread; return {name:p.name,initials:p.initials,avStyle:avatar(p,42),last:t.last,time:t.time,unread:t.unread,onClick:(function(i){return function(){setState({msgThread:i});};})(i),
+      rowStyle:'display:flex;gap:12px;align-items:center;padding:13px 14px;border-radius:10px;cursor:pointer;'+(on?'background:var(--accent-dim)':'')}; });
+    var at=THREADS[s.msgThread], atp=P[at.a];
+    var activeThread={name:atp.name,role:atp.role,initials:atp.initials,avStyle:avatar(atp,36),
+      msgs:at.log.concat(s.msgAdded[s.msgThread]||[]).map(function(m){ return {text:m.text,rowStyle:'display:flex;'+(m.me?'justify-content:flex-end':'justify-content:flex-start')+';margin:6px 0',
+        bubbleStyle:'max-width:74%;padding:10px 14px;border-radius:14px;font-size:14px;line-height:1.45;'+(m.me?'background:var(--accent);color:#fff;border-bottom-right-radius:4px':'background:var(--bg-3);color:var(--text-hi);border-bottom-left-radius:4px')}; })};
+
+    var setSections=[
+      {icon:'◍',t:'Profile',d:'Your public @ott page, headline, and skills',hue:'var(--framevault)'},
+      {icon:'💳',t:'Wallet & payouts',d:'One balance across FilmCrew, RightsForge, CreatorStack',hue:'var(--rightsforge)'},
+      {icon:'🔔',t:'Notifications',d:'Per-product controls for the one notification stream',hue:'var(--creatorstack)'},
+      {icon:'🔒',t:'Permissions',d:'What each product can read and write on your identity',hue:'var(--filmcrew)'}
+    ].map(function(x){ return {icon:x.icon,t:x.t,d:x.d,onClick:(function(x){return function(){toast(x.t+' — one account, shared across every product');};})(x),iconStyle:'width:38px;height:38px;border-radius:10px;display:grid;place-items:center;font-size:16px;flex:0 0 auto;background:color-mix(in srgb,'+x.hue+' 14%,var(--bg-3));border:1px solid color-mix(in srgb,'+x.hue+' 30%,var(--line))'}; });
+
+    return {
+      appStyle:appStyle, barStyle:barStyle, paneStyle:paneStyle, desktop:desktop, tablet:tablet, mobile:mobile, compact:compact,
+      toggleTheme:function(){toggleTheme();}, themeIcon:s.theme==='dark'?'☀':'☾', themeTitle:s.theme==='dark'?'Switch to light mode':'Switch to dark mode',
+      navItems:navItems, mobileNav:mobileNav, paneKey:'animation:rise .22s cubic-bezier(.2,.7,.2,1)',
+      isHome:s.view==='home', isReels:s.view==='reels', isDiscover:s.view==='discover',
+      isFrame:s.view==='framevault', isFilm:s.view==='filmcrew', isLearn:s.view==='learn',
+      isRightsForge:s.view==='rightsforge', rfIsIp:(s.rfMode||'asset')==='ip', rfIsAsset:(s.rfMode||'asset')==='asset',
+      rfModeTabs:[['asset','Assets'],['ip','IP']].map(function(m){ var on=(s.rfMode||'asset')===m[0]; return {label:m[1],onClick:(function(m){return function(){setState({rfMode:m[0]});};})(m),style:'padding:8px 16px;border-radius:999px;font-size:13px;font-weight:600;cursor:pointer;border:1px solid '+(on?'var(--rightsforge)':'var(--line)')+';background:'+(on?'color-mix(in srgb,var(--rightsforge) 14%,transparent)':'var(--bg-2)')+';color:'+(on?'var(--text-hi)':'var(--text-mid)')}; }),
+      isStack:s.view==='creatorstack', isStudio:s.view==='studio', isMsg:s.view==='messages', isSettings:s.view==='settings',
+      sfTabs:sfTabs, sfList:sfList, rhTabs:rhTabs, rhList:rhList, challenges:CHALL, leaders:leaders, boardCols:boardCols, aiJobs:aiJobs, studioAssets:studioAssets, threads:threads, activeThread:activeThread, setSections:setSections,
+      msgDraft:s.msgDraft, boardStyle:'display:grid;gap:14px;grid-template-columns:repeat('+(desktop?4:(mobile?1:2))+',1fr);align-items:start',
+      onMsgDraft:function(e){setState({msgDraft:e.target.value});}, onMsgKey:function(e){ if(e.key==='Enter')sendMsg(); }, sendMsg:function(){sendMsg();},
+      forgeGridStyle:'display:grid;gap:16px;grid-template-columns:repeat('+(desktop?2:1)+',1fr)',
+      rightsGridStyle:'display:grid;gap:16px;grid-template-columns:repeat('+(desktop?3:(mobile?1:2))+',1fr)',
+      stackGridStyle:'display:grid;gap:16px;grid-template-columns:repeat('+(desktop?3:(mobile?1:2))+',1fr)',
+      msgWrapStyle:mobile?'display:block':'display:grid;grid-template-columns:300px 1fr;height:100%',
+      fvTabs:fvTabs, fvWorkTab:s.fvTab==='work', fvReelsTab:s.fvTab==='reels', fvProvTab:s.fvTab==='provenance', fvReviewsTab:s.fvTab==='reviews',
+      fvWork:fvWork, fvReels:fvReels, fvProv:fvProv, fvReviews:fvReviews, fvSkills:fvSkills.map(function(k){return {name:k[0],level:k[1]};}),
+      fvGridStyle:'display:grid;gap:14px;grid-template-columns:repeat('+fvGridCols+',1fr)',
+      fvReelsGridStyle:'display:grid;gap:'+(mobile?'4px':'10px')+';grid-template-columns:repeat(3,1fr)',
+      filmApplicants:filmApplicants, courses:courses, learnGridStyle:'display:grid;gap:16px;grid-template-columns:repeat('+learnCols+',1fr)',
+      h:HUE[s.view]||'var(--accent)',
+      homeWrapStyle:desktop?'max-width:1040px;margin:0 auto;padding:26px 30px 90px;display:grid;grid-template-columns:1fr 300px;gap:32px;align-items:start':'max-width:640px;margin:0 auto;padding:'+(mobile?'18px 14px 80px':'22px 24px 90px'),
+      showRightRail:desktop,
+      stories:stories, feed:feed, suggested:suggested, reels:reels, reel:reel, reelsStageStyle:reelsStageStyle, phoneStyle:phoneStyle,
+      discoverTabs:discoverTabs, discoverItems:discoverItems, discoverGridStyle:discoverGridStyle,
+      cmdGroups:cmdGroups, cmdEmpty:filtered.length===0, q:s.q, notifs:notifs, pmenuItems:pmenuItems, comments:comments, draft:s.draft,
+      cmd:s.cmd, notifOpen:s.notif, pmenuOpen:s.pmenu, toastMsg:s.toast,
+      hasUnread:s.unread>0, unread:s.unread, commentsPost:s.commentsPost, commentsSheetStyle:commentsSheetStyle,
+      muteIcon:s.muted?'🔇':'🔊',
+      openCmd:function(){setState({cmd:true,q:''});}, closeCmd:function(){setState({cmd:false});}, onCmdInput:function(e){setState({q:e.target.value});},
+      toggleNotif:function(){setState(function(st){return {notif:!st.notif,pmenu:false};});}, togglePmenu:function(){setState(function(st){return {pmenu:!st.pmenu,notif:false};});},
+      closeDrops:function(){setState({notif:false,pmenu:false});},
+      markRead:function(){ setState({unread:0,notif:false}); toast('All caught up'); },
+      goMessages:function(){nav('messages');}, goHome:function(){nav('home');}, goReels:function(){nav('reels');}, goDiscover:function(){nav('discover');}, goStack:function(){nav('creatorstack');}, goFilm:function(){nav('filmcrew');},
+      toastCompose:function(){toast('Composer — post an update, upload a reel, or publish work to your profile');},
+      toastShare:function(){toast('Public page link copied — ott.creativeos.com/@ott');},
+      toastResume:function(){toast('Resuming “Cinematography Fundamentals” — lesson 5 of 14');},
+      toastEnter:function(){toast('Entered “Neon Dusk” — submission is standardised; judging is transparent');},
+      toastSignout:function(){toast('One identity across six products — staying signed in for the demo');},
+      goRights:function(){nav('rightsforge');},
+      toggleMute:function(){ setState(function(st){return {muted:!st.muted};}); },
+      nextReel:function(){setState(function(st){return {reel:Math.min(st.reel+1,REELS.length-1)};});},
+      prevReel:function(){setState(function(st){return {reel:Math.max(st.reel-1,0)};});},
+      onReelWheel:function(e){ if(_wl)return; _wl=true; setTimeout(function(){_wl=false;},420); if(e.deltaY>6)setState(function(st){return {reel:Math.min(st.reel+1,REELS.length-1)};}); else if(e.deltaY<-6)setState(function(st){return {reel:Math.max(st.reel-1,0)};}); },
+      onTouchStart:function(e){ _ty=e.touches[0].clientY; }, onTouchEnd:function(e){ var dy=_ty-e.changedTouches[0].clientY; if(dy>40)setState(function(st){return {reel:Math.min(st.reel+1,REELS.length-1)};}); else if(dy<-40)setState(function(st){return {reel:Math.max(st.reel-1,0)};}); },
+      closeComments:function(){closeComments();}, postComment:function(){postComment();}, onDraft:function(e){setState({draft:e.target.value});}, onDraftKey:function(e){ if(e.key==='Enter')postComment(); }
+    };
+  }
+
+  /* ---- view (template) ---- */
+  function view(V){
+    var brand = V.compact ? '' :
+      '<div style="grid-area:brand;display:flex;align-items:center;gap:10px;padding:0 18px;border-bottom:1px solid var(--line);border-right:1px solid var(--line);background:var(--bg-1)"><span style="width:22px;height:22px;border-radius:50%;background:conic-gradient(from 210deg,var(--framevault),var(--filmcrew),var(--rightsforge),var(--creatorstack),var(--framevault));box-shadow:0 0 16px rgba(229,72,45,.5)"></span><b style="font-weight:650;letter-spacing:-.01em;font-size:15px">CreativeOS</b></div>';
+
+    var bar =
+      '<div style="'+V.barStyle+'">'+
+        (V.compact?'<div style="display:flex;align-items:center;gap:8px;font-weight:650;font-size:15px;letter-spacing:-.01em"><span style="width:20px;height:20px;border-radius:50%;background:conic-gradient(from 210deg,var(--framevault),var(--filmcrew),var(--rightsforge),var(--creatorstack),var(--framevault))"></span>CreativeOS</div>':'')+
+        '<div data-click="'+A(V.openCmd)+'" '+hv('border-color:var(--line-2)')+' style="flex:1;max-width:520px;display:flex;align-items:center;gap:10px;height:36px;padding:0 12px;background:var(--bg-0);border:1px solid var(--line);border-radius:8px;color:var(--text-lo);cursor:text;font-size:13.5px"><span>⌕</span><span style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Search people, projects, IP, assets…</span>'+(V.desktop?'<span style="margin-left:auto;font-family:var(--font-mono);font-size:11px;color:var(--text-lo);border:1px solid var(--line);border-radius:5px;padding:1px 6px">⌘K</span>':'')+'</div>'+
+        '<div style="flex:1"></div>'+
+        '<button data-click="'+A(V.toggleTheme)+'" title="'+esc(V.themeTitle)+'" '+hv('background:var(--bg-3);color:var(--text-hi)')+' style="width:36px;height:36px;display:grid;place-items:center;background:transparent;border:1px solid transparent;border-radius:8px;color:var(--text-mid);cursor:pointer;font-size:16px">'+V.themeIcon+'</button>'+
+        '<button data-click="'+A(V.toggleNotif)+'" title="Notifications" '+hv('background:var(--bg-3);color:var(--text-hi)')+' style="position:relative;width:36px;height:36px;display:grid;place-items:center;background:transparent;border:1px solid transparent;border-radius:8px;color:var(--text-mid);cursor:pointer;font-size:16px">🔔'+(V.hasUnread?'<span style="position:absolute;top:4px;right:4px;min-width:15px;height:15px;padding:0 3px;border-radius:999px;background:var(--accent);color:#fff;font-size:10px;font-weight:700;display:grid;place-items:center;border:2px solid var(--bg-1)">'+V.unread+'</span>':'')+'</button>'+
+        '<button data-click="'+A(V.goMessages)+'" title="Messages" '+hv('background:var(--bg-3);color:var(--text-hi)')+' style="position:relative;width:36px;height:36px;display:grid;place-items:center;background:transparent;border:1px solid transparent;border-radius:8px;color:var(--text-mid);cursor:pointer;font-size:16px">✉<span style="position:absolute;top:4px;right:4px;min-width:15px;height:15px;padding:0 3px;border-radius:999px;background:var(--filmcrew);color:#fff;font-size:10px;font-weight:700;display:grid;place-items:center;border:2px solid var(--bg-1)">2</span></button>'+
+        '<button data-click="'+A(V.togglePmenu)+'" '+hv('background:var(--bg-3)')+' style="display:flex;align-items:center;gap:8px;height:36px;padding:0 8px 0 6px;border-radius:8px;background:var(--bg-2);border:1px solid var(--line);cursor:pointer;color:var(--text-hi)"><span style="width:24px;height:24px;border-radius:50%;background:linear-gradient(135deg,var(--accent),#8a1e0e);display:grid;place-items:center;font-size:11px;font-weight:700">O</span>'+(V.desktop?'<small style="font-size:13px;font-weight:600">OTT</small><span style="color:var(--text-lo);font-size:11px">▾</span>':'')+'</button>'+
+      '</div>';
+
+    var rail = V.desktop ?
+      '<nav style="grid-area:rail;background:var(--bg-1);border-right:1px solid var(--line);padding:12px 10px;overflow-y:auto;display:flex;flex-direction:column;gap:3px">'+
+      V.navItems.map(function(n){
+        if(n.isGroup) return '<div style="'+n.wrapStyle+'"><span style="font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--text-lo);font-weight:700">'+n.label+'</span></div>';
+        if(!n.isItem) return '<div style="'+n.wrapStyle+'"></div>';
+        return '<div data-click="'+A(n.onClick)+'" '+hv(n.hoverStyle)+' style="'+n.wrapStyle+'"><span style="'+n.dotStyle+'"></span><span>'+n.label+'</span></div>';
+      }).join('')+
+      '</nav>' : '';
+
+    /* ---- screens ---- */
+    var screen='';
+    if(V.isHome){
+      screen=
+      '<div style="'+V.homeWrapStyle+'"><div style="min-width:0">'+
+        '<div style="margin-bottom:18px"><div style="font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--home);font-weight:700;margin-bottom:6px">Your feed</div><h1 style="font-size:24px;letter-spacing:-.02em;font-weight:660;margin:0">Good evening, OTT</h1><p style="color:var(--text-mid);margin:5px 0 0;font-size:14.5px">Everything across your ecosystem — and everyone you follow — in one stream.</p></div>'+
+        '<div style="display:flex;gap:14px;overflow-x:auto;padding:2px 2px 14px;margin-bottom:6px">'+V.stories.map(function(st){ return '<button data-click="'+A(st.onClick)+'" style="flex:0 0 auto;display:flex;flex-direction:column;align-items:center;gap:6px;background:none;border:none;cursor:pointer;width:64px"><span style="'+st.ringStyle+'"><span style="'+st.avStyle+'">'+st.initials+'</span></span><small style="font-size:11px;color:var(--text-mid);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:62px">'+st.name+'</small></button>'; }).join('')+'</div>'+
+        '<div style="display:flex;align-items:center;gap:12px;background:var(--bg-2);border:1px solid var(--line);border-radius:12px;padding:12px 14px;margin-bottom:20px"><span style="width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,var(--accent),#8a1e0e);display:grid;place-items:center;font-size:13px;font-weight:700;flex:0 0 auto">O</span><div data-click="'+A(V.toastCompose)+'" style="flex:1;color:var(--text-lo);font-size:14px;cursor:text">Share an update, drop a reel, publish work…</div><button data-click="'+A(V.toastCompose)+'" '+hv('background:var(--accent-hi)')+' style="height:34px;padding:0 14px;border-radius:8px;border:none;background:var(--accent);color:#fff;font-weight:600;font-size:13px;cursor:pointer">Post</button></div>'+
+        '<div style="display:flex;flex-direction:column;gap:18px">'+V.feed.map(function(p){ return '<article style="background:var(--bg-2);border:1px solid var(--line);border-radius:14px;overflow:hidden"><div style="display:flex;align-items:center;gap:11px;padding:13px 15px"><span data-click="'+A(p.onAuthor)+'" style="'+p.avStyle+'">'+p.author.initials+'</span><div style="flex:1;min-width:0"><div style="display:flex;align-items:center;gap:7px"><b data-click="'+A(p.onAuthor)+'" style="font-size:14px;font-weight:600;cursor:pointer">'+p.author.name+'</b>'+(p.author.verified?'<span style="color:var(--framevault);font-size:12px" title="Verified">✦</span>':'')+'<span style="'+p.chipStyle+'">'+p.chip+'</span></div><div style="font-size:12px;color:var(--text-lo);margin-top:1px">'+p.author.role+' · '+p.time+'</div></div><button data-click="'+A(p.onFollow)+'" style="'+p.followStyle+'">'+p.followLabel+'</button></div>'+
+        (p.text?'<p style="margin:0 15px 12px;font-size:14.5px;color:var(--text-hi);line-height:1.55">'+p.text+'</p>':'')+
+        (p.hasMedia?'<div data-click="'+A(p.onOpen)+'" style="'+p.mediaStyle+'"><span style="position:absolute;inset:0;background:linear-gradient(180deg,transparent 55%,rgba(0,0,0,.55))"></span>'+(p.isReel?'<span style="position:absolute;top:12px;right:12px;display:flex;align-items:center;gap:6px;background:rgba(8,9,11,.66);backdrop-filter:blur(6px);border:1px solid rgba(255,255,255,.14);color:#fff;font-size:11px;font-weight:600;padding:4px 9px;border-radius:999px">▶ Reel</span>':'')+'<span style="position:absolute;left:14px;bottom:12px;font-size:13px;color:rgba(255,255,255,.92);font-weight:600;text-shadow:0 1px 8px rgba(0,0,0,.6)">'+p.mediaLabel+'</span></div>':'')+
+        '<div style="display:flex;align-items:center;gap:4px;padding:10px 12px"><button data-click="'+A(p.onLike)+'" style="'+p.likeBtnStyle+'"><span style="'+p.heartStyle+'">♥</span> '+p.likeN+'</button><button data-click="'+A(p.onComment)+'" '+hv('background:var(--bg-3);color:var(--text-hi)')+' style="display:flex;align-items:center;gap:7px;background:none;border:none;color:var(--text-mid);font-size:13px;font-weight:600;padding:7px 10px;border-radius:8px;cursor:pointer">💬 '+p.commentsN+'</button><button data-click="'+A(p.onShare)+'" '+hv('background:var(--bg-3);color:var(--text-hi)')+' style="display:flex;align-items:center;gap:7px;background:none;border:none;color:var(--text-mid);font-size:13px;font-weight:600;padding:7px 10px;border-radius:8px;cursor:pointer">↗ Share</button><button data-click="'+A(p.onSave)+'" style="'+p.saveBtnStyle+'">'+p.saveLabel+'</button></div></article>'; }).join('')+'</div>'+
+      '</div>'+
+      (V.showRightRail?
+        '<aside style="display:flex;flex-direction:column;gap:16px;align-self:start;position:sticky;top:0">'+
+        '<div style="background:linear-gradient(150deg,var(--accent-dim),var(--bg-2));border:1px solid var(--line);border-radius:14px;padding:16px"><div style="font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--text-lo);font-weight:700;margin-bottom:6px">Wallet</div><div style="font-size:26px;font-weight:700;letter-spacing:-.02em;font-variant-numeric:tabular-nums">£3,412.00</div><div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:12px"><span style="font-size:11px;color:var(--text-mid);background:var(--bg-1);border:1px solid var(--line);border-radius:6px;padding:3px 8px">FilmCrew <b style="color:var(--text-hi)">£1,940</b></span><span style="font-size:11px;color:var(--text-mid);background:var(--bg-1);border:1px solid var(--line);border-radius:6px;padding:3px 8px">RightsForge <b style="color:var(--text-hi)">£712</b></span><span style="font-size:11px;color:var(--text-mid);background:var(--bg-1);border:1px solid var(--line);border-radius:6px;padding:3px 8px">Stories <b style="color:var(--text-hi)">£500</b></span><span style="font-size:11px;color:var(--text-mid);background:var(--bg-1);border:1px solid var(--line);border-radius:6px;padding:3px 8px">Stack <b style="color:var(--text-hi)">£260</b></span></div></div>'+
+        '<div style="background:var(--bg-2);border:1px solid var(--line);border-radius:14px;padding:16px"><div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px"><b style="font-size:14px">Suggested creators</b><span data-click="'+A(V.goDiscover)+'" style="font-size:12px;color:var(--accent-hi);cursor:pointer">See all</span></div><div style="display:flex;flex-direction:column;gap:12px">'+V.suggested.map(function(c){ return '<div style="display:flex;align-items:center;gap:10px"><span data-click="'+A(c.onOpen)+'" style="'+c.avStyle+'">'+c.initials+'</span><div style="flex:1;min-width:0"><div style="font-size:13.5px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+c.name+'</div><div style="font-size:12px;color:var(--text-lo)">'+c.role+'</div></div><button data-click="'+A(c.onFollow)+'" style="'+c.followStyle+'">'+c.followLabel+'</button></div>'; }).join('')+'</div></div>'+
+        '<div style="background:var(--bg-2);border:1px solid var(--line);border-radius:14px;padding:16px"><b style="font-size:14px">Closing soon</b><div style="display:flex;flex-direction:column;gap:10px;margin-top:12px"><div data-click="'+A(V.goStack)+'" '+hv('background:var(--bg-3)')+' style="display:flex;gap:10px;align-items:flex-start;cursor:pointer;padding:8px;margin:-8px;border-radius:10px"><span style="width:8px;height:8px;border-radius:50%;background:var(--creatorstack);margin-top:6px;box-shadow:0 0 8px var(--creatorstack);flex:0 0 auto"></span><div><div style="font-size:13px;font-weight:600">“Neon Dusk” brand challenge</div><div style="font-size:12px;color:var(--text-lo)">CreatorStack · £5,000 · closes in 2 days</div></div></div><div data-click="'+A(V.goFilm)+'" '+hv('background:var(--bg-3)')+' style="display:flex;gap:10px;align-items:flex-start;cursor:pointer;padding:8px;margin:-8px;border-radius:10px"><span style="width:8px;height:8px;border-radius:50%;background:var(--filmcrew);margin-top:6px;box-shadow:0 0 8px var(--filmcrew);flex:0 0 auto"></span><div><div style="font-size:13px;font-weight:600">DP role — “Halcyon”</div><div style="font-size:12px;color:var(--text-lo)">FilmCrew · £1,200 · respond by Fri</div></div></div></div></div>'+
+        '<p style="font-size:11px;color:var(--text-lo);line-height:1.6;padding:0 4px">One feed, six products, one identity. This stream exists because every room publishes to the same event bus.</p>'+
+        '</aside>':'')+
+      '</div>';
+    }
+    else if(V.isReels){
+      var r=V.reel;
+      screen=
+      '<div data-wheel="'+A(V.onReelWheel)+'" data-tstart="'+A(V.onTouchStart)+'" data-tend="'+A(V.onTouchEnd)+'" style="'+V.reelsStageStyle+'"><div style="'+V.phoneStyle+'"><div style="position:absolute;inset:0;'+r.cover+';overflow:hidden">'+
+        '<span style="position:absolute;inset:0;background:linear-gradient(180deg,rgba(0,0,0,.35) 0%,transparent 22%,transparent 55%,rgba(0,0,0,.72) 100%)"></span>'+
+        '<span style="position:absolute;top:-40%;left:-30%;width:60%;height:180%;background:linear-gradient(90deg,transparent,rgba(255,255,255,.08),transparent);animation:shimmer 3.2s ease-in-out infinite"></span>'+
+        '<span style="position:absolute;top:0;left:0;right:0;height:3px;background:rgba(255,255,255,.18)"><span style="display:block;height:100%;width:'+r.progress+';background:#fff"></span></span>'+
+        '<div style="position:absolute;top:16px;left:16px;right:16px;display:flex;align-items:center;justify-content:space-between;color:#fff"><b style="font-size:16px;font-weight:700;text-shadow:0 1px 6px rgba(0,0,0,.5)">Reels</b><button data-click="'+A(V.toggleMute)+'" style="width:34px;height:34px;border-radius:50%;background:rgba(0,0,0,.4);border:1px solid rgba(255,255,255,.18);color:#fff;cursor:pointer;backdrop-filter:blur(6px)">'+V.muteIcon+'</button></div>'+
+        '<span style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:74px;height:74px;border-radius:50%;background:rgba(0,0,0,.32);backdrop-filter:blur(4px);display:grid;place-items:center;font-size:30px;color:rgba(255,255,255,.92);border:1px solid rgba(255,255,255,.2)">▶</span>'+
+        '<div style="position:absolute;right:12px;bottom:118px;display:flex;flex-direction:column;align-items:center;gap:20px;color:#fff"><button data-click="'+A(r.onLike)+'" style="display:flex;flex-direction:column;align-items:center;gap:4px;background:none;border:none;color:#fff;cursor:pointer;font-size:12px;font-weight:600"><span style="'+r.heartStyle+'">♥</span>'+r.likeN+'</button><button data-click="'+A(r.onComment)+'" style="display:flex;flex-direction:column;align-items:center;gap:4px;background:none;border:none;color:#fff;cursor:pointer;font-size:12px;font-weight:600"><span style="font-size:28px">💬</span>'+r.commentsN+'</button><button data-click="'+A(r.onShare)+'" style="display:flex;flex-direction:column;align-items:center;gap:4px;background:none;border:none;color:#fff;cursor:pointer;font-size:12px;font-weight:600"><span style="font-size:26px">↗</span>'+r.shares+'</button><span style="width:34px;height:34px;border-radius:9px;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.25);display:grid;place-items:center;font-size:16px;animation:spin 4s linear infinite">♪</span></div>'+
+        '<div style="position:absolute;left:16px;right:70px;bottom:22px;color:#fff"><div style="display:flex;align-items:center;gap:9px;margin-bottom:9px"><span data-click="'+A(r.onAuthor)+'" style="'+r.avStyle+'">'+r.author.initials+'</span><b data-click="'+A(r.onAuthor)+'" style="font-size:14px;cursor:pointer;text-shadow:0 1px 6px rgba(0,0,0,.5)">'+r.author.name+'</b><button data-click="'+A(r.onFollow)+'" style="'+r.followStyleLight+'">'+r.followLabel+'</button></div><p style="margin:0 0 8px;font-size:13.5px;line-height:1.5;text-shadow:0 1px 6px rgba(0,0,0,.55)">'+r.caption+'</p><div style="display:flex;gap:7px;flex-wrap:wrap;margin-bottom:9px">'+r.tags.map(function(t){ return '<span data-click="'+A(t.onClick)+'" style="'+t.style+'">'+t.label+'</span>'; }).join('')+'</div><div style="display:flex;align-items:center;gap:8px;font-size:12px;color:rgba(255,255,255,.9)"><span style="display:flex;align-items:flex-end;gap:2px;height:13px"><i style="width:2px;background:#fff;border-radius:2px;height:100%;transform-origin:bottom;animation:eq .6s ease-in-out infinite"></i><i style="width:2px;background:#fff;border-radius:2px;height:100%;transform-origin:bottom;animation:eq .6s ease-in-out infinite .2s"></i><i style="width:2px;background:#fff;border-radius:2px;height:100%;transform-origin:bottom;animation:eq .6s ease-in-out infinite .4s"></i></span>♪ '+r.music+'</div></div>'+
+      '</div></div>'+
+      (V.desktop?'<div style="position:absolute;right:calc(50% - 320px);top:50%;transform:translateY(-50%);display:flex;flex-direction:column;gap:12px"><button data-click="'+A(V.prevReel)+'" '+hv('background:var(--bg-3)')+' style="width:44px;height:44px;border-radius:50%;background:var(--bg-2);border:1px solid var(--line);color:var(--text-hi);cursor:pointer;font-size:18px">↑</button><button data-click="'+A(V.nextReel)+'" '+hv('background:var(--bg-3)')+' style="width:44px;height:44px;border-radius:50%;background:var(--bg-2);border:1px solid var(--line);color:var(--text-hi);cursor:pointer;font-size:18px">↓</button></div>':'')+
+      '<div style="position:absolute;left:calc(50% - 320px);top:50%;transform:translateY(-50%);display:flex;flex-direction:column;gap:8px">'+V.reels.map(function(rr){ return '<span data-click="'+A(rr.onGo)+'" style="'+rr.dotStyle+'"></span>'; }).join('')+'</div>'+
+      '</div>';
+    }
+    else if(V.isDiscover){
+      screen=
+      '<div style="max-width:1100px;margin:0 auto;padding:30px 30px 90px"><div style="margin-bottom:18px"><div style="font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--discover);font-weight:700;margin-bottom:6px">Discover</div><h1 style="font-size:24px;letter-spacing:-.02em;font-weight:660;margin:0">Explore the network</h1><p style="color:var(--text-mid);margin:5px 0 0;font-size:14.5px">Work, reels, and creators from across CreativeOS.</p></div>'+
+      '<div style="display:flex;gap:6px;margin-bottom:20px;flex-wrap:wrap">'+V.discoverTabs.map(function(t){ return '<button data-click="'+A(t.onClick)+'" style="'+t.style+'">'+t.label+'</button>'; }).join('')+'</div>'+
+      '<div style="'+V.discoverGridStyle+'">'+V.discoverItems.map(function(d){ return '<div data-click="'+A(d.onOpen)+'" style="'+d.tileStyle+'"><span style="position:absolute;inset:0;'+d.cover+'"></span><span style="position:absolute;inset:0;background:linear-gradient(180deg,transparent 45%,rgba(0,0,0,.62))"></span>'+(d.isReel?'<span style="position:absolute;top:10px;right:10px;background:rgba(8,9,11,.6);backdrop-filter:blur(6px);border:1px solid rgba(255,255,255,.14);color:#fff;font-size:11px;font-weight:600;padding:3px 8px;border-radius:999px">▶</span>':'')+'<span style="'+d.tagStyle+'">'+d.tag+'</span><div style="position:absolute;left:12px;right:12px;bottom:11px;color:#fff"><div style="font-size:14px;font-weight:650;letter-spacing:-.01em;text-shadow:0 1px 8px rgba(0,0,0,.6)">'+d.title+'</div><div style="display:flex;align-items:center;justify-content:space-between;margin-top:4px;font-size:12px;color:rgba(255,255,255,.85)"><span>'+d.by+'</span><span>♥ '+d.likes+'</span></div></div></div>'; }).join('')+'</div></div>';
+    }
+    else if(V.isFrame){
+      screen=
+      '<div style="max-width:960px;margin:0 auto;padding:28px 30px 90px">'+
+      '<div style="height:150px;border-radius:16px;background:radial-gradient(120% 140% at 15% 0%,#4a1e10,#160a06),linear-gradient(135deg,#5a2410,#160a06);border:1px solid var(--line);position:relative;overflow:hidden"><span style="position:absolute;top:-30%;left:-20%;width:50%;height:160%;background:linear-gradient(90deg,transparent,rgba(255,255,255,.06),transparent);animation:shimmer 4s ease-in-out infinite"></span></div>'+
+      '<div style="display:flex;gap:20px;align-items:flex-start;margin:-46px 0 0;padding:0 6px;flex-wrap:wrap"><span style="width:96px;height:96px;border-radius:24px;background:linear-gradient(140deg,var(--accent),#8a1e0e);display:grid;place-items:center;font-size:34px;font-weight:700;color:#fff;flex:0 0 auto;border:4px solid var(--bg-0);box-shadow:0 10px 30px rgba(229,72,45,.3)">O</span><div style="flex:1;min-width:220px;padding-top:52px"><div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap"><h1 style="font-size:24px;letter-spacing:-.02em;font-weight:660;margin:0">OTT</h1><span style="color:var(--text-lo);font-weight:500;font-size:15px">@ott</span><span style="display:inline-flex;align-items:center;gap:5px;font-size:11.5px;font-weight:600;color:var(--ok);background:rgba(233,185,73,.1);border:1px solid rgba(233,185,73,.32);padding:3px 9px;border-radius:999px">✦ Verified</span></div><p style="color:var(--text-mid);margin:5px 0 0;font-size:14.5px">Cinematographer · Director of Photography</p><div style="display:flex;gap:18px;flex-wrap:wrap;margin-top:8px;color:var(--text-lo);font-size:13px"><span>📍 London</span><span>🔗 ott.creativeos.com</span><span><b style="color:var(--text-hi)">2,840</b> followers</span><span><b style="color:var(--text-hi)">318</b> following</span></div></div><div style="display:flex;gap:10px;padding-top:52px"><button data-click="'+A(V.toastCompose)+'" '+hv('background:var(--accent-hi)')+' style="height:38px;padding:0 16px;border-radius:8px;border:none;background:var(--accent);color:#fff;font-weight:600;cursor:pointer">Edit profile</button><button data-click="'+A(V.toastShare)+'" style="height:38px;padding:0 16px;border-radius:8px;border:1px solid var(--line);background:var(--bg-3);color:var(--text-hi);font-weight:600;cursor:pointer">Share</button></div></div>'+
+      '<div style="display:grid;gap:14px;grid-template-columns:repeat(4,1fr);margin:24px 0 8px">'+
+        '<div style="background:var(--bg-2);border:1px solid var(--line);border-radius:12px;padding:14px 16px"><div style="font-size:24px;font-weight:680;letter-spacing:-.02em">4.9</div><div style="font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--text-lo);font-weight:600;margin-top:2px">Reputation</div><div style="font-size:11px;color:var(--text-lo);margin-top:4px">12 reviews</div></div>'+
+        '<div style="background:var(--bg-2);border:1px solid var(--line);border-radius:12px;padding:14px 16px"><div style="font-size:24px;font-weight:680;letter-spacing:-.02em">7</div><div style="font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--text-lo);font-weight:600;margin-top:2px">Projects</div><div style="font-size:11px;color:var(--text-lo);margin-top:4px">3 this year</div></div>'+
+        '<div style="background:var(--bg-2);border:1px solid var(--line);border-radius:12px;padding:14px 16px"><div style="font-size:24px;font-weight:680;letter-spacing:-.02em">34</div><div style="font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--text-lo);font-weight:600;margin-top:2px">Licenses</div><div style="font-size:11px;color:var(--rightsforge);margin-top:4px">Umber pack</div></div>'+
+        '<div style="background:var(--bg-2);border:1px solid var(--line);border-radius:12px;padding:14px 16px"><div style="font-size:24px;font-weight:680;letter-spacing:-.02em">£3.4k</div><div style="font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--text-lo);font-weight:600;margin-top:2px">Earned</div><div style="font-size:11px;color:var(--ok);margin-top:4px">+£420 / mo</div></div>'+
+      '</div>'+
+      '<div style="display:flex;flex-wrap:wrap;gap:9px;margin:18px 0 6px">'+V.fvSkills.map(function(k){ return '<span style="font-size:12.5px;font-weight:500;padding:7px 12px;border-radius:999px;border:1px solid var(--line);background:var(--bg-2);color:var(--text-mid)">'+k.name+'<span style="color:var(--accent-hi);font-weight:600;margin-left:6px;font-size:11px">'+k.level+'</span></span>'; }).join('')+'</div>'+
+      '<div style="display:flex;gap:24px;border-bottom:1px solid var(--line);margin:20px 0 22px">'+V.fvTabs.map(function(t){ return '<button data-click="'+A(t.onClick)+'" style="'+t.style+'">'+t.label+'</button>'; }).join('')+'</div>'+
+      (V.fvWorkTab?'<div style="'+V.fvGridStyle+'">'+V.fvWork.map(function(w){ return '<div data-click="'+A(w.onOpen)+'" '+hv('border-color:color-mix(in srgb,var(--framevault) 40%,var(--line));transform:translateY(-3px)')+' style="background:var(--bg-2);border:1px solid var(--line);border-radius:12px;overflow:hidden;cursor:pointer;transition:.16s"><div style="aspect-ratio:16/10;position:relative;'+w.cover+'"><span style="position:absolute;bottom:8px;left:10px;font-size:10px;font-weight:700;color:rgba(255,255,255,.85);letter-spacing:.05em;text-transform:uppercase;background:rgba(8,9,11,.5);padding:2px 7px;border-radius:5px;backdrop-filter:blur(4px)">'+w.year+'</span></div><div style="padding:12px 14px"><div style="font-size:14px;font-weight:620">'+w.title+'</div><div style="font-size:12.5px;color:var(--text-lo);margin-top:2px">'+w.role+'</div></div></div>'; }).join('')+'</div>':'')+
+      (V.fvReelsTab?'<div style="'+V.fvReelsGridStyle+'">'+V.fvReels.map(function(rr){ return '<div data-click="'+A(rr.onOpen)+'" style="position:relative;aspect-ratio:9/16;border-radius:8px;overflow:hidden;cursor:pointer;'+rr.cover+'"><span style="position:absolute;inset:0;background:linear-gradient(180deg,transparent 60%,rgba(0,0,0,.6))"></span><span style="position:absolute;top:8px;right:8px;color:#fff;font-size:13px">▶</span><span style="position:absolute;left:9px;bottom:8px;color:#fff;font-size:12px;font-weight:600;text-shadow:0 1px 4px rgba(0,0,0,.6)">▶ '+rr.views+'</span></div>'; }).join('')+'</div>':'')+
+      (V.fvProvTab?'<div style="background:var(--bg-2);border:1px solid var(--line);border-radius:14px;padding:22px 24px"><div style="display:flex;align-items:center;gap:9px;margin-bottom:6px"><b style="font-size:15px">Provenance ledger</b><span style="font-size:11px;color:var(--rightsforge);font-weight:600;background:rgba(192,49,28,.1);border:1px solid rgba(192,49,28,.28);padding:2px 8px;border-radius:999px">signed</span></div><p style="font-size:13px;color:var(--text-lo);margin:0 0 18px;max-width:56ch">Every portfolio piece links to a signed provenance record — content hash, timestamp, contributors, and transparent AI disclosure. Trust is the product.</p><div style="position:relative;padding-left:22px"><span style="position:absolute;left:5px;top:4px;bottom:4px;width:2px;background:var(--line)"></span>'+V.fvProv.map(function(e){ return '<div style="position:relative;padding:0 0 20px"><span style="position:absolute;left:-21px;top:4px;width:10px;height:10px;border-radius:50%;background:var(--framevault);box-shadow:0 0 0 3px var(--bg-2)"></span><div style="display:flex;align-items:baseline;gap:10px;flex-wrap:wrap"><b style="font-size:14px">'+e.title+'</b><span style="font-size:12px;color:var(--text-lo)">'+e.meta+'</span></div><div style="font-size:12.5px;color:var(--text-mid);margin-top:4px">'+e.foot+'</div><div style="font-family:var(--font-mono);font-size:11.5px;color:var(--accent-hi);margin-top:4px">'+e.hash+'</div></div>'; }).join('')+'</div></div>':'')+
+      (V.fvReviewsTab?'<div style="background:var(--bg-2);border:1px solid var(--line);border-radius:14px;padding:8px 22px">'+V.fvReviews.map(function(rv){ return '<div style="padding:16px 0;border-bottom:1px solid var(--line)"><div style="display:flex;align-items:center;gap:9px"><span style="'+rv.avStyle+'">'+rv.initials+'</span><b style="font-size:13.5px">'+rv.name+'</b><span style="font-size:12px;color:var(--text-lo)">'+rv.role+'</span><span style="margin-left:auto;color:var(--warn);font-size:13px;letter-spacing:1px">'+rv.stars+'</span></div><div style="color:var(--text-mid);font-size:13.5px;margin-top:8px;line-height:1.55">'+rv.text+'</div><div style="font-size:11.5px;color:var(--text-lo);margin-top:6px">'+rv.ctx+'</div></div>'; }).join('')+'</div>':'')+
+      '</div>';
+    }
+    else if(V.isFilm){
+      screen=
+      '<div style="max-width:900px;margin:0 auto;padding:28px 30px 90px"><div style="font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--filmcrew);font-weight:700;margin-bottom:6px">FilmCrew · Collaboration</div><h1 style="font-size:24px;letter-spacing:-.02em;font-weight:660;margin:0">Staff your production</h1><p style="color:var(--text-mid);margin:5px 0 0;font-size:14.5px">Hire creatives, rank applicants by fit, and let every hire credit itself back to FrameVault.</p>'+
+      '<div style="background:linear-gradient(120deg,rgba(245,137,43,.12),var(--bg-2));border:1px solid var(--line);border-radius:14px;padding:20px;margin:22px 0"><div style="display:flex;align-items:flex-start;justify-content:space-between;gap:14px;flex-wrap:wrap"><div><div style="display:flex;align-items:center;gap:9px"><b style="font-size:16px">“Halcyon” — feature</b><span style="font-size:11px;font-weight:700;color:var(--ok);background:rgba(233,185,73,.1);border:1px solid rgba(233,185,73,.32);padding:2px 9px;border-radius:999px">Open role</span></div><div style="color:var(--text-mid);font-size:13.5px;margin-top:5px">Director of Photography · 6-day shoot · London · <b style="color:var(--text-hi)">£1,200</b></div></div><div style="text-align:right"><div style="font-size:12px;color:var(--text-lo)">Applicants</div><div style="font-size:22px;font-weight:700">3</div></div></div></div>'+
+      '<div style="display:flex;align-items:center;justify-content:space-between;margin:0 0 12px"><h2 style="font-size:16px;font-weight:620;margin:0">Ranked applicants</h2><span style="font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--text-lo);font-weight:600">AI-matched by fit</span></div>'+
+      '<div style="display:flex;flex-direction:column;gap:12px">'+V.filmApplicants.map(function(a){ return '<div style="background:var(--bg-2);border:1px solid var(--line);border-radius:12px;padding:16px;display:flex;gap:14px;align-items:flex-start"><span data-click="'+A(a.onView)+'" style="'+a.avStyle+'">'+a.initials+'</span><div style="flex:1;min-width:0"><div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap"><b data-click="'+A(a.onView)+'" style="font-size:14.5px;cursor:pointer">'+a.name+'</b><span style="font-size:12.5px;color:var(--text-lo)">'+a.role+'</span><span style="font-size:11px;font-weight:700;color:var(--filmcrew);background:rgba(245,137,43,.12);border:1px solid rgba(245,137,43,.3);padding:2px 8px;border-radius:999px">'+a.match+'% match</span></div><p style="font-size:13px;color:var(--text-mid);margin:7px 0 0;line-height:1.5">'+a.note+'</p></div><div style="display:flex;flex-direction:column;gap:8px;flex:0 0 auto"><button data-click="'+A(a.onHire)+'" style="height:34px;padding:0 16px;border-radius:8px;border:none;background:var(--filmcrew);color:#04121f;font-weight:700;font-size:13px;cursor:pointer">Hire</button><button data-click="'+A(a.onView)+'" style="height:34px;padding:0 16px;border-radius:8px;border:1px solid var(--line);background:transparent;color:var(--text-mid);font-weight:600;font-size:13px;cursor:pointer">Profile</button></div></div>'; }).join('')+'</div>'+
+      '<div style="background:var(--bg-1);border:1px solid var(--line);border-left:3px solid var(--filmcrew);border-radius:8px;padding:12px 15px;font-size:13px;color:var(--text-mid);margin-top:22px">🔗 <b style="color:var(--text-hi)">Cross-product loop:</b> hiring here emits <span style="font-family:var(--font-mono);font-size:12px;color:var(--accent-hi)">hire.completed</span> — the credit lands on the hire’s FrameVault, opens wallet escrow, and updates their reputation graph.</div></div>';
+    }
+    else if(V.isLearn){
+      screen=
+      '<div style="max-width:1040px;margin:0 auto;padding:28px 30px 90px"><div style="font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--learn);font-weight:700;margin-bottom:6px">Learn · Education</div><h1 style="font-size:24px;letter-spacing:-.02em;font-weight:660;margin:0">Learn from the people you follow</h1><p style="color:var(--text-mid);margin:5px 0 0;font-size:14.5px">Creators teach; you learn — and every course you finish credits your FrameVault.</p>'+
+      '<div style="display:grid;gap:16px;grid-template-columns:1fr;margin:24px 0 30px"><div style="background:linear-gradient(120deg,rgba(233,185,73,.14),var(--bg-2));border:1px solid var(--line);border-radius:16px;padding:22px;display:flex;gap:18px;align-items:center;flex-wrap:wrap"><div style="width:120px;aspect-ratio:16/10;border-radius:12px;flex:0 0 auto;position:relative;overflow:hidden;background:radial-gradient(120% 90% at 20% 10%,#4a1e10,#160a06),linear-gradient(135deg,#5a2410,#160a06)"><span style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);font-size:22px;color:#fff">▶</span></div><div style="flex:1;min-width:200px"><div style="font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--learn);font-weight:600">Continue learning</div><div style="font-size:17px;font-weight:640;margin-top:4px">Cinematography Fundamentals</div><div style="font-size:13px;color:var(--text-lo);margin-top:3px">Lesson 5 of 14 · Nadia Okonkwo</div><div style="height:6px;border-radius:999px;background:var(--bg-0);overflow:hidden;margin-top:12px;max-width:340px"><span style="display:block;height:100%;width:35%;background:var(--learn);border-radius:999px"></span></div></div><button data-click="'+A(V.toastResume)+'" style="height:40px;padding:0 20px;border-radius:8px;border:none;background:var(--learn);color:#04120d;font-weight:700;cursor:pointer;flex:0 0 auto">Resume</button></div></div>'+
+      '<div style="display:flex;align-items:center;justify-content:space-between;margin:0 0 14px"><h2 style="font-size:16px;font-weight:620;margin:0">Courses</h2><span style="font-size:12px;color:var(--text-lo)">Taught by verified creators</span></div>'+
+      '<div style="'+V.learnGridStyle+'">'+V.courses.map(function(c){ return '<div '+hv('border-color:color-mix(in srgb,var(--learn) 40%,var(--line))')+' style="background:var(--bg-2);border:1px solid var(--line);border-radius:14px;overflow:hidden;display:flex;flex-direction:column;transition:.16s"><div style="aspect-ratio:16/9;position:relative;'+c.cover+'"><span style="'+c.levelStyle+'">'+c.level+'</span><span style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:44px;height:44px;border-radius:50%;background:rgba(0,0,0,.35);backdrop-filter:blur(4px);display:grid;place-items:center;font-size:17px;color:#fff;border:1px solid rgba(255,255,255,.2)">▶</span></div><div style="padding:15px;display:flex;flex-direction:column;gap:9px;flex:1"><div style="font-size:15px;font-weight:640;letter-spacing:-.01em">'+c.title+'</div><div style="display:flex;align-items:center;gap:8px"><span style="'+c.avStyle+'">'+c.initials+'</span><span style="font-size:12.5px;color:var(--text-mid)">'+c.by+'</span></div><div style="font-size:12px;color:var(--text-lo)">'+c.lessons+' lessons · '+c.dur+'</div>'+(c.hasProgress?'<div style="height:5px;border-radius:999px;background:var(--bg-0);overflow:hidden"><span style="'+c.barStyle+'"></span></div>':'')+'<button data-click="'+A(c.onGo)+'" style="'+c.btnStyle+'">'+c.btnLabel+'</button></div></div>'; }).join('')+'</div></div>';
+    }
+    else if(V.isRightsForge){
+      screen=
+      '<div style="max-width:1040px;margin:0 auto;padding:28px 30px 90px"><div style="font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--rightsforge);font-weight:700;margin-bottom:6px">RightsForge · Rights marketplace</div><h1 style="font-size:24px;letter-spacing:-.02em;font-weight:660;margin:0">List it once. License it, option it, sell it.</h1><p style="color:var(--text-mid);margin:5px 0 0;font-size:14.5px">One marketplace, two deal modes — instant asset licenses, and negotiated IP deals. Originally two products (StoryForge + RightsHub); merged, because they were the same engine underneath.</p>'+
+      '<div style="display:inline-flex;gap:4px;padding:4px;background:var(--bg-2);border:1px solid var(--line);border-radius:12px;margin:20px 0">'+V.rfModeTabs.map(function(t){ return '<button data-click="'+A(t.onClick)+'" style="'+t.style+'">'+t.label+'</button>'; }).join('')+'</div>'+
+      (V.rfIsAsset?(
+      '<div style="display:flex;gap:8px;flex-wrap:wrap;margin:0 0 20px">'+V.rhTabs.map(function(t){ return '<button data-click="'+A(t.onClick)+'" style="'+t.style+'">'+t.label+'</button>'; }).join('')+'</div>'+
+      '<div style="'+V.rightsGridStyle+'">'+V.rhList.map(function(a){ return '<div style="background:var(--bg-2);border:1px solid var(--line);border-radius:14px;overflow:hidden;display:flex;flex-direction:column"><div data-click="'+A(a.onPreview)+'" style="aspect-ratio:16/9;position:relative;cursor:pointer;'+a.cover+'">'+(a.audio?'<span style="position:absolute;left:14px;right:14px;bottom:14px;display:flex;align-items:flex-end;gap:2px;height:36px">'+a.bars.map(function(b){ return '<i style="'+b.style+'"></i>'; }).join('')+'</span>':'')+'<span style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:40px;height:40px;border-radius:50%;background:rgba(0,0,0,.4);backdrop-filter:blur(4px);display:grid;place-items:center;font-size:15px;color:#fff;border:1px solid rgba(255,255,255,.2)">▶</span></div><div style="padding:15px;display:flex;flex-direction:column;gap:8px;flex:1"><div style="display:flex;align-items:baseline;justify-content:space-between;gap:8px"><div style="font-size:15px;font-weight:640">'+a.title+'</div><div style="font-size:15px;font-weight:700;font-variant-numeric:tabular-nums">'+a.price+'</div></div><div style="font-size:12.5px;color:var(--text-lo)">'+a.sub+'</div><div style="display:flex;align-items:center;gap:7px"><span style="'+a.avStyle+'">'+a.initials+'</span><span style="font-size:12px;color:var(--text-mid)">'+a.by+'</span><span style="margin-left:auto;font-size:11.5px;color:var(--rightsforge)">licensed '+a.licenses+'×</span></div><button data-click="'+A(a.onLicense)+'" style="height:36px;border-radius:8px;border:none;background:var(--rightsforge);color:#04120d;font-weight:700;font-size:13px;cursor:pointer;margin-top:2px">License · '+a.price+'</button></div></div>'; }).join('')+'</div>'+
+      '<div style="display:grid;gap:16px;grid-template-columns:1fr;margin-top:24px"><div style="background:var(--bg-2);border:1px solid var(--line);border-radius:14px;padding:20px"><b style="font-size:14px">Automatic royalty split — “Umber” · £39</b><div style="display:flex;flex-direction:column;gap:12px;margin-top:14px"><div><div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:5px"><span>Ivo Lindqvist · creator</span><b>70% · £27.30</b></div><div style="height:7px;border-radius:999px;background:var(--bg-0);overflow:hidden"><span style="display:block;height:100%;width:70%;background:var(--rightsforge);border-radius:999px"></span></div></div><div><div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:5px"><span>Studio Kestrel · collaborator</span><b>20% · £7.80</b></div><div style="height:7px;border-radius:999px;background:var(--bg-0);overflow:hidden"><span style="display:block;height:100%;width:20%;background:var(--filmcrew);border-radius:999px"></span></div></div><div><div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:5px"><span>CreativeOS · platform</span><b>10% · £3.90</b></div><div style="height:7px;border-radius:999px;background:var(--bg-0);overflow:hidden"><span style="display:block;height:100%;width:10%;background:var(--text-lo);border-radius:999px"></span></div></div></div></div></div>'+
+      '<div style="background:var(--bg-1);border:1px solid var(--line);border-left:3px solid var(--rightsforge);border-radius:8px;padding:12px 15px;font-size:13px;color:var(--text-mid);margin-top:22px">🔗 <b style="color:var(--text-hi)">Cross-product loop:</b> a license emits <span style="font-family:var(--font-mono);font-size:12px;color:var(--accent-hi)">asset.licensed</span> — royalties split automatically and it lands on the seller’s FrameVault.</div>'
+      ):(
+      '<p style="color:var(--text-mid);margin:0 0 16px;font-size:14.5px">Publish scripts, pilots, novels and comics. Protected previews, clear deal terms, provenance on every option.</p>'+
+      '<div style="display:flex;gap:8px;flex-wrap:wrap;margin:0 0 20px">'+V.sfTabs.map(function(t){ return '<button data-click="'+A(t.onClick)+'" style="'+t.style+'">'+t.label+'</button>'; }).join('')+'</div>'+
+      '<div style="'+V.forgeGridStyle+'">'+V.sfList.map(function(i){ return '<div style="background:var(--bg-2);border:1px solid var(--line);border-radius:14px;overflow:hidden;display:flex;flex-direction:column"><div style="aspect-ratio:16/9;position:relative;'+i.cover+'"><span style="'+i.statusStyle+'">'+i.status+'</span><span style="position:absolute;left:12px;bottom:11px;font-size:10.5px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:rgba(255,255,255,.85)">'+i.type+'</span></div><div style="padding:16px;display:flex;flex-direction:column;gap:10px;flex:1"><div style="font-size:17px;font-weight:650;letter-spacing:-.01em">'+i.title+'</div><p style="font-size:13.5px;color:var(--text-mid);margin:0;line-height:1.5">'+i.log+'</p><div style="display:flex;align-items:center;gap:8px"><span style="'+i.avStyle+'">'+i.initials+'</span><span style="font-size:12.5px;color:var(--text-lo)">'+i.by+'</span><span style="margin-left:auto;font-size:12px;color:var(--text-lo)">👁 '+i.views+' · ☆ '+i.bookmarks+'</span></div><div style="display:flex;gap:9px;margin-top:2px"><button data-click="'+A(i.onOption)+'" style="flex:1;height:36px;border-radius:8px;border:none;background:var(--rightsforge);color:#1a0f04;font-weight:700;font-size:13px;cursor:pointer">Option / license</button><button data-click="'+A(i.onRead)+'" style="height:36px;padding:0 14px;border-radius:8px;border:1px solid var(--line);background:transparent;color:var(--text-mid);font-weight:600;font-size:13px;cursor:pointer">Preview</button></div></div></div>'; }).join('')+'</div>'+
+      '<div style="background:var(--bg-1);border:1px solid var(--line);border-left:3px solid var(--rightsforge);border-radius:8px;padding:12px 15px;font-size:13px;color:var(--text-mid);margin-top:22px">🔗 <b style="color:var(--text-hi)">Cross-product loop:</b> optioning a listing emits <span style="font-family:var(--font-mono);font-size:12px;color:var(--accent-hi)">ip.optioned</span> — it lands on the writer’s FrameVault and can spin up a real project in FilmCrew + OTT Studio.</div>'
+      ))+'</div>';
+    }
+    else if(V.isStack){
+      screen=
+      '<div style="max-width:1000px;margin:0 auto;padding:28px 30px 90px"><div style="font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--creatorstack);font-weight:700;margin-bottom:6px">CreatorStack · Competitions</div><h1 style="font-size:24px;letter-spacing:-.02em;font-weight:660;margin:0">Win the brief, get funded</h1><p style="color:var(--text-mid);margin:5px 0 0;font-size:14.5px">Brands post challenges; winning concepts become funded productions in FilmCrew and OTT Studio.</p>'+
+      '<div style="background:linear-gradient(120deg,rgba(242,107,29,.16),var(--bg-2));border:1px solid var(--line);border-radius:16px;overflow:hidden;margin:22px 0"><div style="padding:22px 24px"><div style="display:flex;align-items:center;gap:9px;flex-wrap:wrap"><span style="font-size:11px;font-weight:700;color:var(--creatorstack);background:rgba(242,107,29,.14);border:1px solid rgba(242,107,29,.34);padding:3px 9px;border-radius:999px">Featured · closes in 2 days</span></div><h2 style="font-size:20px;font-weight:660;margin:12px 0 6px;letter-spacing:-.01em">“Neon Dusk” — brand challenge</h2><p style="color:var(--text-mid);font-size:14px;margin:0;max-width:60ch">A 30-second brand film for a synthwave energy drink. Nighttime, neon, motion. Winner is funded into a full production with a real crew.</p><div style="display:flex;gap:24px;flex-wrap:wrap;margin-top:16px"><div><div style="font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--text-lo);font-weight:600">Prize</div><div style="font-size:20px;font-weight:700">£5,000</div></div><div><div style="font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--text-lo);font-weight:600">Entries</div><div style="font-size:20px;font-weight:700">87</div></div><div><div style="font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--text-lo);font-weight:600">Judging</div><div style="font-size:13px;color:var(--text-mid);max-width:22ch">40% concept · 40% craft · 20% community vote</div></div></div><button data-click="'+A(V.toastEnter)+'" style="height:40px;padding:0 20px;border-radius:8px;border:none;background:var(--creatorstack);color:#1f0810;font-weight:700;cursor:pointer;margin-top:18px">Enter challenge</button></div></div>'+
+      '<div style="display:grid;grid-template-columns:1fr;gap:24px"><div><h2 style="font-size:16px;font-weight:620;margin:0 0 14px">Open challenges</h2><div style="'+V.stackGridStyle+'">'+V.challenges.map(function(c){ return '<div data-click="'+A(c.onOpen)+'" '+hv('border-color:color-mix(in srgb,var(--creatorstack) 40%,var(--line));transform:translateY(-3px)')+' style="background:var(--bg-2);border:1px solid var(--line);border-radius:14px;overflow:hidden;cursor:pointer;transition:.16s"><div style="aspect-ratio:16/9;position:relative;'+c.cover+'"><span style="position:absolute;top:10px;right:10px;font-size:11px;font-weight:700;background:rgba(8,9,11,.66);backdrop-filter:blur(6px);color:#fff;padding:3px 9px;border-radius:999px;border:1px solid rgba(255,255,255,.14)">'+c.daysLeft+'d left</span></div><div style="padding:14px"><div style="font-size:14.5px;font-weight:640">'+c.title+'</div><div style="font-size:12.5px;color:var(--text-lo);margin-top:2px">'+c.by+'</div><div style="display:flex;align-items:center;justify-content:space-between;margin-top:10px"><b style="font-size:15px">'+c.prize+'</b><span style="font-size:12px;color:var(--text-lo)">'+c.entries+' entries</span></div></div></div>'; }).join('')+'</div></div>'+
+      '<div><h2 style="font-size:16px;font-weight:620;margin:0 0 14px">Leaderboard</h2><div style="background:var(--bg-2);border:1px solid var(--line);border-radius:14px;padding:6px 16px">'+V.leaders.map(function(l){ return '<div style="display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid var(--line)"><span style="width:22px;font-size:14px;font-weight:700;color:var(--creatorstack);font-variant-numeric:tabular-nums">'+l.rank+'</span><span style="'+l.avStyle+'">'+l.initials+'</span><div style="flex:1;min-width:0"><div style="font-size:13.5px;font-weight:600">'+l.name+'</div><div style="font-size:12px;color:var(--text-lo)">'+l.role+'</div></div><b style="font-size:14px;font-variant-numeric:tabular-nums">'+l.score+'</b></div>'; }).join('')+'</div></div></div></div>';
+    }
+    else if(V.isStudio){
+      screen=
+      '<div style="max-width:1100px;margin:0 auto;padding:28px 30px 90px"><div style="font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--studio);font-weight:700;margin-bottom:6px">OTT Studio · Workspace</div><h1 style="font-size:24px;letter-spacing:-.02em;font-weight:660;margin:0">“Halcyon” cut</h1><p style="color:var(--text-mid);margin:5px 0 0;font-size:14.5px">The production workspace — tasks, assets, and AI orchestration with provenance of everything AI touched.</p>'+
+      '<h2 style="font-size:15px;font-weight:620;margin:24px 0 12px">Production board</h2><div style="'+V.boardStyle+'">'+V.boardCols.map(function(col){ return '<div style="background:var(--bg-1);border:1px solid var(--line);border-radius:12px;padding:12px;min-height:120px"><div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;font-size:12.5px;font-weight:600;color:var(--text-mid)"><span style="'+col.dotStyle+'"></span>'+col.name+'<span style="margin-left:auto;font-size:11px;color:var(--text-lo);background:var(--bg-3);border-radius:999px;padding:1px 8px">'+col.count+'</span></div>'+col.tasks.map(function(t){ return '<div data-click="'+A(t.onClick)+'" '+hv('border-color:var(--line-2)')+' style="background:var(--bg-2);border:1px solid var(--line);border-radius:8px;padding:12px;margin-bottom:9px;cursor:pointer"><div style="font-size:13.5px;font-weight:600">'+t.t+'</div><div style="font-size:12px;color:var(--text-lo);margin-top:5px">'+t.m+'</div></div>'; }).join('')+'</div>'; }).join('')+'</div>'+
+      '<div style="display:grid;gap:20px;grid-template-columns:1fr;margin-top:26px"><div style="background:var(--bg-2);border:1px solid var(--line);border-radius:14px;padding:18px 20px"><div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px"><b style="font-size:14px">AI jobs</b><span style="font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--text-lo);font-weight:600">Mechanical work · disclosed</span></div>'+V.aiJobs.map(function(j){ return '<div style="display:flex;gap:12px;align-items:center;padding:12px 0;border-bottom:1px solid var(--line)"><span style="width:34px;height:34px;border-radius:9px;background:var(--accent-dim);color:var(--accent-hi);display:grid;place-items:center;font-size:15px;flex:0 0 auto">'+j.icon+'</span><div style="flex:1;min-width:0"><div style="font-size:13.5px;font-weight:600">'+j.t+'</div><div style="font-size:12.5px;color:var(--text-lo);margin-top:2px">'+j.s+'</div></div><span style="'+j.badgeStyle+'">'+j.status+'</span></div>'; }).join('')+'</div>'+
+      '<div style="background:var(--bg-2);border:1px solid var(--line);border-radius:14px;padding:18px 20px"><div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px"><b style="font-size:14px">Asset tray</b><span data-click="'+A(V.goRights)+'" style="font-size:12px;color:var(--accent-hi);cursor:pointer">Import from RightsForge</span></div><div style="display:flex;gap:12px;overflow-x:auto;padding-bottom:4px">'+V.studioAssets.map(function(a){ return '<div data-click="'+A(a.onClick)+'" style="width:110px;height:70px;border-radius:9px;flex:0 0 auto;cursor:pointer;border:1px solid var(--line);'+a.cover+'"></div>'; }).join('')+'</div></div></div>'+
+      '<div style="background:var(--bg-1);border:1px solid var(--line);border-left:3px solid var(--studio);border-radius:8px;padding:12px 15px;font-size:13px;color:var(--text-mid);margin-top:22px">🔗 <b style="color:var(--text-hi)">Cross-product loop:</b> publishing here emits <span style="font-family:var(--font-mono);font-size:12px;color:var(--accent-hi)">project.published</span> — it stamps provenance, indexes to ⌘K search, and lands on your FrameVault.</div></div>';
+    }
+    else if(V.isMsg){
+      var atv=V.activeThread;
+      screen=
+      '<div style="'+V.msgWrapStyle+'"><div style="border-right:1px solid var(--line);padding:16px 12px;overflow-y:auto"><h1 style="font-size:18px;font-weight:640;margin:4px 8px 14px">Messages</h1>'+V.threads.map(function(t){ return '<div data-click="'+A(t.onClick)+'" style="'+t.rowStyle+'"><span style="'+t.avStyle+'">'+t.initials+'</span><div style="flex:1;min-width:0"><div style="display:flex;justify-content:space-between;gap:8px"><b style="font-size:13.5px">'+t.name+'</b><span style="font-size:11px;color:var(--text-lo)">'+t.time+'</span></div><div style="font-size:12.5px;color:var(--text-mid);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+t.last+'</div></div>'+(t.unread?'<span style="width:8px;height:8px;border-radius:50%;background:var(--accent);flex:0 0 auto"></span>':'')+'</div>'; }).join('')+'</div>'+
+      '<div style="display:flex;flex-direction:column;height:100%;min-height:0"><div style="display:flex;align-items:center;gap:11px;padding:14px 18px;border-bottom:1px solid var(--line);flex:0 0 auto"><span style="'+atv.avStyle+'">'+atv.initials+'</span><div><b style="font-size:14px">'+atv.name+'</b><div style="font-size:12px;color:var(--text-lo)">'+atv.role+' · usually replies in an hour</div></div></div><div style="flex:1;overflow-y:auto;padding:18px 18px 8px;min-height:200px">'+atv.msgs.map(function(m){ return '<div style="'+m.rowStyle+'"><div style="'+m.bubbleStyle+'">'+m.text+'</div></div>'; }).join('')+'</div><div style="display:flex;gap:10px;padding:14px 18px;border-top:1px solid var(--line);flex:0 0 auto"><input data-focus="msg" value="'+esc(V.msgDraft)+'" data-input="'+A(V.onMsgDraft)+'" data-key="'+A(V.onMsgKey)+'" placeholder="Message…" style="flex:1;height:40px;background:var(--bg-0);border:1px solid var(--line);border-radius:10px;padding:0 14px;color:var(--text-hi);outline:none;font-size:14px" /><button data-click="'+A(V.sendMsg)+'" '+hv('background:var(--accent-hi)')+' style="height:40px;padding:0 18px;border-radius:10px;border:none;background:var(--accent);color:#fff;font-weight:600;cursor:pointer">Send</button></div></div></div>';
+    }
+    else if(V.isSettings){
+      screen=
+      '<div style="max-width:720px;margin:0 auto;padding:28px 30px 90px"><div style="font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--text-lo);font-weight:700;margin-bottom:6px">Account</div><h1 style="font-size:24px;letter-spacing:-.02em;font-weight:660;margin:0">Settings</h1><p style="color:var(--text-mid);margin:5px 0 0;font-size:14.5px">One account across every product — profile, wallet, notifications and permissions.</p>'+
+      '<div style="display:flex;flex-direction:column;gap:12px;margin-top:24px">'+V.setSections.map(function(x){ return '<div data-click="'+A(x.onClick)+'" '+hv('border-color:var(--line-2)')+' style="display:flex;align-items:center;gap:14px;background:var(--bg-2);border:1px solid var(--line);border-radius:12px;padding:16px 18px;cursor:pointer"><span style="'+x.iconStyle+'">'+x.icon+'</span><div style="flex:1"><div style="font-size:14.5px;font-weight:620">'+x.t+'</div><div style="font-size:13px;color:var(--text-lo);margin-top:2px">'+x.d+'</div></div><span style="color:var(--text-lo);font-size:18px">›</span></div>'; }).join('')+'</div>'+
+      '<div style="margin-top:24px;display:flex;align-items:center;justify-content:space-between;background:var(--bg-2);border:1px solid var(--line);border-radius:12px;padding:16px 18px"><div><div style="font-size:14px;font-weight:600">Signed in as OTT</div><div style="font-size:12.5px;color:var(--text-lo)">@ott · one identity, six products</div></div><button data-click="'+A(V.toastSignout)+'" style="height:36px;padding:0 15px;border-radius:8px;border:1px solid var(--line);background:transparent;color:var(--err);font-weight:600;font-size:13px;cursor:pointer">Sign out</button></div></div>';
+    }
+
+    var main = '<main style="'+V.paneStyle+'"><div style="'+V.paneKey+'">'+screen+'</div></main>';
+
+    var mobileBottom = V.compact ?
+      '<nav style="position:fixed;bottom:0;left:0;right:0;height:58px;background:color-mix(in srgb,var(--bg-1) 92%,transparent);backdrop-filter:blur(12px);border-top:1px solid var(--line);display:flex;align-items:center;justify-content:space-around;z-index:30">'+
+      V.mobileNav.map(function(m){ return '<button data-click="'+A(m.onClick)+'" style="'+m.style+'"><span style="font-size:19px">'+m.icon+'</span><small style="font-size:9.5px;font-weight:600">'+m.label+'</small></button>'; }).join('')+
+      '</nav>' : '';
+
+    /* ---- overlays ---- */
+    var overlays='';
+    if(V.cmd){
+      overlays+=
+      '<div data-click="'+A(V.closeCmd)+'" style="position:fixed;inset:0;background:rgba(4,5,7,.66);backdrop-filter:blur(3px);z-index:50;animation:fadein .15s"></div>'+
+      '<div style="position:fixed;z-index:51;top:13vh;left:50%;transform:translateX(-50%);width:min(600px,92vw);background:var(--bg-1);border:1px solid var(--line);border-radius:18px;box-shadow:0 20px 60px rgba(0,0,0,.6);overflow:hidden;animation:rise .18s ease"><div style="display:flex;align-items:center;gap:11px;padding:15px 18px;border-bottom:1px solid var(--line)"><span style="color:var(--text-lo)">⌕</span><input data-focus="cmd" value="'+esc(V.q)+'" data-input="'+A(V.onCmdInput)+'" placeholder="Search people, projects, IP, assets, challenges…" style="flex:1;background:transparent;border:none;outline:none;color:var(--text-hi);font-size:16px" /><span style="font-family:var(--font-mono);font-size:11px;color:var(--text-lo);border:1px solid var(--line);border-radius:5px;padding:1px 6px">esc</span></div><div style="max-height:52vh;overflow-y:auto;padding:8px">'+
+      (V.cmdEmpty?'<div style="padding:26px;text-align:center;color:var(--text-lo);font-size:14px">No matches. One index spans every product.</div>':'')+
+      V.cmdGroups.map(function(g){ return '<div style="margin:6px 8px 4px;font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--text-lo);font-weight:700">'+g.prod+'</div>'+g.items.map(function(i){ return '<div data-click="'+A(i.onClick)+'" '+hv('background:var(--accent-dim)')+' style="display:flex;align-items:center;gap:11px;padding:10px 11px;border-radius:8px;cursor:pointer"><span style="'+i.tyStyle+'">'+i.ty+'</span><span style="flex:1;font-size:14px;color:var(--text-hi)">'+i.t+' <small style="color:var(--text-lo)">· '+i.s+'</small></span><span style="margin-left:auto;font-size:10px;text-transform:uppercase;letter-spacing:.06em;font-weight:700;color:'+i.h+'">'+i.type+'</span></div>'; }).join(''); }).join('')+
+      '</div></div>';
+    }
+    if(V.notifOpen){
+      overlays+=
+      '<div data-click="'+A(V.closeDrops)+'" style="position:fixed;inset:0;z-index:44"></div>'+
+      '<div style="position:fixed;top:52px;right:120px;width:340px;background:var(--bg-1);border:1px solid var(--line);border-radius:12px;box-shadow:0 16px 44px rgba(0,0,0,.55);z-index:45;overflow:hidden;animation:rise .16s ease"><div style="display:flex;align-items:center;justify-content:space-between;padding:13px 15px;border-bottom:1px solid var(--line)"><b style="font-size:14px">Notifications</b><a data-click="'+A(V.markRead)+'" style="font-size:12px;color:var(--accent-hi);cursor:pointer">Mark all read</a></div><div style="max-height:360px;overflow-y:auto">'+
+      V.notifs.map(function(n){ return '<div data-click="'+A(n.onClick)+'" style="'+n.rowStyle+'"><span style="'+n.dotStyle+'"></span><div><div style="font-size:13px"><span style="font-weight:700;text-transform:uppercase;font-size:10px;letter-spacing:.05em;color:'+n.h+'">'+n.prod+'</span> · <span style="color:var(--text-mid)">'+n.txt+'</span></div><div style="font-size:11.5px;color:var(--text-lo);margin-top:3px">'+n.t+'</div></div></div>'; }).join('')+
+      '</div></div>';
+    }
+    if(V.pmenuOpen){
+      overlays+=
+      '<div data-click="'+A(V.closeDrops)+'" style="position:fixed;inset:0;z-index:44"></div>'+
+      '<div style="position:fixed;top:52px;right:14px;width:280px;background:var(--bg-1);border:1px solid var(--line);border-radius:12px;box-shadow:0 16px 44px rgba(0,0,0,.55);z-index:45;overflow:hidden;animation:rise .16s ease"><div style="padding:15px;border-bottom:1px solid var(--line)"><div style="font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--text-lo);font-weight:700;margin-bottom:6px">Wallet balance</div><div style="font-size:24px;font-weight:700;letter-spacing:-.02em;font-variant-numeric:tabular-nums">£3,412.00</div></div>'+
+      V.pmenuItems.map(function(m){ return '<div data-click="'+A(m.onClick)+'" '+hv('background:var(--bg-2);color:var(--text-hi)')+' style="display:flex;align-items:center;gap:10px;padding:11px 15px;cursor:pointer;font-size:13.5px;color:var(--text-mid)">'+m.label+'</div>'; }).join('')+
+      '</div>';
+    }
+    if(V.commentsPost){
+      overlays+=
+      '<div data-click="'+A(V.closeComments)+'" style="position:fixed;inset:0;background:rgba(4,5,7,.6);backdrop-filter:blur(2px);z-index:52;animation:fadein .15s"></div>'+
+      '<div style="'+V.commentsSheetStyle+'"><div style="display:flex;align-items:center;justify-content:space-between;padding:16px 18px;border-bottom:1px solid var(--line)"><b style="font-size:15px">Comments</b><button data-click="'+A(V.closeComments)+'" style="background:none;border:none;color:var(--text-lo);font-size:20px;cursor:pointer">✕</button></div><div style="flex:1;overflow-y:auto;padding:8px 18px">'+
+      V.comments.map(function(c){ return '<div style="display:flex;gap:11px;padding:12px 0;border-bottom:1px solid var(--line)"><span style="'+c.avStyle+'">'+c.initials+'</span><div style="flex:1"><div style="font-size:13.5px"><b>'+c.name+'</b> <span style="color:var(--text-lo);font-size:12px">· '+c.time+'</span></div><div style="font-size:13.5px;color:var(--text-mid);margin-top:2px">'+c.text+'</div></div></div>'; }).join('')+
+      '</div><div style="display:flex;gap:10px;padding:14px 18px;border-top:1px solid var(--line)"><input data-focus="draft" value="'+esc(V.draft)+'" data-input="'+A(V.onDraft)+'" data-key="'+A(V.onDraftKey)+'" placeholder="Add a comment…" style="flex:1;height:38px;background:var(--bg-0);border:1px solid var(--line);border-radius:8px;padding:0 12px;color:var(--text-hi);outline:none;font-size:14px" /><button data-click="'+A(V.postComment)+'" '+hv('background:var(--accent-hi)')+' style="height:38px;padding:0 16px;border-radius:8px;border:none;background:var(--accent);color:#fff;font-weight:600;cursor:pointer">Post</button></div></div>';
+    }
+    if(V.toastMsg){
+      overlays+='<div style="position:fixed;bottom:26px;left:50%;transform:translateX(-50%);background:var(--bg-3);border:1px solid var(--line);color:var(--text-hi);padding:11px 18px;border-radius:8px;font-size:13.5px;box-shadow:0 12px 40px rgba(0,0,0,.5);z-index:60;animation:rise .22s ease">'+V.toastMsg+'</div>';
+    }
+
+    return '<div style="'+V.appStyle+'">'+brand+bar+rail+main+mobileBottom+'</div>'+overlays;
+  }
+
+  /* ---- wiring + render ---- */
+  function wire(){
+    root.querySelectorAll('[data-click]').forEach(function(el){ el.addEventListener('click',function(e){ H[+el.getAttribute('data-click')](e); }); });
+    root.querySelectorAll('[data-input]').forEach(function(el){ el.addEventListener('input',function(e){ H[+el.getAttribute('data-input')](e); }); });
+    root.querySelectorAll('[data-key]').forEach(function(el){ el.addEventListener('keydown',function(e){ H[+el.getAttribute('data-key')](e); }); });
+    root.querySelectorAll('[data-wheel]').forEach(function(el){ el.addEventListener('wheel',function(e){ H[+el.getAttribute('data-wheel')](e); },{passive:true}); });
+    root.querySelectorAll('[data-tstart]').forEach(function(el){ el.addEventListener('touchstart',function(e){ H[+el.getAttribute('data-tstart')](e); },{passive:true}); });
+    root.querySelectorAll('[data-tend]').forEach(function(el){ el.addEventListener('touchend',function(e){ H[+el.getAttribute('data-tend')](e); },{passive:true}); });
+    root.querySelectorAll('[data-hover]').forEach(function(el){
+      var base=el.getAttribute('style')||''; var h=decodeURIComponent(el.getAttribute('data-hover'));
+      el.addEventListener('mouseenter',function(){ el.setAttribute('style',base+';'+h); });
+      el.addEventListener('mouseleave',function(){ el.setAttribute('style',base); });
+    });
+  }
+
+  var V;
+  function render(){
+    var a=document.activeElement, fid=(a&&a.getAttribute)?a.getAttribute('data-focus'):null;
+    var ss=0,se=0; if(fid){ try{ ss=a.selectionStart; se=a.selectionEnd; }catch(e){} }
+    H=[]; V=renderVals(); root.innerHTML=view(V); wire();
+    if(fid){ var el=root.querySelector('[data-focus="'+fid+'"]'); if(el){ el.focus(); try{ el.setSelectionRange(ss,se); }catch(e){} } }
+  }
+
+  /* ---- init ---- */
+  document.body.dataset.theme=state.theme;
+  window.addEventListener('resize',function(){ setState({w:window.innerWidth}); });
+  document.addEventListener('keydown',function(e){
+    if((e.metaKey||e.ctrlKey)&&e.key.toLowerCase()==='k'){ e.preventDefault(); setState(function(s){return {cmd:!s.cmd,q:''};}); }
+    else if(e.key==='Escape'){ setState({cmd:false,notif:false,pmenu:false,commentsPost:null}); }
+  });
+  render();
+})();
+</script>
+</body>
+</html>

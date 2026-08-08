@@ -1,0 +1,230 @@
+/* FilmCrew — OTT ecosystem theme (accent: teal). One global palette, one accent per app. */
+:root{
+  --bg:#FAFAF8; --bg-sunk:#F1F1EE; --surface:#FFFFFF; --surface-2:#FFFFFF;
+  --line:#DDDDD7; --line-strong:color-mix(in srgb,#DDDDD7 55%,#111114); --ink:#111114; --ink-soft:#555560; --ink-faint:color-mix(in srgb,#555560 60%,#FAFAF8);
+  --accent:#0891B2; --accent-ink:#FFFFFF; --accent-soft:color-mix(in srgb,var(--accent) 14%,var(--surface)); --accent-line:color-mix(in srgb,var(--accent) 40%,var(--line));
+  --good:#22C55E; --good-soft:color-mix(in srgb,var(--good) 14%,var(--surface)); --warn:#F59E0B; --danger:#DC2626;
+  --shadow:0 1px 2px rgba(20,24,30,.05), 0 8px 28px rgba(20,24,30,.07);
+  --r-sm:8px; --r:12px; --r-lg:18px; --r-pill:999px;
+  --display:"OTT Sans Display","Space Grotesk","Segoe UI",system-ui,sans-serif;
+  --text:"OTT Sans Text","Plus Jakarta Sans","Segoe UI",system-ui,sans-serif;
+  --mono:"OTT Mono","IBM Plex Mono",ui-monospace,Menlo,monospace;
+  --ease:cubic-bezier(.2,.7,.2,1);
+  --ott-signature:#D72638;
+}
+:root[data-theme="dark"]{
+  --bg:#0B0B0D; --bg-sunk:#0B0B0D; --surface:#141417; --surface-2:#1D1D22;
+  --line:#2C2C33; --line-strong:color-mix(in srgb,#2C2C33 60%,#F5F5F4); --ink:#F5F5F4; --ink-soft:#B8B8C0; --ink-faint:#73737D;
+  --accent:#0891B2; --accent-ink:#FFFFFF; --accent-soft:color-mix(in srgb,var(--accent) 18%,var(--surface)); --accent-line:color-mix(in srgb,var(--accent) 45%,var(--line));
+  --good:#22C55E; --good-soft:color-mix(in srgb,var(--good) 18%,var(--surface)); --warn:#F59E0B; --danger:#DC2626;
+  --shadow:0 1px 2px rgba(0,0,0,.3), 0 12px 34px rgba(0,0,0,.45);
+}
+*{box-sizing:border-box}
+body{margin:0; background:var(--bg); color:var(--ink); font-family:var(--text); font-size:15.5px;
+  line-height:1.55; -webkit-font-smoothing:antialiased; transition:background .25s,color .25s}
+@keyframes rise{from{opacity:0; transform:translateY(10px)} to{opacity:1; transform:none}}
+.wrap{animation:rise .32s var(--ease)}
+::selection{background:var(--accent-soft)}
+::-webkit-scrollbar{width:10px; height:10px}
+::-webkit-scrollbar-thumb{background:var(--line-strong); border-radius:8px; border:2px solid var(--bg)}
+::-webkit-scrollbar-thumb:hover{background:var(--ink-faint)}
+a{color:inherit; text-decoration:none}
+h1,h2,h3{font-family:var(--display); font-weight:600; letter-spacing:-.02em; margin:0; line-height:1.15}
+.mono{font-family:var(--mono)} .muted{color:var(--ink-soft)} .faint{color:var(--ink-faint)} .tiny{font-size:.8rem}
+.wrap{max-width:840px; margin:0 auto; padding:0 24px}
+.row{display:flex; gap:12px; align-items:center} .spread{justify-content:space-between} .grow{flex:1} .wrap-w{flex-wrap:wrap}
+
+.nav{position:sticky; top:0; z-index:50; background:color-mix(in srgb,var(--bg) 84%,transparent);
+  backdrop-filter:saturate(1.4) blur(12px); border-bottom:1px solid var(--line)}
+.nav-inner{display:flex; align-items:center; gap:16px; height:60px; position:relative}
+/* Desktop: #navLinks is invisible to layout (display:contents) so its children
+   flex directly inside .nav-inner; `order` restores the original left/right
+   grouping regardless of where they live in markup. Mobile media query below
+   turns it back into a real dropdown container. */
+#navLinks{display:contents}
+.navlink, .nav-external{order:1}
+.nav-inner .grow{order:4}
+.nav-inner > .icon-btn:not(.nav-toggle){order:5}
+.nav-who, .nav-logout-form, .nav-login{order:6}
+.nav-toggle{order:9}
+.brand{display:flex; align-items:center; gap:10px; font-family:var(--display); font-weight:600; font-size:1.05rem}
+.brand .mark{width:24px; height:24px; border-radius:7px; background:var(--accent);
+  box-shadow:inset 0 0 0 2px color-mix(in srgb,var(--accent-ink) 25%,transparent)}
+.brand small{color:var(--ink-faint); font-family:var(--text); font-weight:500; font-size:.72rem; letter-spacing:.04em; text-transform:uppercase}
+.icon-btn{width:38px; height:38px; display:grid; place-items:center; border-radius:var(--r-pill);
+  border:1px solid var(--line); background:var(--surface); color:var(--ink-soft); cursor:pointer}
+.icon-btn:hover{border-color:var(--line-strong); color:var(--ink)}
+.navlink{color:var(--ink-soft); font-weight:500; font-size:.9rem; padding:7px 12px; border-radius:var(--r-pill)}
+.navlink:hover{background:var(--bg-sunk); color:var(--ink)}
+.icon-btn.nav-toggle{display:none}
+
+.eyebrow{font-weight:600; font-size:.72rem; letter-spacing:.12em; text-transform:uppercase; color:var(--accent)}
+.card{background:var(--surface); border:1px solid var(--line); border-radius:var(--r-lg); box-shadow:var(--shadow)}
+.card.pad{padding:22px}
+.hero{background:linear-gradient(120deg, var(--accent-soft), var(--surface)); border:1px solid var(--line);
+  border-radius:var(--r-lg); padding:22px}
+.badge{display:inline-flex; align-items:center; gap:6px; padding:4px 10px; border-radius:var(--r-pill); font-size:.76rem; font-weight:600}
+.badge.open{background:var(--good-soft); color:var(--good)} .badge.filled{background:var(--bg-sunk); color:var(--ink-soft)}
+.badge.fv{background:var(--accent-soft); color:var(--accent)}
+.badge.match{background:var(--accent-soft); color:var(--accent)}
+.dot{width:8px; height:8px; border-radius:50%; background:currentColor; display:inline-block}
+
+.appl{display:flex; gap:14px; align-items:flex-start; padding:16px; border:1px solid var(--line);
+  border-radius:var(--r); background:var(--surface-2)}
+.appl + .appl{margin-top:12px}
+.appl .av{width:44px; height:44px; border-radius:12px; flex:0 0 auto; display:grid; place-items:center;
+  font-family:var(--display); font-weight:700; color:#fff;
+  background:linear-gradient(140deg, hsl(var(--h1, 230) 62% 48%), hsl(var(--h2, 260) 58% 34%))}
+.appl.hired{border-color:var(--accent-line); background:var(--accent-soft)}
+
+.btn{display:inline-flex; align-items:center; justify-content:center; gap:8px; padding:10px 18px;
+  border-radius:var(--r-pill); border:1px solid transparent; font-family:var(--text); font-weight:600;
+  font-size:.9rem; cursor:pointer; transition:background .15s,border-color .15s,transform .06s}
+.btn:active{transform:translateY(1px)}
+.btn-primary{background:var(--accent); color:var(--accent-ink)}
+.btn-primary:hover{background:color-mix(in srgb,var(--accent) 88%,#000)}
+.btn-ghost{background:var(--surface); border-color:var(--line-strong); color:var(--ink)}
+.btn-ghost:hover{border-color:var(--ink-faint)}
+.btn-sm{padding:7px 13px; font-size:.82rem}
+.btn[disabled]{opacity:.5; cursor:not-allowed}
+
+.result{margin-top:18px; border:1px solid var(--accent-line); background:var(--accent-soft);
+  border-radius:var(--r); padding:16px; animation:pop .25s ease}
+.result.plain{border-color:var(--line); background:var(--surface-2)}
+@keyframes pop{from{opacity:0; transform:translateY(8px)} to{opacity:1; transform:none}}
+
+#toasts{position:fixed; bottom:22px; left:50%; transform:translateX(-50%); z-index:200; display:flex; flex-direction:column; gap:8px; align-items:center}
+.toast{background:var(--ink); color:var(--bg); padding:11px 18px; border-radius:var(--r-pill); font-weight:500; font-size:.9rem; box-shadow:var(--shadow); animation:pop .25s ease}
+.toast.ok{background:var(--good); color:#fff} .toast.err{background:var(--danger); color:#fff}
+.note{margin-top:22px; background:var(--surface); border:1px solid var(--line); border-left:3px solid var(--accent);
+  border-radius:var(--r-sm); padding:13px 16px; font-size:.9rem; color:var(--ink-soft)}
+.note b{color:var(--ink)} .hidden{display:none!important}
+footer.foot{color:var(--ink-faint); font-size:.82rem; padding:36px 0 60px; text-align:center}
+
+/* ---- command palette ------------------------------------------------------ */
+.palette-scrim{position:fixed; inset:0; background:rgba(10,10,12,.5); backdrop-filter:blur(2px); z-index:300}
+.palette{
+  position:fixed; z-index:301; top:14vh; left:50%; transform:translateX(-50%);
+  width:min(560px,92vw); background:var(--surface); border:1px solid var(--line);
+  border-radius:var(--r-lg); box-shadow:var(--shadow-lg, var(--shadow)); overflow:hidden;
+  animation:rise .16s var(--ease)
+}
+.palette-input-row{display:flex; align-items:center; gap:10px; padding:14px 16px; border-bottom:1px solid var(--line)}
+.palette-input-row input{flex:1; border:none; outline:none; background:transparent; color:var(--ink); font-size:1rem; font-family:var(--text); padding:0}
+.palette-results{max-height:52vh; overflow-y:auto; padding:6px}
+.palette-empty{padding:22px; text-align:center; color:var(--ink-faint); font-size:.88rem}
+.palette-row{display:flex; align-items:center; gap:10px; padding:10px 12px; border-radius:var(--r-sm); text-decoration:none; color:var(--ink)}
+.palette-row.sel, .palette-row:hover{background:var(--accent-soft)}
+.palette-type{font-size:.68rem; font-weight:700; text-transform:uppercase; letter-spacing:.05em; color:var(--accent); flex:0 0 auto; width:66px}
+.palette-title{font-weight:600; font-size:.92rem}
+.palette-sub{color:var(--ink-faint); font-size:.8rem; margin-left:auto}
+
+/* ---- wider canvas for the board + nav extras ---------------------------- */
+.wrap.wide{max-width:1140px}
+.navlinks{display:flex; gap:2px}
+.navlink.on{background:var(--accent-soft); color:var(--accent)}
+.who{font-size:.84rem; color:var(--ink-soft); font-weight:600; white-space:nowrap}
+.who .tick{color:var(--good)}
+.btn-quiet{background:transparent; color:var(--ink-soft); padding:8px 12px}
+.btn-quiet:hover{background:var(--bg-sunk); color:var(--ink)}
+
+/* ---- stat tiles --------------------------------------------------------- */
+.stats{display:grid; gap:14px; grid-template-columns:repeat(2,1fr); margin:22px 0}
+@media(min-width:720px){.stats{grid-template-columns:repeat(4,1fr)}}
+.stat{background:var(--surface); border:1px solid var(--line); border-radius:var(--r); padding:15px 17px}
+.stat .n{font-family:var(--display); font-weight:600; font-size:1.7rem; letter-spacing:-.02em; font-variant-numeric:tabular-nums}
+.stat .l{font-size:.72rem; letter-spacing:.1em; text-transform:uppercase; color:var(--ink-faint); font-weight:600; margin-top:2px}
+
+/* ---- pipeline board ----------------------------------------------------- */
+.board{display:grid; gap:16px; grid-template-columns:1fr; align-items:start}
+@media(min-width:760px){.board{grid-template-columns:repeat(2,1fr)}}
+@media(min-width:1060px){.board{grid-template-columns:repeat(4,1fr)}}
+.col{background:var(--bg-sunk); border:1px solid var(--line); border-radius:var(--r); padding:13px; min-height:110px}
+.col h3{font-size:.8rem; letter-spacing:.08em; text-transform:uppercase; color:var(--ink-soft); display:flex; align-items:center; gap:8px}
+.col h3 .ct{margin-left:auto; background:var(--surface); border:1px solid var(--line); border-radius:var(--r-pill); padding:1px 9px; font-size:.72rem; color:var(--ink-faint)}
+.pcard{display:block; background:var(--surface); border:1px solid var(--line); border-radius:var(--r-sm);
+  overflow:hidden; margin-top:11px; transition:transform .1s, border-color .15s, box-shadow .15s, opacity .15s}
+.pcard:hover{transform:translateY(-2px); border-color:var(--accent-line); box-shadow:var(--shadow)}
+.pcard[draggable="true"]{cursor:grab}
+.pcard.dragging{opacity:.4; cursor:grabbing}
+.col{transition:background .15s, border-color .15s}
+.col.dragover{background:var(--accent-soft); border-color:var(--accent-line); border-style:dashed}
+@keyframes statpulse{0%{color:var(--accent); transform:scale(1.08)} 100%{color:inherit; transform:scale(1)}}
+.stat .n.pulse{animation:statpulse .5s var(--ease)}
+/* Every production gets its own identity, not a gray Trello card — a
+   deterministic two-hue cover derived from its own id (golden-angle
+   spacing keeps consecutive ids visually distinct, never decoration for
+   its own sake: it's a real, stable per-project color, not random paint). */
+.pcard .cov{height:40px; background:linear-gradient(120deg, hsl(var(--h1) 68% 58%), hsl(var(--h2) 62% 46%))}
+.pcard .body{padding:14px}
+.pcard .t{font-family:var(--display); font-weight:600; font-size:1rem}
+.pcard .m{font-size:.8rem; color:var(--ink-faint); margin-top:3px}
+.pcard .tags{display:flex; gap:6px; flex-wrap:wrap; margin-top:10px}
+.col .empty{font-size:.82rem; color:var(--ink-faint); padding:10px 2px}
+
+/* ---- project detail ----------------------------------------------------- */
+.rolecard{margin-top:18px}
+.rolehead{display:flex; align-items:flex-start; justify-content:space-between; gap:14px; flex-wrap:wrap;
+  padding:18px 22px; border-bottom:1px solid var(--line)}
+.rolebody{padding:18px 22px}
+.fee{font-family:var(--display); font-weight:600; font-size:1.15rem; white-space:nowrap}
+
+/* ---- contract stepper --------------------------------------------------- */
+.flow{display:flex; align-items:center; gap:0; flex-wrap:wrap; margin:4px 0 16px}
+.step{display:flex; align-items:center; gap:8px; font-size:.82rem; color:var(--ink-faint); font-weight:600}
+.step .bub{width:24px; height:24px; border-radius:50%; display:grid; place-items:center; font-size:.72rem;
+  border:1.5px solid var(--line-strong); background:var(--surface); color:var(--ink-faint)}
+.step.done .bub{background:var(--good); border-color:var(--good); color:#fff}
+.step.done{color:var(--ink)}
+.step.now .bub{background:var(--accent); border-color:var(--accent); color:var(--accent-ink)}
+.step.now{color:var(--accent)}
+.flow .bar{width:26px; height:2px; background:var(--line-strong); margin:0 8px; border-radius:2px}
+.flow .bar.done{background:var(--good)}
+
+/* ---- talent directory --------------------------------------------------- */
+.tgrid{display:grid; gap:14px; grid-template-columns:1fr}
+@media(min-width:640px){.tgrid{grid-template-columns:repeat(2,1fr)}}
+@media(min-width:980px){.tgrid{grid-template-columns:repeat(3,1fr)}}
+.tcard{background:var(--surface); border:1px solid var(--line); border-radius:var(--r); padding:17px; display:flex; flex-direction:column; gap:9px}
+.tcard .top{display:flex; gap:12px; align-items:center}
+.tcard .av{width:42px; height:42px; border-radius:12px; flex:0 0 auto; display:grid; place-items:center;
+  font-family:var(--display); font-weight:700; color:#fff;
+  background:linear-gradient(140deg, hsl(var(--h1) 62% 48%), hsl(var(--h2) 58% 34%))}
+.tcard .foot{margin-top:auto; display:flex; align-items:center; justify-content:space-between; gap:10px; padding-top:6px}
+
+/* ---- forms -------------------------------------------------------------- */
+input,textarea,select{width:100%; font-family:var(--text); font-size:.95rem; color:var(--ink);
+  background:var(--surface-2); border:1px solid var(--line-strong); border-radius:var(--r); padding:11px 13px}
+input:focus,textarea:focus,select:focus{outline:none; border-color:var(--accent); box-shadow:0 0 0 3px var(--accent-soft)}
+textarea{resize:vertical; min-height:70px}
+label.fld{display:block} label.fld>span{display:block; font-weight:600; font-size:.8rem; color:var(--ink-soft); margin-bottom:6px}
+.fgrid{display:grid; gap:13px; grid-template-columns:1fr 1fr}
+@media(max-width:620px){.fgrid{grid-template-columns:1fr}}
+.stack>*+*{margin-top:13px}
+details.newform{margin-top:18px}
+details.newform summary{cursor:pointer; font-weight:600; color:var(--accent); font-size:.9rem; padding:6px 0}
+
+/* ---- adaptive nav (Productions/Talent/FrameVault-link/who/logout never
+   wrapped, so the whole site overflowed horizontally on a phone) ---------- */
+@media(max-width:680px){
+  .brand small{display:none}
+  .icon-btn.nav-toggle{display:grid; place-items:center}
+  #navLinks{
+    display:none; position:absolute; top:calc(100% + 1px); left:0; right:0;
+    flex-direction:column; gap:2px; padding:10px;
+    background:var(--surface); border:1px solid var(--line); border-top:none;
+    border-radius:0 0 var(--r) var(--r); box-shadow:var(--shadow)
+  }
+  #navLinks.open{display:flex; animation:rise .18s var(--ease)}
+  #navLinks .navlink, #navLinks .nav-external{order:initial; padding:11px 13px; border-radius:var(--r-sm)}
+  #navLinks .nav-who, #navLinks .nav-logout-form, #navLinks .nav-login{order:initial}
+}
+
+/* ---- OTT motion & accessibility standard --------------------------------- */
+:focus-visible{outline:2px solid var(--accent); outline-offset:2px; border-radius:4px}
+@media (prefers-reduced-motion: reduce){
+  *, *::before, *::after{
+    animation-duration:.001ms!important; animation-iteration-count:1!important;
+    transition-duration:.001ms!important; scroll-behavior:auto!important;
+  }
+}

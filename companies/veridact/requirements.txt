@@ -1,0 +1,20 @@
+Flask==3.1.3
+cryptography>=42
+pyOpenSSL>=24
+c2pa-python>=0.37
+# ^ large wheel (~90MB, bundles a compiled component). If pip's install times
+#   out on a slow/unstable connection, see decisions/0007 for a resumable
+#   `curl -C -` download workaround.
+numpy>=2
+# ^ pinned explicitly: trustmark's own metadata requires numpy<2.0.0, which is
+#   overly conservative (verified against numpy 2.5.1 — see decisions/0009 §9)
+#   and would otherwise downgrade numpy for every other package in this
+#   environment that needs numpy>=2. Keep this line ABOVE trustmark in this
+#   file so pip resolves numpy first.
+trustmark>=0.9
+# ^ Adobe's official Content Authenticity Initiative watermark library —
+#   soft-binding companion to c2pa-python (decisions/0009). Pulls in a
+#   PyTorch-class dependency chain and downloads model weights on first use
+#   (~200s cold, ~17s once cached with loadRemover/loadBBoxDetector disabled —
+#   see app/watermark.py). Model should be loaded once at server startup, not
+#   per-request.

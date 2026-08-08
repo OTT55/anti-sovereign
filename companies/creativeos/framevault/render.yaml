@@ -1,0 +1,23 @@
+# Render.com blueprint — one-click deploy for FrameVault.
+# In Render: New → Blueprint → point at this repo. Render reads this file.
+services:
+  - type: web
+    name: framevault
+    runtime: python
+    # this service lives in a subfolder of the repo
+    rootDir: companies/creativeos/framevault
+    plan: free
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn app:app --bind 0.0.0.0:$PORT --workers 2
+    envVars:
+      # A stable signing secret so sessions + provenance signatures survive redeploys.
+      # Render generates a strong value once and keeps it.
+      - key: FV_SECRET
+        generateValue: true
+      # Persist the SQLite file on a mounted disk so data isn't wiped on each deploy.
+      - key: FV_DB
+        value: /var/data/framevault.db
+    disk:
+      name: framevault-data
+      mountPath: /var/data
+      sizeGB: 1

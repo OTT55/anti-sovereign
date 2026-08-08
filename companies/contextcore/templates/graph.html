@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+{% set active = "home" %}
+{% block title %}{{ title }} — Knowledge Graph — ContextCore{% endblock %}
+{% block body %}
+<a href="{{ back_href }}" class="muted" style="text-decoration:none;font-size:13px">← {{ back_label }}</a>
+<h1 style="margin-top:8px">Knowledge graph</h1>
+<p class="lede">
+  Entities and relationships extracted from this {{ 'document' if '/doc/' in back_href else 'collection' }}
+  by Claude at ingest time — not a bespoke rules engine, the same generative layer that composes
+  answers, pointed at a structured extraction task instead. Layout is a static force-directed
+  render (NetworkX); dragging/zooming is a later phase, not this one.
+</p>
+
+{% if svg %}
+<div class="card graph-card">
+  {{ svg|safe }}
+</div>
+
+<h2 class="section">Entities ({{ nodes|length }})</h2>
+<div class="doc-list">
+  {% for n in nodes %}
+  <div class="doc-card" style="cursor:default">
+    <div class="dc-title">{{ n.name }}</div>
+    <div class="muted" style="font-size:12px;text-transform:uppercase;letter-spacing:1px">{{ n.type }}</div>
+  </div>
+  {% endfor %}
+</div>
+
+{% if edges %}
+<h2 class="section">Relationships ({{ edges|length }})</h2>
+<div class="card">
+  {% for e in edges %}
+  <div class="rel-row"><span class="mono">{{ e.source[0] }}</span> <span class="muted">— {{ e.label }} →</span> <span class="mono">{{ e.target[0] }}</span></div>
+  {% endfor %}
+</div>
+{% endif %}
+{% else %}
+<div class="card">
+  <p class="muted" style="margin:0">
+    No entities extracted yet. This needs <span class="mono">ANTHROPIC_API_KEY</span> set with
+    available credit at ingest time — see the note on this document/collection's ingest response,
+    or re-ingest once a key is configured.
+  </p>
+</div>
+{% endif %}
+{% endblock %}
+{% block scripts %}
+<style>
+  .graph-card { overflow-x: auto; }
+  .graph-card svg { width: 100%; height: auto; min-width: 600px; display: block; }
+  .rel-row { font-size: 13.5px; padding: 7px 0; border-bottom: 1px solid var(--border); }
+  .rel-row:last-child { border-bottom: none; }
+</style>
+{% endblock %}

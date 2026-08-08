@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>CreativeOS — Home</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/creativeos.css">
+<script>(function(){ try{ var t=localStorage.getItem('ott-theme'); if(!t){ t=matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light'; } document.documentElement.setAttribute('data-theme',t); }catch(e){} })();</script>
+</head>
+<body>
+<!-- CreativeOS home · cross-product feed -->
+<main class="pane" data-view="home">
+  <div class="inner">
+    <div class="phdr">
+      <div>
+        <div class="prod" style="--h:var(--home)"><span class="pdot"></span>Workspace</div>
+        <h1>Good evening, OTT</h1>
+        <p class="sub">Everything happening across your ecosystem, in one stream.</p>
+      </div>
+      <button class="btn sec" data-toast="⌘K opens search across every product">🔍 Quick find</button>
+    </div>
+
+    <div class="grid stats" style="margin-top:22px">
+      <div class="stat"><div class="n">£3.4k</div><div class="l cap">Wallet</div><div class="d">+£420 this month</div></div>
+      <div class="stat"><div class="n">2</div><div class="l cap">Active offers</div><div class="src">FilmCrew</div></div>
+      <div class="stat"><div class="n">4.9</div><div class="l cap">Reputation</div><div class="src">12 reviews</div></div>
+      <div class="stat"><div class="n">3</div><div class="l cap">Deadlines</div><div class="src">this week</div></div>
+    </div>
+
+    <div class="banner" style="--h:var(--home)">◍ <span><b>One feed, six products.</b> This stream only exists because every product publishes to the same event bus — that's the whole platform thesis in one screen.</span></div>
+
+    <section class="blk">
+      <div class="blkhead"><h2>Activity</h2><span class="cap">Across all products</span></div>
+      <div class="rows">
+        <a class="lrow" href="filmcrew.html" style="--h:var(--filmcrew)"><div class="av">🎬</div><div class="grow"><div class="t">New offer — Director of Photography on "Halcyon"</div><div class="m">FilmCrew · £1,200 · from Studio Kestrel · 18m ago</div></div><span class="btn hue sm" style="--h:var(--filmcrew)">Review</span></a>
+        <a class="lrow" href="rightsforge.html" style="--h:var(--rightsforge)"><div class="av">💰</div><div class="grow"><div class="t">Royalty received — "Umber" LUT pack licensed again</div><div class="m">RightsForge · +£28 · 1h ago</div></div><span class="btn sec sm">Wallet</span></a>
+        <a class="lrow" href="creatorstack.html" style="--h:var(--creatorstack)"><div class="av">⏳</div><div class="grow"><div class="t">Deadline soon — "Neon Dusk" brand challenge</div><div class="m">CreatorStack · closes in 2 days · £5,000 prize · 3h ago</div></div><span class="btn sec sm">Open</span></a>
+        <a class="lrow" href="rightsforge.html" style="--h:var(--rightsforge)"><div class="av">📩</div><div class="grow"><div class="t">Inquiry — a producer bookmarked "The Archivist"</div><div class="m">RightsForge · 5h ago</div></div><span class="btn sec sm">View</span></a>
+        <a class="lrow" href="studio.html" style="--h:var(--studio)"><div class="av">🤖</div><div class="grow"><div class="t">AI job finished — proxy transcodes ready for "Halcyon" cut</div><div class="m">OTT Studio · yesterday</div></div><span class="btn sec sm">Open</span></a>
+      </div>
+    </section>
+
+    <section class="blk">
+      <div class="blkhead"><h2>Jump back in</h2></div>
+      <div class="cards c3">
+        <a class="uc" href="framevault.html" style="--h:var(--framevault)"><div class="cover" style="--tb:linear-gradient(135deg,#221a3a,#12101e)"><span class="tagtl">FrameVault</span><span class="ic">◍</span></div><div class="body"><div class="t">Your profile</div><div class="m">4.9 · 7 projects · verified</div></div></a>
+        <a class="uc" href="studio.html" style="--h:var(--studio)"><div class="cover" style="--tb:linear-gradient(135deg,#221a30,#140f1e)"><span class="tagtl">OTT Studio</span><span class="ic">🎞️</span></div><div class="body"><div class="t">"Halcyon" cut</div><div class="m">Editing · 2 AI jobs done</div></div></a>
+        <a class="uc" href="filmcrew.html" style="--h:var(--filmcrew)"><div class="cover" style="--tb:linear-gradient(135deg,#16202e,#0e1620)"><span class="tagtl">FilmCrew</span><span class="ic">🎬</span></div><div class="body"><div class="t">2 open offers</div><div class="m">Review &amp; respond</div></div></a>
+      </div>
+    </section>
+  </div>
+</main>
+<script src="assets/shell.js"></script>
+</body>
+</html>

@@ -1,0 +1,77 @@
+{% extends "base.html" %}
+{% set active = "authenticate" %}
+{% block title %}Veridact — Capture{% endblock %}
+{% block body %}
+<h1>Capture</h1>
+<p class="lede">Veridact opens your camera and signs the frame the instant it's taken.
+There is no file picker here — you never choose the bytes, so generated content
+can't be passed off as a capture. Each capture is bound to a one-time challenge
+Veridact issues seconds beforehand, which is what makes it provably <em>live</em>.</p>
+
+<div id="no-devices" class="empty-callout hidden">
+  <div class="empty-callout-icon" aria-hidden="true">◆</div>
+  <p>No device is enrolled in this browser yet.</p>
+  <a href="/" class="btn">Enrol a device →</a>
+</div>
+
+<div class="card" id="capture-card">
+  <label for="handle">Capturing as</label>
+  <select id="handle"></select>
+
+  <label for="label">Label</label>
+  <input type="text" id="label" placeholder="e.g. street interview, 2026-07-22">
+
+  <div class="viewfinder" id="viewfinder">
+    <video id="preview" playsinline muted></video>
+    <canvas id="frame" class="hidden"></canvas>
+    <div class="flash" id="flash"></div>
+    <div id="camstate" class="viewfinder-state" aria-live="polite">Camera off.</div>
+  </div>
+
+  <div class="shutter-row">
+    <button id="snap" class="shutter-btn" disabled title="Capture & sign" aria-label="Capture and sign"></button>
+  </div>
+  <div class="cam-secondary">
+    <button id="start" class="btn-ghost">Start camera</button>
+    <button id="stop" class="btn-ghost hidden" type="button">Stop camera</button>
+  </div>
+  <div id="err" class="err hidden" role="alert"></div>
+</div>
+
+<div id="result" class="cert hidden">
+  <div class="check-badge">✓</div>
+  <h2>Captured &amp; Signed</h2>
+  <div class="muted" style="font-size:12px">Save the photo below. The code is your proof — you don't need a file for it.</div>
+  <img id="shot" class="shot hidden" alt="the captured frame">
+
+  <button id="download_img" style="width:100%;margin-top:16px">⬇ Save the photo</button>
+
+  <div class="proof-code-box">
+    <div class="k" style="color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:1px">Your proof code</div>
+    <div class="proof-code" id="c_id"></div>
+    <button class="btn-ghost" id="copy_id">Copy code</button>
+    <p class="muted" style="font-size:12px;margin-top:8px">
+      This code is already embedded in the photo above — <a href="/verify">Verify</a> will read
+      it automatically when you upload the photo, so you shouldn't need to paste it. It's here as
+      a fallback for the rare case the photo gets re-saved somewhere that strips that out.
+    </p>
+  </div>
+
+  <details style="margin-top:14px">
+    <summary class="muted" style="font-size:12px;cursor:pointer">Technical details</summary>
+    <div class="kv"><div class="k">Device</div><div class="v" id="c_device"></div></div>
+    <div class="kv"><div class="k">Label</div><div class="v" id="c_label"></div></div>
+    <div class="kv"><div class="k">Media SHA-256</div><div class="v hash" id="c_hash"></div></div>
+    <div class="kv"><div class="k">Captured at (device clock)</div><div class="v" id="c_time"></div></div>
+    <button class="btn-ghost" id="download" style="margin-top:10px">Download full manifest (.json) — optional, for archiving</button>
+  </details>
+</div>
+
+<p class="muted" style="font-size:12px;max-width:62ch">
+  <b>Honest limit:</b> a browser can't tell a real sensor from a virtual camera
+  (e.g. OBS). Veridact proves this was captured live through its capture agent by
+  an enrolled device and hasn't changed since — not that the lens saw the world.
+  Closing that last gap needs a camera whose chip signs on the sensor.
+</p>
+{% endblock %}
+{% block scripts %}<script src="{{ url_for('static', filename='authenticate.js') }}"></script>{% endblock %}

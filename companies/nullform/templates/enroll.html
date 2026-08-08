@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% set active = "enroll" %}
+{% block title %}Nullform — Enrol{% endblock %}
+{% block body %}
+<h1>Enrol an identity</h1>
+<p class="lede">Your browser generates a private key and never sends it anywhere.
+Nullform stores only the matching public key as your identity anchor. From then
+on you prove control of the identity with a zero-knowledge proof — the private
+key never crosses the wire, so there is no shared secret to steal.</p>
+
+<div class="stat-row">
+  <div class="stat"><b>{{ count }}</b><span>IDENTITIES ENROLLED</span></div>
+  <div class="stat"><b>Schnorr / 2048-bit</b><span>MODP GROUP 14</span></div>
+</div>
+
+<div class="card">
+  <label>Handle</label>
+  <input type="text" id="handle" placeholder="e.g. ott">
+  <button id="generate">Generate keypair &amp; enrol</button>
+  <div id="err" class="err hidden"></div>
+</div>
+
+<div id="result" class="cert hidden">
+  <h2>Identity Enrolled</h2>
+  <div class="kv"><div class="k">Identity ID</div><div class="v" id="c_id"></div></div>
+  <div class="kv"><div class="k">Handle</div><div class="v" id="c_handle"></div></div>
+  <div class="kv"><div class="k">Enrolled (UTC)</div><div class="v" id="c_time"></div></div>
+
+  <div class="secret-box">
+    <div class="k" style="color:var(--bad)">⚠ PRIVATE KEY — shown once, stored only by you</div>
+    <div class="v hash" id="c_secret" style="max-height:120px;overflow:auto"></div>
+    <button class="btn-ghost" id="copy">Copy private key</button>
+    <p class="muted" style="font-size:12px;margin-top:8px">This value never touched
+    the server. Save it — it is the only thing that can prove this identity, and it
+    cannot be recovered.</p>
+  </div>
+  <div class="kv"><div class="k">Public key (sent to server)</div><div class="v hash" id="c_pub" style="max-height:90px;overflow:auto"></div></div>
+</div>
+{% endblock %}
+{% block scripts %}<script src="{{ url_for('static', filename='enroll.js') }}"></script>{% endblock %}

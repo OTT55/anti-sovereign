@@ -1,0 +1,168 @@
+{% extends "base.html" %}
+{% block title %}{{ user['display_name'] }}{% endblock %}
+{% block nav_public %}{{ 'on' if is_owner else '' }}{% endblock %}
+
+{% block body %}
+<!-- Identity header -->
+<div class="card" style="overflow:hidden;">
+  <div style="height:156px;background:
+      radial-gradient(120% 160% at 15% 0%, color-mix(in srgb, var(--accent) 70%, white) 0%, var(--accent) 45%, color-mix(in srgb, var(--accent) 55%, #7a2f1e) 100%);"></div>
+  <div class="card-b" style="margin-top:-52px;">
+    <div class="row wrap-w spread" style="align-items:flex-end;">
+      <div class="row" style="align-items:flex-end;gap:18px;">
+        <div style="width:96px;height:96px;border-radius:20px;background:var(--surface);border:4px solid var(--surface);
+             box-shadow:var(--shadow);display:grid;place-items:center;font-family:var(--display);font-weight:700;
+             font-size:2.2rem;color:var(--accent);">{{ user['display_name'][0]|upper }}</div>
+        <div style="padding-bottom:4px;">
+          <h1 style="margin:0;">{{ user['display_name'] }}
+            {% if user['verified'] %}<span class="badge verified" style="vertical-align:middle;font-size:.8rem;">✓ Verified creator</span>{% endif %}
+          </h1>
+          <p class="muted" style="margin:2px 0;">{{ profile['headline'] }}</p>
+          <p class="faint tiny">
+            <span class="mono">@{{ user['handle'] }}</span>
+            {% if profile['location'] %} · {{ profile['location'] }}{% endif %}
+            · <span style="text-transform:capitalize;">{{ profile['availability'] }} for work</span>
+          </p>
+        </div>
+      </div>
+      <div class="row" style="padding-bottom:6px;">
+        {% if is_owner %}<a href="/dashboard" class="btn btn-ghost btn-sm">Edit ↗</a>{% endif %}
+        <button class="btn btn-primary btn-sm" onclick="copyText(location.href,'Profile link')">Share profile</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="grid-2" style="margin-top:24px;">
+  <!-- LEFT: portfolio with provenance -->
+  <div class="stack">
+    <div class="card">
+      <div class="card-h row spread">
+        <div><p class="eyebrow">Portfolio</p><h2 style="margin-top:4px;">Work, with verifiable provenance</h2></div>
+        <span class="chip">{{ records|length }} signed record{{ '' if records|length == 1 else 's' }}</span>
+      </div>
+      <div class="card-b">
+        {% if records %}
+        <div class="work-grid">
+          {% for r in records %}
+          {% set mime = r['mime'] or '' %}
+          <div class="work-card">
+            <div class="work-cover" style="background:linear-gradient(135deg, #{{ r['content_hash'][0:6] }}, #{{ r['content_hash'][14:20] }});">
+              <span class="wtype">{% if mime.startswith('image/') %}🖼{% elif mime.startswith('video/') %}🎬{% elif mime.startswith('audio/') %}🎵{% elif mime == 'application/pdf' %}📄{% else %}◆{% endif %}</span>
+            </div>
+            <div class="work-body">
+              <span class="work-rid">{{ r['registry_id'] }}</span>
+              <div class="work-title">{{ r['title'] }}</div>
+              <div class="work-meta">{{ r['role'] }}{% if r['contributors'] %} · with {{ r['contributors'] }}{% endif %}</div>
+              {% if r['ai_disclosure'] and not (r['ai_disclosure']|lower).startswith('no') and 'no generative' not in r['ai_disclosure']|lower %}
+                <span class="badge ai" style="align-self:flex-start;">AI disclosed</span>
+              {% else %}<span class="badge ok" style="align-self:flex-start;">No generative AI</span>{% endif %}
+              {% if r['source'] %}<div class="work-meta">via {{ r['source'] }}</div>{% endif %}
+              <div class="work-foot">
+                <span class="hash grow" title="{{ r['content_hash'] }}">{{ r['content_hash'][:14] }}…</span>
+                <a class="btn btn-quiet btn-sm" href="/verify?hash={{ r['content_hash'] }}">Verify ↗</a>
+              </div>
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+        {% else %}
+        <p class="muted">No works published yet.</p>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  <!-- RIGHT: reputation, skills, reviews -->
+  <div class="stack">
+    {% if is_owner %}
+    <div class="card pad">
+      <p class="eyebrow">Wallet</p>
+      <div class="row" style="gap:28px;margin-top:8px;align-items:baseline;">
+        <div>
+          <div class="stat">{{ wallet_pence|gbp }}</div>
+          <div class="muted tiny">earned lifetime</div>
+        </div>
+        <div>
+          <div class="stat" style="color:var(--ink-soft);">{{ spent_pence|gbp }}</div>
+          <div class="muted tiny">paid out lifetime</div>
+        </div>
+      </div>
+      <p class="muted tiny" style="margin-top:10px;">Both sides of every real transaction across CreativeOS — RightsForge licenses, CreatorStack prizes, FilmCrew contracts. No payout system exists yet, so these are running totals, not withdrawable balances.</p>
+      {% if earnings %}
+      <p class="muted tiny" style="margin-top:14px;text-transform:uppercase;letter-spacing:.06em;font-size:.7rem;">Earned</p>
+      <div class="stack" style="margin-top:6px;gap:6px;">
+        {% for e in earnings[:5] %}
+        <div class="row spread tiny">
+          <span class="muted">{{ e['source'] }} · {{ e['kind'] }}</span>
+          <span class="mono">+{{ e['amount_pence']|gbp }}</span>
+        </div>
+        {% endfor %}
+      </div>
+      {% endif %}
+      {% if spending %}
+      <p class="muted tiny" style="margin-top:14px;text-transform:uppercase;letter-spacing:.06em;font-size:.7rem;">Paid out</p>
+      <div class="stack" style="margin-top:6px;gap:6px;">
+        {% for s in spending[:5] %}
+        <div class="row spread tiny">
+          <span class="muted">{{ s['source'] }} · to @{{ s['counterparty'] }}</span>
+          <span class="mono">−{{ s['amount_pence']|gbp }}</span>
+        </div>
+        {% endfor %}
+      </div>
+      {% endif %}
+    </div>
+    {% endif %}
+
+    <div class="card pad">
+      <p class="eyebrow">Reputation</p>
+      <div class="row" style="gap:16px;margin-top:8px;align-items:baseline;">
+        <div class="stat">{{ reputation if reputation is not none else '—' }}</div>
+        <div class="muted tiny">
+          {% if reputation is not none %}
+            <span class="stars">{{ '★' * (reputation|round(0,'floor')|int) }}</span><br>
+            {{ review_count }} verified review{{ '' if review_count == 1 else 's' }}
+          {% else %}No reviews yet{% endif %}
+        </div>
+      </div>
+      <p class="muted tiny" style="margin-top:10px;">Earned from real collaborations across CreativeOS — not self-reported.</p>
+    </div>
+
+    {% if profile['bio'] %}
+    <div class="card pad">
+      <p class="eyebrow">About</p>
+      <p style="margin:8px 0 0;">{{ profile['bio'] }}</p>
+    </div>
+    {% endif %}
+
+    <div class="card pad">
+      <p class="eyebrow">Craft</p>
+      <div class="row wrap-w" style="margin-top:10px;">
+        {% for s in skills %}
+        <span class="chip">{{ s['skill'] }} · <span class="faint">{{ s['level'] }}</span></span>
+        {% endfor %}
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-h"><p class="eyebrow">Reviews</p></div>
+      <div class="card-b">
+        <div class="review-thread">
+          {% for rv in reviews %}
+          <div class="review-bubble">
+            <div class="rav">{{ rv['author_name'][0]|upper }}</div>
+            <div class="rbody">
+              <div class="rhead"><strong>{{ rv['author_name'] }}</strong><span class="stars">{{ '★' * rv['rating'] }}</span></div>
+              <p class="rtext">{{ rv['body'] }}</p>
+              <p class="rctx">{{ rv['context'] }}</p>
+            </div>
+          </div>
+          {% else %}
+          <p class="muted">No reviews yet.</p>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,97 @@
+{% extends "base.html" %}
+{% set active = "enrol" %}
+{% block title %}Veridact — Enrol device{% endblock %}
+{% block body %}
+<h1>Enrol a capture device</h1>
+<p class="lede">A device (a camera app, a phone, a recorder) generates a keypair in
+your browser. Veridact stores only the <em>public</em> key — the private key never
+leaves the device. From then on, anything this device signs at capture can be
+verified as genuinely from it, and Veridact can never forge a signature in its name.
+Enrolling is a one-time step: after this, capturing needs no key handling at all
+(decisions/0008).</p>
+
+<div class="stat-row">
+  <div class="stat"><b id="stat-devices">{{ device_count }}</b><span>ENROLLED DEVICES</span></div>
+  <div class="stat"><b id="scheme-label">ECDSA P-256</b><span>SIGNATURE SCHEME</span></div>
+</div>
+<script>
+async function pollDeviceCount(){
+  try {
+    const res = await fetch('/api/stats');
+    if (!res.ok) return;
+    const data = await res.json();
+    const el = document.getElementById('stat-devices');
+    if (el && el.textContent !== String(data.device_count)) {
+      el.textContent = String(data.device_count);
+      el.classList.remove('pulse'); void el.offsetWidth; el.classList.add('pulse');
+    }
+  } catch (e) { /* offline — skip this tick */ }
+}
+setInterval(pollDeviceCount, 12000);
+</script>
+
+<div class="card">
+  <label for="handle">Device handle</label>
+  <input type="text" id="handle" placeholder="e.g. ott-field-camera">
+
+  <label for="algorithm">Signature scheme <span class="muted">(decisions/0004)</span></label>
+  <select id="algorithm">
+    <option value="ecdsa-p256" selected>ECDSA P-256 — peer-reviewed, browser-native (recommended)</option>
+    <option value="schnorr">Schnorr / 2048-bit MODP — this project's original custom scheme</option>
+  </select>
+
+  <button id="enrol">Generate device key &amp; enrol</button>
+  <div id="err" class="err hidden" role="alert"></div>
+</div>
+
+<div id="result" class="cert hidden">
+  <h2>Device Enrolled</h2>
+  <div class="kv"><div class="k">Handle</div><div class="v" id="c_handle"></div></div>
+  <div class="kv"><div class="k">Scheme</div><div class="v" id="c_algorithm"></div></div>
+
+  <div id="ecdsa-note" class="secret-box hidden" style="border-color:var(--ok)">
+    <div class="k" style="color:var(--ok)">✓ Private key stored — not shown, because it can't be</div>
+    <p class="muted" style="font-size:12px">Generated non-extractable and saved directly
+    in this browser (IndexedDB). No script on this page or any other can ever read it
+    back out — only use it to sign. That's stronger than a key you could copy, but it
+    also means it cannot be backed up: clearing this browser's site data, reinstalling,
+    or switching browsers/devices loses it, and you'd enrol again as a new device.</p>
+  </div>
+
+  <details id="schnorr-note" class="secret-box hidden" style="border-color:var(--warn)">
+    <summary style="cursor:pointer"><span class="k" style="color:var(--warn)">⚠ Reveal private key (optional backup)</span></summary>
+    <p class="muted" style="font-size:12px;margin-top:8px">Already saved to this browser automatically —
+    capturing needs no copy/paste. Unlike ECDSA above, Schnorr is hand-rolled arithmetic, not a
+    Web Crypto key, so there's no non-extractable form for it: revealing it here doesn't weaken
+    anything that wasn't already true. Save it externally only if you want a portable backup.</p>
+    <div class="v hash" id="c_secret" style="max-height:120px;overflow:auto;margin-top:8px"></div>
+    <button class="btn-ghost" id="copy">Copy private key</button>
+  </details>
+
+  <div class="kv"><div class="k">Public key (sent to Veridact)</div><div class="v hash" id="c_pub" style="max-height:90px;overflow:auto"></div></div>
+  <a href="/authenticate" class="btn" style="display:inline-block;text-decoration:none;margin-top:14px">Capture now →</a>
+</div>
+
+<details style="margin-top:8px">
+  <summary class="muted" style="font-size:12px;cursor:pointer">Already enrolled a device before this browser update? Import its saved key</summary>
+  <div class="card" style="margin-top:10px">
+    <p class="muted" style="font-size:12px">If you saved a private key from an earlier
+    enrolment (as text, or a .json manifest), paste it here once. It's imported into this
+    browser's secure storage and you won't need to paste it again — the same one-time step
+    as a fresh enrolment, just for a device that already exists on the server.</p>
+    <label for="import_handle">Device handle (must match exactly)</label>
+    <input type="text" id="import_handle" placeholder="the handle you enrolled it under">
+    <label for="import_algorithm">Signature scheme it was enrolled under</label>
+    <select id="import_algorithm">
+      <option value="ecdsa-p256" selected>ECDSA P-256</option>
+      <option value="schnorr">Schnorr / 2048-bit MODP</option>
+    </select>
+    <label for="import_secret">Saved private key</label>
+    <textarea id="import_secret" class="mono" placeholder="paste the private key you saved earlier"></textarea>
+    <button id="import_btn" class="btn-ghost">Import into this browser</button>
+    <div id="import_err" class="err hidden" role="alert"></div>
+    <div id="import_ok" class="hidden" style="color:var(--ok);font-size:13px;margin-top:10px">✓ Imported. It's ready to use on the Capture page — no more pasting.</div>
+  </div>
+</details>
+{% endblock %}
+{% block scripts %}<script src="{{ url_for('static', filename='enrol.js') }}"></script>{% endblock %}

@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+{% block title %}Create your FrameVault{% endblock %}
+
+{% block body %}
+<div style="max-width:440px;margin:6vh auto 0;">
+  <div style="text-align:center;margin-bottom:22px;">
+    <p class="eyebrow">FrameVault</p>
+    <h1 style="margin:.2em 0;">Create your identity</h1>
+    <p class="muted">One profile, verifiable provenance, a public page you own.</p>
+  </div>
+
+  <div class="card pad">
+    {% if error %}
+    <div class="badge no" style="width:100%;justify-content:flex-start;padding:10px 12px;margin-bottom:14px;">
+      <span class="dot"></span>{{ error }}
+    </div>
+    {% endif %}
+
+    <form method="post" action="/signup" class="stack">
+      <label class="fld"><span>Name</span>
+        <input name="display_name" value="{{ form.get('display_name','') }}" placeholder="Your name" autofocus>
+      </label>
+      <div class="field-grid">
+        <label class="fld"><span>Handle</span>
+          <input name="handle" value="{{ form.get('handle','') }}" placeholder="yourname" autocomplete="username">
+        </label>
+        <label class="fld"><span>Email <span class="faint tiny">(optional)</span></span>
+          <input name="email" type="email" value="{{ form.get('email','') }}" placeholder="you@example.com" autocomplete="email">
+        </label>
+      </div>
+      <label class="fld"><span>Password <span class="faint tiny">(6+ characters)</span></span>
+        <input name="password" type="password" autocomplete="new-password" placeholder="••••••••">
+      </label>
+      <button class="btn btn-primary" type="submit" style="width:100%;">Create account</button>
+    </form>
+
+    <p class="muted tiny" style="text-align:center;margin-top:14px;">
+      Your public page will live at <span class="mono">/@<span id="handlePreview">yourname</span></span>
+    </p>
+  </div>
+
+  <p class="muted" style="text-align:center;margin-top:16px;">
+    Already have one? <a href="/login" style="color:var(--accent);font-weight:600;">Log in</a>
+  </p>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  const h = document.querySelector('input[name="handle"]');
+  const prev = document.getElementById("handlePreview");
+  h.addEventListener("input", () => {
+    prev.textContent = h.value.trim().toLowerCase().replace(/[^a-z0-9_]/g, "") || "yourname";
+  });
+</script>
+{% endblock %}

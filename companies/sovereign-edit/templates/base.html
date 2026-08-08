@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}Sovereign Edit{% endblock %}</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+  <header class="top">
+    <div class="brand"><b>Sovereign&nbsp;Edit</b><span>Certification</span></div>
+    <nav>
+      <a href="/" class="{{ 'active' if active=='archive' }}">Archive</a>
+      <a href="/identify" class="{{ 'active' if active=='identify' }}">Identify a file</a>
+    </nav>
+  </header>
+  <div class="wrap">
+    {% block body %}{% endblock %}
+  </div>
+  <footer>Sovereign Edit · Sovereign Stack · which cut is the real one</footer>
+  <script src="{{ url_for('static', filename='hash.js') }}"></script>
+  {% block scripts %}{% endblock %}
+</body>
+</html>

@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% set active = "archive" %}
+{% block title %}Sovereign Edit — Archive{% endblock %}
+{% block body %}
+<h1>The archive</h1>
+<p class="lede">A film ends up as a dozen files with names like <span class="mono">final_v3_REAL.mov</span>.
+Sovereign Edit records what actually happened — capture, edit, colour, sound,
+master — as a chain nobody can quietly rewrite, so six months later you can still
+answer the only question that matters: <em>which cut is the real one?</em></p>
+
+<div class="card">
+  <h3 style="margin-top:0">Register a work</h3>
+  <div class="grid2">
+    <div>
+      <label>Title</label>
+      <input type="text" id="title" placeholder="e.g. The Long Take">
+    </div>
+    <div>
+      <label>Director</label>
+      <input type="text" id="director" placeholder="e.g. OTT">
+    </div>
+  </div>
+  <button id="create">Register work</button>
+  <div id="err" class="err hidden"></div>
+</div>
+
+<h2 class="section">Works</h2>
+{% if not works %}<p class="muted">Nothing registered yet.</p>{% endif %}
+<div class="work-list">
+  {% for w in works %}
+  <a class="work-card" href="/works/{{ w.work_id }}">
+    <div class="wc-title">{{ w.title }}</div>
+    <div class="muted" style="font-size:13px">dir. {{ w.director }}</div>
+    <div class="muted" style="font-size:12px;margin-top:6px">{{ w.step_count }} steps</div>
+    <div class="mono wc-id">{{ w.work_id }}</div>
+  </a>
+  {% endfor %}
+</div>
+{% endblock %}
+{% block scripts %}<script src="{{ url_for('static', filename='index.js') }}"></script>{% endblock %}

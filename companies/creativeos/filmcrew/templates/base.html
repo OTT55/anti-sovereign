@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}FilmCrew{% endblock %} · CreativeOS</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{{ url_for('static', filename='filmcrew.css') }}">
+  <script>
+    (function(){ try{ var t=localStorage.getItem('cos-theme'); if(!t){ t=matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light'; } document.documentElement.setAttribute('data-theme',t); }catch(e){} })();
+  </script>
+</head>
+<body>
+  <nav class="nav">
+    <div class="wrap nav-inner">
+      <a class="brand" href="/"><span class="mark"></span>FilmCrew <small>CreativeOS</small></a>
+      <div class="navlinks" id="navLinks">
+        <a class="navlink {% block nav_board %}{% endblock %}" href="/">Productions</a>
+        <a class="navlink {% block nav_talent %}{% endblock %}" href="/talent">Talent</a>
+        <a class="navlink nav-external" href="{{ framevault_url }}" target="_blank" rel="noopener">FrameVault ↗</a>
+        {% if me %}
+        <span class="who nav-who" title="Signed in with your FrameVault account">@{{ me.handle }}{% if me.verified %} <span class="tick">✓</span>{% endif %}</span>
+        <form method="post" action="/logout" class="nav-logout-form"><button class="btn btn-quiet btn-sm" type="submit">Log out</button></form>
+        {% else %}
+        <a class="btn btn-primary btn-sm nav-login" href="/login">Log in</a>
+        {% endif %}
+      </div>
+      <span class="grow"></span>
+      <button class="icon-btn" onclick="openPalette()" title="Search (Ctrl/Cmd+K)" aria-label="Search everything">🔍</button>
+      <button class="icon-btn" onclick="toggleTheme()" title="Toggle light / dark"><span id="theme-icon">☾</span></button>
+      <button class="icon-btn nav-toggle" id="navToggle" onclick="toggleNav()" aria-label="Menu" aria-expanded="false" aria-controls="navLinks">☰</button>
+    </div>
+  </nav>
+
+  <main class="wrap" style="padding:32px 24px 24px;">
+    {% block body %}{% endblock %}
+  </main>
+
+  <footer class="foot wrap">
+    FilmCrew — the collaboration layer of CreativeOS · runs on its own port (5002) and its own database.
+  </footer>
+
+  <div id="toasts"></div>
+
+  <div class="palette-scrim hidden" id="paletteScrim" onclick="closePalette()"></div>
+  <div class="palette hidden" id="palette" role="dialog" aria-label="Search productions and talent" aria-modal="true">
+    <div class="palette-input-row">
+      <span class="palette-icon" aria-hidden="true">🔍</span>
+      <input type="text" id="paletteInput" placeholder="Search productions, talent…" autocomplete="off">
+      <span class="kbd">esc</span>
+    </div>
+    <div class="palette-results" id="paletteResults"></div>
+  </div>
+
+  <script src="{{ url_for('static', filename='filmcrew.js') }}"></script>
+  {% block scripts %}{% endblock %}
+</body>
+</html>

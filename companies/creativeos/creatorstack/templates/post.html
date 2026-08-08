@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+{% block title %}Post a challenge{% endblock %}
+{% block nav_challenges %}on{% endblock %}
+
+{% block body %}
+<div style="max-width:600px; margin:0 auto;">
+  <p class="eyebrow">CreatorStack · Sponsor</p>
+  <h1 style="margin:.2em 0;">Post a challenge</h1>
+  <p class="muted">Set the brief, the criteria, and the prize. You'll pick the winner yourself once entries are in.</p>
+
+  <div class="card pad stack" style="margin-top:18px;">
+    <label class="fld"><span>Title *</span><input id="f-title" placeholder="e.g. “Neon Dusk” — a 60-second brand film"></label>
+    <label class="fld"><span>Brief</span><textarea id="f-brief" placeholder="What are you asking for? Set the scene."></textarea></label>
+    <div class="fgrid">
+      <label class="fld"><span>Prize (£)</span><input id="f-prize" type="number" min="0" placeholder="5000"></label>
+      <label class="fld"><span>Closes</span><input id="f-deadline" type="date"></label>
+    </div>
+    <label class="fld"><span>Judging criteria</span><input id="f-criteria" placeholder="e.g. Mood 40% · Originality 40% · Feasibility 20%"></label>
+    <div class="row" style="justify-content:flex-end;">
+      <button class="btn btn-primary" onclick="publish()">Post challenge</button>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+async function publish(){
+  const title = document.getElementById('f-title').value.trim();
+  if(!title){ toast('A title is required','err'); return; }
+  const { ok, data } = await postJSON('/api/challenge', {
+    title,
+    brief: document.getElementById('f-brief').value.trim(),
+    prize: document.getElementById('f-prize').value || 0,
+    submit_deadline: document.getElementById('f-deadline').value,
+    criteria: document.getElementById('f-criteria').value.trim(),
+  });
+  if(!ok || !data.ok){ toast(data.error || 'Could not post','err'); return; }
+  toast('Challenge posted','ok');
+  setTimeout(function(){ location.href = '/challenge/' + data.id; }, 450);
+}
+</script>
+{% endblock %}

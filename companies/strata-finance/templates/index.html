@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+{% set active = "deals" %}
+{% block title %}Strata Finance — Deals{% endblock %}
+{% block body %}
+<h1>Structure a deal</h1>
+<p class="lede">Define the participants and the revenue waterfall — a distribution
+fee off the top, investor recoupment, then the backend split. Once created, settle
+real payments through it; Strata runs the tiers in exact integer cents and books a
+double-entry ledger where gross received always equals the sum distributed.</p>
+
+<div class="card">
+  <label>Deal name</label>
+  <input type="text" id="deal_name" placeholder="e.g. The Long Take — distribution deal">
+
+  <label style="margin-top:20px">Participants</label>
+  <div class="row">
+    <input type="text" id="new_party" placeholder="e.g. Investor">
+    <button class="btn-sm" id="add_party" type="button">Add</button>
+  </div>
+  <div id="parties" class="chips"></div>
+
+  <div class="tier-header">
+    <label style="margin:0">Waterfall tiers <span class="muted">(top to bottom)</span></label>
+    <div class="tier-buttons">
+      <button class="btn-sm" id="add_fee" type="button">+ Fee</button>
+      <button class="btn-sm" id="add_recoup" type="button">+ Recoupment</button>
+      <button class="btn-sm" id="add_split" type="button">+ Split</button>
+    </div>
+  </div>
+  <div id="tiers"></div>
+
+  <div class="actions">
+    <button id="create">Create deal</button>
+    <button class="btn-ghost" id="load_example" type="button">Load example</button>
+  </div>
+  <div id="err" class="err hidden"></div>
+</div>
+
+<h2 class="section">Deals</h2>
+{% if not deals %}<p class="muted">No deals yet.</p>{% endif %}
+<div class="deal-list">
+  {% for d in deals %}
+  <a class="deal-card" href="/deals/{{ d.deal_id }}">
+    <div class="dc-title">{{ d.name }}</div>
+    <div class="mono dc-id">{{ d.deal_id }}</div>
+  </a>
+  {% endfor %}
+</div>
+{% endblock %}
+{% block scripts %}<script src="{{ url_for('static', filename='builder.js') }}"></script>{% endblock %}

@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}Nullform{% endblock %}</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+  <header class="top">
+    <div class="brand"><b>Nullform</b><span>Identity Layer</span></div>
+    <nav>
+      <a href="/" class="{{ 'active' if active=='enroll' }}">Enrol</a>
+      <a href="/prove" class="{{ 'active' if active=='prove' }}">Prove</a>
+    </nav>
+  </header>
+  <div class="wrap">
+    {% block body %}{% endblock %}
+  </div>
+  <footer>Nullform · Sovereign Stack · prove who you are without revealing what you know</footer>
+  <script>
+    window.NF_P_HEX = "{{ p_hex }}";
+    window.NF_G = {{ g }};
+  </script>
+  <script src="{{ url_for('static', filename='crypto.js') }}"></script>
+  {% block scripts %}{% endblock %}
+</body>
+</html>

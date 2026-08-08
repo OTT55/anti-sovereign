@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+{% block title %}Mine{% endblock %}
+{% block nav_mine %}on{% endblock %}
+
+{% block body %}
+<div class="row spread wrap-w">
+  <div>
+    <p class="eyebrow">CreatorStack · You</p>
+    <h1 style="margin:.2em 0;">Your activity</h1>
+  </div>
+  <a class="btn btn-primary" href="/post">+ Post a challenge</a>
+</div>
+
+<div class="stats">
+  <div class="stat"><div class="n">{{ sponsoring|length }}</div><div class="l">Sponsoring</div></div>
+  <div class="stat"><div class="n">{{ entering|length }}</div><div class="l">Entered</div></div>
+  <div class="stat"><div class="n">{{ won|length }}</div><div class="l">Won</div></div>
+</div>
+
+<div class="fgrid" style="margin-top:6px; align-items:start;">
+  <div class="card">
+    <div style="padding:16px 18px 0;"><p class="eyebrow">Sponsoring</p></div>
+    {% for c in sponsoring %}
+    <a class="mrow" href="/challenge/{{ c.id }}" style="text-decoration:none;">
+      <div class="av">{{ c.title[0]|upper }}</div>
+      <div class="grow">
+        <div style="font-weight:600; font-size:.92rem;">{{ c.title }}</div>
+        <div class="faint tiny">{{ c.submissions|length }} entries · {{ c.status|capitalize }}</div>
+      </div>
+    </a>
+    {% else %}
+    <p class="muted" style="padding:16px 18px;">Nothing sponsored yet.</p>
+    {% endfor %}
+  </div>
+
+  <div class="card">
+    <div style="padding:16px 18px 0;"><p class="eyebrow">Entered</p></div>
+    {% for s in entering %}
+    <a class="mrow" href="/challenge/{{ s['challenge_id'] }}" style="text-decoration:none;">
+      <div class="av">{{ s['title'][0]|upper }}</div>
+      <div class="grow">
+        <div style="font-weight:600; font-size:.92rem;">{{ s['title'] }}</div>
+        <div class="faint tiny">{{ s['challenge_status']|capitalize }}</div>
+      </div>
+    </a>
+    {% else %}
+    <p class="muted" style="padding:16px 18px;">Nothing entered yet.</p>
+    {% endfor %}
+  </div>
+</div>
+
+{% if won %}
+<div class="card pad" style="margin-top:16px;">
+  <p class="eyebrow" style="margin-bottom:10px;">Won</p>
+  {% for w in won %}
+  <p style="margin:6px 0;">🏆 <strong>{{ w['title'] }}</strong> · £{{ '{:,}'.format(w['funding']) }}</p>
+  {% endfor %}
+</div>
+{% endif %}
+{% endblock %}

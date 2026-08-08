@@ -1,0 +1,88 @@
+{% extends "base.html" %}
+{% block title %}{{ ws.name }}{% endblock %}
+{% block nav_home %}on{% endblock %}
+
+{% block body %}
+<a class="navlink" href="/" style="margin-left:-12px;">← Workspaces</a>
+
+<div class="hero" style="margin:14px 0 20px;">
+  <div class="row spread wrap-w">
+    <div>
+      <p class="eyebrow">Workspace</p>
+      <h1 style="margin:.2em 0;">{{ ws.name }}</h1>
+      <p class="muted">Owned by {{ ws.owner_name }}</p>
+    </div>
+    <button class="btn btn-primary btn-sm" onclick="newProject()">+ New project</button>
+  </div>
+</div>
+
+<div class="fgrid" style="display:grid; gap:20px; grid-template-columns:1.6fr 1fr;">
+  <div>
+    <p class="eyebrow" style="margin-bottom:10px;">Projects</p>
+    <div class="grid" style="grid-template-columns:1fr;">
+      {% for p in projects %}
+      <a class="pcard" href="/project/{{ p.id }}">
+        <div class="row spread">
+          <div class="t">{{ p.name }}</div>
+          <span class="badge {{ 'open' if p.status=='active' else 'filled' }}">{{ 'Active' if p.status=='active' else 'Published' }}</span>
+        </div>
+      </a>
+      {% else %}
+      <p class="muted">No projects yet.</p>
+      {% endfor %}
+    </div>
+  </div>
+
+  <div class="card pad">
+    <p class="eyebrow" style="margin-bottom:10px;">Members</p>
+    <div id="members">
+    {% for m in members %}
+    <div class="memrow">
+      <div class="av">{{ m['name'][0]|upper }}</div>
+      <div class="grow">
+        <div style="font-weight:600; font-size:.88rem;">{{ m['name'] }}{% if m['handle'] %} <span class="faint" style="font-weight:400;">@{{ m['handle'] }}</span>{% endif %}</div>
+      </div>
+      {% if m['status'] == 'pending' %}<span class="badge" style="opacity:.6;">invited</span>{% endif %}
+      <span class="badge role">{{ m['role'] }}</span>
+    </div>
+    {% endfor %}
+    </div>
+    <div class="row" style="gap:8px; margin-top:14px;">
+      <input id="inv-handle" placeholder="Invite by handle…">
+      <button class="btn btn-ghost btn-sm" onclick="invite()">Invite</button>
+    </div>
+    <p class="faint tiny" style="margin-top:8px;">Sharing uses the workspace's own membership list today; fine-grained per-resource permissions are a spine service for later (see docs/architecture.md).</p>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+async function newProject(){
+  const name = prompt('Project name:');
+  if(!name) return;
+  const { ok, data } = await postJSON('/api/project', { workspace_id: {{ ws.id }}, name });
+  if(!ok || !data.ok){ toast(data.error || 'Could not create','err'); return; }
+  toast('Project created','ok');
+  setTimeout(function(){ location.href = '/project/' + data.id; }, 450);
+}
+function esc(s){ const d = document.createElement("div"); d.textContent = s == null ? "" : String(s); return d.innerHTML; }
+async function invite(){
+  const handle = document.getElementById('inv-handle').value.trim();
+  if(!handle){ toast('Enter a handle','err'); return; }
+  const { ok, data } = await postJSON('/api/workspace/{{ ws.id }}/invite', { handle });
+  if(!ok || !data.ok){ toast(data.error || 'Could not invite','err'); return; }
+  toast('Invited','ok');
+
+  const row = document.createElement('div');
+  row.className = 'memrow';
+  row.innerHTML = `
+    <div class="av">${esc(handle[0].toUpperCase())}</div>
+    <div class="grow"><div style="font-weight:600; font-size:.88rem;">${esc(handle)} <span class="faint" style="font-weight:400;">@${esc(handle)}</span></div></div>
+    <span class="badge" style="opacity:.6;">invited</span>
+    <span class="badge role">editor</span>`;
+  document.getElementById('members').appendChild(row);
+  document.getElementById('inv-handle').value = '';
+}
+</script>
+{% endblock %}

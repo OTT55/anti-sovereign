@@ -1,0 +1,44 @@
+/* OTT VIBE SYSTEM v1.0 — Veridact Customization */
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&family=Space+Grotesk:wght@500;600;700&display=swap');
+
+:root {
+  --accent: #7C3AED; /* Veridact Royal Purple */
+  --ease-vibe: cubic-bezier(0.16, 1, 0.3, 1);
+  --glass-bg: rgba(20, 20, 23, 0.75);
+  --glass-border: rgba(255, 255, 255, 0.08);
+  --glass-blur: blur(16px) saturate(180%);
+  --ott-signature: #D72638;
+}
+
+body {
+  background-image: radial-gradient(circle at 50% -10%, rgba(124, 58, 237, 0.2) 0%, transparent 60%) !important;
+  font-family: 'IBM Plex Sans', sans-serif !important;
+}
+
+.card, .vibe-card {
+  background: var(--glass-bg) !important;
+  backdrop-filter: var(--glass-blur) !important;
+  border: 1px solid var(--glass-border) !important;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4) !important;
+  transition: transform 220ms var(--ease-vibe), border-color 220ms var(--ease-vibe) !important;
+}
+
+.card:hover, .vibe-card:hover {
+  transform: translateY(-2px);
+  border-color: rgba(124, 58, 237, 0.4) !important;
+}
+
+.btn-primary, .vibe-btn-primary {
+  background: #7C3AED !important;
+  box-shadow: 0 0 20px -3px rgba(124, 58, 237, 0.4) !important;
+  transition: all 140ms var(--ease-vibe) !important;
+}
+
+.btn-primary:hover, .vibe-btn-primary:hover {
+  transform: translateY(-1px) !important;
+  filter: brightness(1.1) !important;
+}
+
+.btn-primary:active, .vibe-btn-primary:active {
+  transform: scale(0.98) !important;
+}

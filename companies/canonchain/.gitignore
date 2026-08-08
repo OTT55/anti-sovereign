@@ -1,0 +1,4 @@
+*.db
+.canonchain_secret
+__pycache__/
+.venv/

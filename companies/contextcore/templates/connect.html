@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+{% set active = "connect" %}
+{% block title %}Connect — ContextCore{% endblock %}
+{% block body %}
+<a href="/" class="muted" style="text-decoration:none;font-size:13px">← Documents</a>
+<h1 style="margin-top:8px">How are these connected?</h1>
+<p class="lede">
+  Multi-hop reasoning over the real knowledge graph built at ingest (Phase 1) — a
+  shortest-path search (NetworkX) across every document's extracted entities and
+  relationships, not just one document. Two entities never mentioned in the same
+  document can still be connected here, through a chain of shared entities in
+  between. The traversal itself needs no API call; a short plain-English
+  explanation is layered on top when Claude is available.
+</p>
+
+<div class="card">
+  <form method="get" action="/connect">
+    <label>From entity</label>
+    <input type="text" name="from" value="{{ from_name or '' }}" placeholder="e.g. Halloween">
+    <label>To entity</label>
+    <input type="text" name="to" value="{{ to_name or '' }}" placeholder="e.g. Get Out">
+    <button type="submit">Find connection</button>
+  </form>
+</div>
+
+{% if searched %}
+<h2 class="section">Result</h2>
+<div class="card">
+  {% if hops %}
+    <div class="chain">
+      {% for h in hops %}
+        {% if not loop.first %}<div class="chain-via">{{ h.via }}</div>{% endif %}
+        <div class="chain-node">
+          <div><span class="chain-name">{{ h.name }}</span> <span class="muted">{{ h.type }}</span></div>
+          <div class="muted" style="font-size:11px">{{ h.doc_ids|join(', ') }}</div>
+        </div>
+      {% endfor %}
+    </div>
+    {% if explanation %}
+      <div class="note" style="font-style:normal;margin-top:14px">{{ explanation }}</div>
+    {% elif explanation_note %}
+      <div class="note">{{ explanation_note }}</div>
+    {% endif %}
+  {% else %}
+    <p class="muted">{{ error }}</p>
+  {% endif %}
+</div>
+{% endif %}
+{% endblock %}

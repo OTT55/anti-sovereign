@@ -1,0 +1,33 @@
+Flask==3.1.3
+networkx>=3.3
+
+# Multi-format ingest (Phase 3 of PRODUCT-VISION.md) — each format-specific
+# library's only job is producing plain text; the chunk/index pipeline after
+# that is unchanged.
+pymupdf>=1.24      # .pdf
+python-docx>=1.1   # .docx
+openpyxl>=3.1      # .xlsx
+python-pptx>=1.0   # .pptx
+# .csv and .eml use the Python standard library — no extra dependency.
+
+# OCR (Phase 4) — .png/.jpg/.jpeg. pytesseract is just a wrapper: it also
+# requires the Tesseract OCR binary installed system-wide, not just this
+# pip package. On Windows: winget install UB-Mannheim.TesseractOCR
+pytesseract>=0.3
+
+# Hybrid retrieval (Phase 6 of SCALING-RESEARCH.md / PRODUCT-VISION.md).
+# rank-bm25 and sentence-transformers (reranking) are pure pip installs and
+# always active. psycopg + pgvector talk to the Postgres+pgvector service in
+# docker-compose.yml (`docker compose up -d`) for dense retrieval — without
+# it, or without VOYAGE_API_KEY, the app falls back to sparse (BM25) search,
+# same honest-degradation pattern as every other optional layer here.
+rank-bm25>=0.2
+sentence-transformers>=5.0    # cross-encoder reranking (BAAI/bge-reranker-v2-m3), self-hosted, no API key
+psycopg[binary]>=3.2
+pgvector>=0.5
+voyageai>=0.5                 # needs VOYAGE_API_KEY (voyageai.com) — dense embeddings
+
+# Optional — enables the Claude-composed answer layer, entity/relationship
+# extraction, and conflict detection. All fall back gracefully without it
+# (extractive answers, no graph, "conflict check skipped" instead of a call).
+# anthropic>=0.40

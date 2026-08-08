@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+{% block title %}Log in{% endblock %}
+
+{% block body %}
+<div style="max-width:420px; margin:6vh auto 0;">
+  <div style="text-align:center; margin-bottom:22px;">
+    <p class="eyebrow">RightsForge</p>
+    <h1 style="margin:.2em 0;">Log in</h1>
+    <p class="muted">Use your <strong>FrameVault</strong> account — one login across CreativeOS.</p>
+  </div>
+
+  <div class="card pad">
+    {% if error %}
+    <div class="badge" style="width:100%; justify-content:flex-start; padding:10px 12px; margin-bottom:14px; background:color-mix(in srgb,var(--danger) 12%,transparent); color:var(--danger);">
+      <span class="dot"></span>{{ error }}
+    </div>
+    {% endif %}
+
+    <form method="post" action="/login{% if request.args.get('next') %}?next={{ request.args.get('next') }}{% endif %}" class="stack">
+      <label class="fld"><span>FrameVault handle</span>
+        <input name="handle" autocomplete="username" placeholder="ott" autofocus>
+      </label>
+      <label class="fld"><span>Password</span>
+        <input name="password" type="password" autocomplete="current-password" placeholder="••••••••">
+      </label>
+      <button class="btn btn-primary" type="submit" style="width:100%;">Log in with FrameVault</button>
+    </form>
+
+    <p class="faint tiny" style="text-align:center; margin-top:14px;">
+      RightsForge verifies your password with FrameVault and never stores it.
+      Demo: <span class="mono">ott</span> / <span class="mono">framevault</span>
+    </p>
+  </div>
+
+  <p class="muted" style="text-align:center; margin-top:16px;">
+    No account yet? <a href="{{ framevault_url }}/signup" target="_blank" rel="noopener" style="color:var(--accent); font-weight:600;">Create one on FrameVault ↗</a>
+  </p>
+</div>
+{% endblock %}

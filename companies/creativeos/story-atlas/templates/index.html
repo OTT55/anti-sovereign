@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Story Atlas — Creative Intelligence Workspace</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <script>
+    (function(){ try{ var t=localStorage.getItem('ott-theme'); if(!t){ t=matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light'; } document.documentElement.setAttribute('data-theme',t); }catch(e){} })();
+    function ottToggleTheme(){
+      var next = (document.documentElement.getAttribute('data-theme')==='dark') ? 'light' : 'dark';
+      document.documentElement.setAttribute('data-theme', next);
+      try{ localStorage.setItem('ott-theme', next); }catch(e){}
+      var icon = document.getElementById('theme-icon');
+      if(icon) icon.innerHTML = next==='dark' ? '&#9789;' : '&#9788;';
+    }
+    document.addEventListener('DOMContentLoaded', function(){
+      var icon = document.getElementById('theme-icon');
+      if(icon) icon.innerHTML = document.documentElement.getAttribute('data-theme')==='dark' ? '&#9789;' : '&#9788;';
+    });
+  </script>
+</head>
+<body>
+  <div id="app" class="shell">
+
+    <!-- Sidebar -->
+    <aside class="sidebar">
+      <div class="brand">
+        <div class="brand-mark">◈</div>
+        <div class="brand-text">
+          <div class="brand-name">Story Atlas</div>
+          <div class="brand-tag">Creative Intelligence</div>
+        </div>
+      </div>
+
+      <div class="universe-switcher">
+        <label>Universe</label>
+        <div class="universe-select" id="universeSelect">
+          <button id="universeButton" class="universe-button">
+            <span id="universeName">Loading…</span>
+            <span class="chev">⌄</span>
+          </button>
+          <div id="universeMenu" class="universe-menu hidden"></div>
+        </div>
+      </div>
+
+      <nav class="nav" id="nav">
+        <div class="nav-section">Workspace</div>
+        <a data-view="dashboard" class="nav-item active"><i>▦</i>Dashboard</a>
+        <a data-view="characters" class="nav-item"><i>☺</i>Characters<span class="count" data-count="characters"></span></a>
+        <a data-view="timeline" class="nav-item"><i>◷</i>Timeline<span class="count" data-count="events"></span></a>
+        <a data-view="locations" class="nav-item"><i>⌖</i>Locations<span class="count" data-count="locations"></span></a>
+        <a data-view="organizations" class="nav-item"><i>⬡</i>Organizations<span class="count" data-count="organizations"></span></a>
+        <a data-view="graph" class="nav-item"><i>⁂</i>Universe Graph</a>
+        <a data-view="lore" class="nav-item"><i>❋</i>Lore<span class="count" data-count="lore"></span></a>
+        <a data-view="scenes" class="nav-item"><i>▤</i>Scenes<span class="count" data-count="scenes"></span></a>
+
+        <div class="nav-section">Intelligence</div>
+        <a data-view="assistant" class="nav-item"><i>✦</i>AI Assistant</a>
+        <a data-view="canon" class="nav-item"><i>⚖</i>Canon Engine<span class="count warn" id="canonBadge"></span></a>
+      </nav>
+
+      <div class="sidebar-foot" style="flex-wrap:wrap;row-gap:8px">
+        <div class="dot"></div>
+        {% if me %}<a href="{{ framevault_url }}/@{{ me.handle }}" target="_blank" rel="noopener" style="color:var(--text-2)">@{{ me.handle }}</a>{% endif %}
+        · CreativeOS
+        <button class="theme-toggle" onclick="openPalette()" title="Search (Ctrl/Cmd+K)" style="margin-left:auto">🔍</button>
+        <button class="theme-toggle" onclick="ottToggleTheme()" title="Toggle light / dark"><span id="theme-icon">&#9789;</span></button>
+        {% if me %}
+        <form method="post" action="/logout" style="margin:0;width:100%">
+          <button type="submit" class="btn ghost sm" style="width:100%">Log out</button>
+        </form>
+        {% endif %}
+      </div>
+    </aside>
+
+    <!-- Main -->
+    <main class="main" id="main">
+      <div class="loading">Loading workspace…</div>
+    </main>
+  </div>
+
+  <!-- Modal host -->
+  <div id="modalHost" class="modal-host hidden">
+    <div class="modal-backdrop" data-close></div>
+    <div class="modal" id="modalBody"></div>
+  </div>
+
+  <div class="palette-scrim hidden" id="paletteScrim" onclick="closePalette()"></div>
+  <div class="palette hidden" id="palette" role="dialog" aria-label="Search this universe" aria-modal="true">
+    <div class="palette-input-row">
+      <span class="palette-icon" aria-hidden="true">🔍</span>
+      <input type="text" id="paletteInput" placeholder="Search characters, locations, events…" autocomplete="off">
+      <span class="kbd">esc</span>
+    </div>
+    <div class="palette-results" id="paletteResults"></div>
+  </div>
+
+  <script src="{{ url_for('static', filename='app.js') }}"></script>
+</body>
+</html>

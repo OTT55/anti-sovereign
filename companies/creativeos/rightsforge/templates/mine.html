@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+{% block title %}My listings{% endblock %}
+{% block nav_mine %}on{% endblock %}
+
+{% block body %}
+<div class="row spread wrap-w">
+  <div>
+    <p class="eyebrow">RightsForge · You</p>
+    <h1 style="margin:.2em 0;">Your marketplace activity</h1>
+  </div>
+  <a class="btn btn-primary" href="/sell">+ List something</a>
+</div>
+
+<div class="stats">
+  <div class="stat"><div class="n">{{ selling|length }}</div><div class="l">Listings</div></div>
+  <div class="stat"><div class="n">{{ buying|length }}</div><div class="l">Purchases</div></div>
+  <div class="stat"><div class="n">£{{ '{:,}'.format(earned) }}</div><div class="l">Earned (paid deals)</div></div>
+</div>
+
+<div class="fgrid" style="margin-top:6px; align-items:start;">
+  <div class="card">
+    <div style="padding:16px 18px 0;"><p class="eyebrow">Selling</p></div>
+    {% for l in selling %}
+    <a class="mrow" href="/listing/{{ l.id }}" style="text-decoration:none;">
+      <div class="av">{{ l.title[0]|upper }}</div>
+      <div class="grow">
+        <div style="font-weight:600; font-size:.92rem;">{{ l.title }}</div>
+        <div class="faint tiny">{{ 'Asset' if l.listing_type=='asset' else 'IP' }} · {{ l.status|capitalize }}</div>
+      </div>
+    </a>
+    {% else %}
+    <p class="muted" style="padding:16px 18px;">Nothing listed yet.</p>
+    {% endfor %}
+  </div>
+
+  <div class="card">
+    <div style="padding:16px 18px 0;"><p class="eyebrow">Bought</p></div>
+    {% for d in buying %}
+    <a class="mrow" href="/listing/{{ d['listing_id'] }}" style="text-decoration:none;">
+      <div class="av">{{ d['title'][0]|upper }}</div>
+      <div class="grow">
+        <div style="font-weight:600; font-size:.92rem;">{{ d['title'] }}</div>
+        <div class="faint tiny">{{ d['kind']|capitalize }} · £{{ '{:,}'.format(d['price']) }} · {{ d['status']|capitalize }}</div>
+      </div>
+    </a>
+    {% else %}
+    <p class="muted" style="padding:16px 18px;">Nothing bought yet.</p>
+    {% endfor %}
+  </div>
+</div>
+{% endblock %}

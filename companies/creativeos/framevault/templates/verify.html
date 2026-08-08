@@ -1,0 +1,141 @@
+{% extends "base.html" %}
+{% block title %}Verify{% endblock %}
+{% block nav_verify %}on{% endblock %}
+
+{% block body %}
+<div style="max-width:720px;margin:0 auto;">
+
+  {% if not_found %}
+  <div class="card pad" style="border-color:var(--accent-line);background:var(--accent-soft);margin-bottom:22px;">
+    <strong>That page doesn't exist.</strong>
+    <span class="muted">But you can still verify any work below.</span>
+  </div>
+  {% endif %}
+
+  <div style="text-align:center;margin-bottom:26px;">
+    <p class="eyebrow">Public verification</p>
+    <h1 style="margin:.3em 0;">Is this work registered?</h1>
+    <p class="muted" style="max-width:52ch;margin:0 auto;">
+      Drop a file to fingerprint it in your browser, or paste a SHA-256 hash.
+      The file never leaves your device — only its fingerprint is checked.
+    </p>
+  </div>
+
+  <div class="card pad stack">
+    <div id="drop" class="drop">
+      <div class="big">Drop a file to hash it</div>
+      <div class="muted tiny" style="margin-top:6px;">…or click to choose. Hashed locally with Web Crypto — never uploaded.</div>
+      <input id="file" type="file" class="hidden">
+    </div>
+
+    <div class="row" style="gap:10px;">
+      <hr class="sep grow"><span class="faint tiny">OR PASTE A HASH</span><hr class="sep grow">
+    </div>
+
+    <div class="row" style="gap:10px;align-items:stretch;">
+      <input id="hash" class="mono grow" placeholder="64-character SHA-256 hex digest…" spellcheck="false" autocomplete="off">
+      <button id="go" class="btn btn-primary">Verify</button>
+    </div>
+    <div id="hashnote" class="faint tiny mono"></div>
+  </div>
+
+  <div id="result" class="hidden" style="margin-top:22px;"></div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+const drop = document.getElementById("drop");
+const fileInput = document.getElementById("file");
+const hashInput = document.getElementById("hash");
+const note = document.getElementById("hashnote");
+const result = document.getElementById("result");
+
+drop.addEventListener("click", () => fileInput.click());
+["dragover","dragenter"].forEach(e => drop.addEventListener(e, ev => { ev.preventDefault(); drop.classList.add("hot"); }));
+["dragleave","drop"].forEach(e => drop.addEventListener(e, ev => { ev.preventDefault(); drop.classList.remove("hot"); }));
+drop.addEventListener("drop", ev => { if (ev.dataTransfer.files[0]) hashFile(ev.dataTransfer.files[0]); });
+fileInput.addEventListener("change", () => { if (fileInput.files[0]) hashFile(fileInput.files[0]); });
+
+async function hashFile(file) {
+  note.textContent = `Hashing “${file.name}” (${fmtBytes(file.size)}) locally…`;
+  const h = await sha256File(file);
+  hashInput.value = h;
+  note.textContent = `SHA-256 of “${file.name}” computed in your browser.`;
+  verify();
+}
+
+document.getElementById("go").addEventListener("click", verify);
+hashInput.addEventListener("keydown", e => { if (e.key === "Enter") verify(); });
+
+async function verify() {
+  const content_hash = hashInput.value.trim().toLowerCase();
+  if (!/^[0-9a-f]{64}$/.test(content_hash)) {
+    toast("Enter a valid 64-character SHA-256 hash, or drop a file.", "err");
+    return;
+  }
+  const { ok, data } = await postJSON("/api/verify", { content_hash });
+  if (!ok || !data.ok) { toast(data.error || "Verification failed.", "err"); return; }
+  render(data);
+}
+
+function render(data) {
+  result.classList.remove("hidden");
+  if (!data.registered) {
+    result.innerHTML = `
+      <div class="card">
+        <div class="card-b">
+          <span class="badge no"><span class="dot"></span>Not registered</span>
+          <h2 style="margin:.5em 0 .2em;">No provenance record found</h2>
+          <p class="muted">This exact file has not been registered in FrameVault. If you made it, register it from your dashboard to create a signed proof of authorship.</p>
+          <p class="hash" style="margin-top:10px;">${data.content_hash}</p>
+        </div>
+      </div>`;
+    result.scrollIntoView({ behavior: "smooth", block: "nearest" });
+    return;
+  }
+  const r = data.record;
+  const sig = r.signature_valid
+    ? `<span class="badge ok"><span class="dot"></span>Signature valid</span>`
+    : `<span class="badge no"><span class="dot"></span>Signature INVALID — tampered</span>`;
+  const vbadge = r.owner_verified ? `<span class="badge verified">✓ Verified creator</span>` : "";
+  result.innerHTML = `
+    <div class="card">
+      <div class="card-h row spread">
+        <span class="badge ok"><span class="dot"></span>Registered</span>
+        ${sig}
+      </div>
+      <div class="card-b stack">
+        <div>
+          <p class="rid">${r.registry_id}</p>
+          <h2 style="margin:.15em 0;">${escapeHtml(r.title)}</h2>
+          <p class="muted">${escapeHtml(r.role || "")}</p>
+        </div>
+        <hr class="sep">
+        <div class="field-grid">
+          <div><span class="faint tiny">CREATOR</span><br>
+            <a href="/@${r.owner_handle}" style="font-weight:600;color:var(--accent);">${escapeHtml(r.owner_name)}</a> ${vbadge}
+          </div>
+          <div><span class="faint tiny">REGISTERED</span><br><span class="mono tiny">${r.created_at}</span></div>
+          <div><span class="faint tiny">CONTRIBUTORS</span><br>${escapeHtml(r.contributors || "—")}</div>
+          <div><span class="faint tiny">AI DISCLOSURE</span><br>${escapeHtml(r.ai_disclosure || "—")}</div>
+        </div>
+        <hr class="sep">
+        <div><span class="faint tiny">CONTENT HASH (SHA-256)</span><p class="hash">${data.content_hash}</p></div>
+        <div><span class="faint tiny">REGISTRY SIGNATURE (HMAC-SHA256)</span><p class="hash">${r.signature}</p></div>
+      </div>
+    </div>`;
+  result.scrollIntoView({ behavior: "smooth", block: "nearest" });
+}
+
+function escapeHtml(s) {
+  return String(s ?? "").replace(/[&<>"']/g, c => ({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;" }[c]));
+}
+
+// Deep link: /verify?hash=… auto-runs
+(function () {
+  const q = new URLSearchParams(location.search).get("hash");
+  if (q) { hashInput.value = q; verify(); }
+})();
+</script>
+{% endblock %}

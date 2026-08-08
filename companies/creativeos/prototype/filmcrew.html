@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>CreativeOS — FilmCrew</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/creativeos.css">
+<script>(function(){ try{ var t=localStorage.getItem('ott-theme'); if(!t){ t=matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light'; } document.documentElement.setAttribute('data-theme',t); }catch(e){} })();</script>
+</head>
+<body>
+<main class="pane" data-view="filmcrew">
+  <div class="inner" style="--h:var(--filmcrew)">
+    <div class="phdr">
+      <div>
+        <div class="prod" style="--h:var(--filmcrew)"><span class="pdot"></span>FilmCrew · Collaboration layer</div>
+        <h1>Projects &amp; talent</h1>
+        <p class="sub">Hire creative professionals, assemble teams, and run the engagement end to end. Every completed hire writes back to FrameVault automatically.</p>
+      </div>
+      <button class="btn hue" style="--h:var(--filmcrew)" data-toast="New project — prototype stub">+ New project</button>
+    </div>
+
+    <div class="grid stats" style="margin-top:22px">
+      <div class="stat"><div class="n">3</div><div class="l cap">Active projects</div></div>
+      <div class="stat"><div class="n">2</div><div class="l cap">Open roles</div><div class="src">7 applicants</div></div>
+      <div class="stat"><div class="n">£8.2k</div><div class="l cap">In escrow</div></div>
+      <div class="stat"><div class="n">18</div><div class="l cap">Past collaborators</div></div>
+    </div>
+
+    <div class="toolbar">
+      <div class="tabs"><button class="tab on hue" style="--h:var(--filmcrew)">Pipeline</button><button class="tab" data-toast="Discovery tab — see grid below">Discover talent</button><button class="tab" data-toast="Contracts view — prototype stub">Contracts</button></div>
+      <div class="field">🔎 Filter roles…</div>
+      <button class="chipbtn on" style="--h:var(--filmcrew)">All roles</button>
+      <button class="chipbtn" style="--h:var(--filmcrew)">Camera</button>
+      <button class="chipbtn" style="--h:var(--filmcrew)">Post</button>
+      <button class="chipbtn" style="--h:var(--filmcrew)">Sound</button>
+    </div>
+
+    <section class="blk">
+      <div class="blkhead"><h2>Production pipeline</h2><span class="cap">Drag-and-drop in the full build</span></div>
+      <div class="board k4">
+        <div class="col">
+          <div class="ch">✏️ Drafting <span class="ct">1</span></div>
+          <div class="tk"><div class="tt">"Meridian II" — music video</div><div class="tm"><span class="pill" style="padding:2px 8px">Concept</span><span>budget TBD</span></div></div>
+        </div>
+        <div class="col">
+          <div class="ch" style="color:var(--filmcrew)">📣 Open roles <span class="ct">2</span></div>
+          <div class="tk" style="border-color:color-mix(in srgb,var(--filmcrew) 40%,var(--line))"><div class="tt">"Halcyon" — Director of Photography</div><div class="tm"><span class="pill hue" style="--h:var(--filmcrew)">£1,200</span><span>4 applicants</span></div></div>
+          <div class="tk"><div class="tt">"Halcyon" — Colorist</div><div class="tm"><span class="pill hue" style="--h:var(--filmcrew)">£600</span><span>3 applicants</span></div></div>
+        </div>
+        <div class="col">
+          <div class="ch">🎥 In production <span class="ct">1</span></div>
+          <div class="tk"><div class="tt">"Halcyon" — short film</div><div class="tm"><span class="pill warn">Day 2 / 4</span><span>crew of 6</span></div></div>
+        </div>
+        <div class="col">
+          <div class="ch">✅ Wrapped <span class="ct">1</span></div>
+          <div class="tk"><div class="tt">"Nightshift" — short film</div><div class="tm"><span class="pill ok"><span class="dotv"></span>Paid</span><span>★ 5.0</span></div></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="blk">
+      <div class="blkhead"><h2>Applicants — "Halcyon" · Director of Photography</h2><span class="cap">Ranked by verified reputation</span></div>
+      <div class="rows">
+        <div class="lrow" style="--h:var(--filmcrew)"><div class="av">AL</div><div class="grow"><div class="t">Aria Lindqvist <span class="pill ok" style="margin-left:6px"><span class="dotv"></span>Verified</span></div><div class="m">DP · 4.9 ★ · 22 projects · available now · £1,150 quote</div></div><div style="display:flex;gap:8px"><button class="btn sec sm" data-toast="Opening Aria's FrameVault profile">Profile</button><button class="btn hue sm" style="--h:var(--filmcrew)" data-toast="Offer flow — releases to escrow on accept">Offer</button></div></div>
+        <div class="lrow" style="--h:var(--filmcrew)"><div class="av">TN</div><div class="grow"><div class="t">Tomás Neruda</div><div class="m">DP / Operator · 4.7 ★ · 15 projects · available in 3d · £1,000 quote</div></div><div style="display:flex;gap:8px"><button class="btn sec sm">Profile</button><button class="btn hue sm" style="--h:var(--filmcrew)">Offer</button></div></div>
+        <div class="lrow" style="--h:var(--filmcrew)"><div class="av">RK</div><div class="grow"><div class="t">Rhea Kapoor</div><div class="m">DP · 4.6 ★ · 9 projects · available now · £1,200 quote</div></div><div style="display:flex;gap:8px"><button class="btn sec sm">Profile</button><button class="btn hue sm" style="--h:var(--filmcrew)">Offer</button></div></div>
+      </div>
+    </section>
+
+    <section class="blk">
+      <div class="blkhead"><h2>Discover talent</h2><span class="cap">Matched to your open roles</span></div>
+      <div class="cards c3">
+        <div class="uc" style="--h:var(--filmcrew)"><div class="cover" style="--tb:linear-gradient(135deg,#16202e,#0e1620)"><span class="tagtl">Available</span><span class="tagtr">★ 4.9</span><span class="ic">🎥</span></div><div class="body"><div class="t">Aria Lindqvist</div><div class="m">Director of Photography · London</div><div class="foot"><span class="who"><span class="av">AL</span>22 projects</span><span class="price" style="color:var(--filmcrew)">£1,150</span></div></div></div>
+        <div class="uc" style="--h:var(--filmcrew)"><div class="cover" style="--tb:linear-gradient(135deg,#1a1e2b,#10131c)"><span class="tagtr">★ 4.8</span><span class="ic">🎨</span></div><div class="body"><div class="t">Kojo Mensah</div><div class="m">Colorist · remote</div><div class="foot"><span class="who"><span class="av">KM</span>31 projects</span><span class="price" style="color:var(--filmcrew)">£620</span></div></div></div>
+        <div class="uc" style="--h:var(--filmcrew)"><div class="cover" style="--tb:linear-gradient(135deg,#181f2a,#0f141d)"><span class="tagtr">★ 4.9</span><span class="ic">🎙️</span></div><div class="body"><div class="t">Sena Okafor</div><div class="m">Sound recordist · Manchester</div><div class="foot"><span class="who"><span class="av">SO</span>17 projects</span><span class="price" style="color:var(--filmcrew)">£480</span></div></div></div>
+      </div>
+    </section>
+
+    <div class="banner" style="--h:var(--filmcrew)">🔗 <span><b>Cross-product loop:</b> when a "Halcyon" contract is delivered &amp; paid, FilmCrew emits <code style="font-family:var(--font-mono);color:var(--filmcrew)">hire.completed</code> — FrameVault logs the credit, Reputation updates, and the wallet releases escrow.</span></div>
+  </div>
+</main>
+<script src="assets/shell.js"></script>
+</body>
+</html>

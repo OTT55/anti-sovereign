@@ -1,0 +1,127 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>{% block title %}Veridact{% endblock %}</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+
+  <!-- PWA: installable to the home screen, opens full-screen like its own
+       camera app rather than a browser tab (decisions/0006). -->
+  <link rel="manifest" href="{{ url_for('static', filename='manifest.webmanifest') }}">
+  <meta name="theme-color" content="#0B0B0D">
+  <link rel="apple-touch-icon" href="{{ url_for('static', filename='icons/apple-touch-icon.png') }}">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Veridact">
+  <meta name="mobile-web-app-capable" content="yes">
+  <script>
+    (function(){ try{ var t=localStorage.getItem('ott-theme'); if(!t){ t=matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light'; } document.documentElement.setAttribute('data-theme',t); }catch(e){} })();
+  </script>
+</head>
+<body>
+  <header class="top">
+    <div class="brand"><b>Veridact</b><span>Truth Infrastructure</span></div>
+    <nav>
+      <a href="/" class="{{ 'active' if active=='enrol' }}">Enrol device</a>
+      <a href="/authenticate" class="{{ 'active' if active=='authenticate' }}">Authenticate</a>
+      <a href="/verify" class="{{ 'active' if active=='verify' }}">Verify</a>
+    </nav>
+    <button class="theme-toggle" onclick="openPalette()" title="Quick actions (Ctrl/Cmd+K)" style="margin-right:8px">&#128269;</button>
+    <button class="theme-toggle" onclick="ottToggleTheme()" title="Toggle light / dark"><span id="theme-icon">&#9789;</span></button>
+  </header>
+
+  <div class="palette-scrim hidden" id="paletteScrim" onclick="closePalette()"></div>
+  <div class="palette hidden" id="palette" role="dialog" aria-label="Quick actions" aria-modal="true">
+    <div class="palette-input-row">
+      <span class="palette-icon" aria-hidden="true">&#128269;</span>
+      <input type="text" id="paletteInput" placeholder="Enrol, authenticate, verify…" autocomplete="off">
+      <span class="kbd">esc</span>
+    </div>
+    <div class="palette-results" id="paletteResults"></div>
+  </div>
+
+  <script>
+    function ottToggleTheme(){
+      var next = (document.documentElement.getAttribute('data-theme')==='dark') ? 'light' : 'dark';
+      document.documentElement.setAttribute('data-theme', next);
+      try{ localStorage.setItem('ott-theme', next); }catch(e){}
+      var icon = document.getElementById('theme-icon');
+      if(icon) icon.innerHTML = next==='dark' ? '&#9789;' : '&#9788;';
+    }
+    document.addEventListener('DOMContentLoaded', function(){
+      var icon = document.getElementById('theme-icon');
+      if(icon) icon.innerHTML = document.documentElement.getAttribute('data-theme')==='dark' ? '&#9789;' : '&#9788;';
+    });
+
+    /* ---- command palette: quick jumps between the three steps of the
+       capture->verify pipeline. Veridact keeps devices/keys client-side by
+       design, so there's no central directory to search — navigation is
+       the honest scope here, not a fabricated search feature. ---- */
+    (function(){
+      var COMMANDS = [
+        { label: 'Enrol a device', sub: 'Generate a device key and register its public half', url: '/' },
+        { label: 'Authenticate (capture)', sub: 'Sign a frame live, bound to a one-time challenge', url: '/authenticate' },
+        { label: 'Verify a file', sub: 'Check a file against Veridact manifests or a C2PA credential', url: '/verify' },
+      ];
+      var selIdx = 0, filtered = COMMANDS;
+      function els(){ return { scrim: document.getElementById('paletteScrim'), panel: document.getElementById('palette'), input: document.getElementById('paletteInput'), list: document.getElementById('paletteResults') }; }
+      window.openPalette = function(){
+        var e = els(); if(!e.scrim) return;
+        e.scrim.classList.remove('hidden'); e.panel.classList.remove('hidden');
+        e.input.value = ''; filtered = COMMANDS; selIdx = 0; render(); e.input.focus();
+      };
+      window.closePalette = function(){
+        var e = els(); if(e.scrim) e.scrim.classList.add('hidden'); if(e.panel) e.panel.classList.add('hidden');
+      };
+      function render(){
+        var host = els().list; if(!host) return;
+        host.innerHTML = filtered.map(function(c, i){
+          return '<a class="palette-row' + (i===0?' sel':'') + '" href="' + c.url + '" data-i="' + i + '">' +
+            '<span class="palette-title">' + c.label + '</span><span class="palette-sub">' + c.sub + '</span></a>';
+        }).join('') || '<div class="palette-empty">No matching action.</div>';
+      }
+      function highlight(){ var host = els().list; if(!host) return; [].slice.call(host.querySelectorAll('.palette-row')).forEach(function(el,i){ el.classList.toggle('sel', i===selIdx); }); }
+      document.addEventListener('DOMContentLoaded', function(){
+        var input = els().input; if(!input) return;
+        input.addEventListener('input', function(){
+          var q = input.value.trim().toLowerCase();
+          filtered = COMMANDS.filter(function(c){ return c.label.toLowerCase().indexOf(q) > -1; });
+          selIdx = 0; render();
+        });
+        input.addEventListener('keydown', function(e){
+          if(e.key === 'ArrowDown'){ e.preventDefault(); selIdx = Math.min(selIdx+1, filtered.length-1); highlight(); }
+          else if(e.key === 'ArrowUp'){ e.preventDefault(); selIdx = Math.max(selIdx-1, 0); highlight(); }
+          else if(e.key === 'Enter'){ e.preventDefault(); var c = filtered[selIdx]; if(c) window.location.href = c.url; }
+          else if(e.key === 'Escape'){ closePalette(); }
+        });
+      });
+      document.addEventListener('keydown', function(e){
+        if((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k'){
+          e.preventDefault();
+          var p = els().panel;
+          if(p && !p.classList.contains('hidden')) closePalette(); else openPalette();
+        } else if(e.key === 'Escape'){
+          var p2 = els().panel; if(p2 && !p2.classList.contains('hidden')) closePalette();
+        }
+      });
+    })();
+  </script>
+  <div class="wrap">
+    {% block body %}{% endblock %}
+  </div>
+  <footer>Veridact · Sovereign Stack · proof of real capture, not a guess about AI</footer>
+  <script>
+    window.VD_P_HEX = "{{ p_hex }}";
+    window.VD_G = {{ g }};
+  </script>
+  <script src="{{ url_for('static', filename='keystore.js') }}"></script>
+  <script src="{{ url_for('static', filename='pngtext.js') }}"></script>
+  <script src="{{ url_for('static', filename='device.js') }}"></script>
+  <script src="{{ url_for('static', filename='ecdsa.js') }}"></script>
+  {% block scripts %}{% endblock %}
+</body>
+</html>

@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+{% block title %}Challenges{% endblock %}
+{% block nav_challenges %}on{% endblock %}
+
+{% block body %}
+<div class="row spread wrap-w" style="gap:16px;">
+  <div>
+    <p class="eyebrow">CreatorStack · Competitions</p>
+    <h1 style="margin:.2em 0;">Ideas become funded productions</h1>
+    <p class="muted">Brands post creative challenges. Creators submit concepts and vote on their favourites.
+      The sponsor picks a winner — funded, and credited to their FrameVault.</p>
+  </div>
+  {% if me %}
+  <a class="btn btn-primary" href="/post">+ Post a challenge</a>
+  {% else %}
+  <a class="btn btn-primary" href="/login">Log in to sponsor</a>
+  {% endif %}
+</div>
+
+<div class="stats">
+  <div class="stat"><div class="n">{{ stats.open }}</div><div class="l">Open challenges</div></div>
+  <div class="stat"><div class="n">{{ stats.submissions }}</div><div class="l">Submissions</div></div>
+  <div class="stat"><div class="n">{{ stats.awarded }}</div><div class="l">Awarded</div></div>
+  <div class="stat"><div class="n">£{{ '{:,}'.format(stats.prize_pool) }}</div><div class="l">Open prize pool</div></div>
+</div>
+
+<div class="modes">
+  <a href="/?status=open" class="{{ 'on' if status=='open' }}">Open</a>
+  <a href="/?status=awarded" class="{{ 'on' if status=='awarded' }}">Awarded</a>
+</div>
+
+<div class="grid" style="margin-top:16px;">
+  {% for c in listing %}
+  <a class="ccard" href="/challenge/{{ c.id }}">
+    <div class="cov">
+      <span class="pz">£{{ '{:,}'.format(c.prize) }}</span>
+      🏆
+    </div>
+    <div class="body">
+      <div class="t">{{ c.title }}</div>
+      <div class="m">Sponsored by {{ c.sponsor_name }}{% if c.submit_deadline and c.status=='open' %} · closes {{ c.submit_deadline }}{% endif %}</div>
+      <div class="foot">
+        <span class="badge {{ 'open' if c.status=='open' else 'filled' }}">
+          {% if c.status=='open' %}<span class="dot"></span>{% endif %}{{ c.submissions|length }} submission{{ '' if c.submissions|length==1 else 's' }}
+        </span>
+        {% if c.award %}<span class="faint tiny">won by {{ c.award['creator_name'] }}</span>{% endif %}
+      </div>
+    </div>
+  </a>
+  {% else %}
+  <p class="muted">No {{ status }} challenges right now.</p>
+  {% endfor %}
+</div>
+
+<div class="note">
+  🔗 <b>The cross-product loop:</b> when a sponsor awards a challenge, CreatorStack emits
+  <code class="mono">challenge.won</code> — a verified credit lands on the winner's FrameVault,
+  their reputation updates, and the concept becomes a real production brief.
+</div>
+{% endblock %}

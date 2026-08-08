@@ -1,0 +1,17 @@
+services:
+  # Phase 6 of SCALING-RESEARCH.md — dense retrieval store. Not a general
+  # ContextCore dependency: the app runs fine without this (sparse/BM25
+  # retrieval), this only adds the dense leg of hybrid search.
+  postgres:
+    image: pgvector/pgvector:pg16
+    environment:
+      POSTGRES_USER: contextcore
+      POSTGRES_PASSWORD: contextcore
+      POSTGRES_DB: contextcore
+    ports:
+      - "5432:5432"
+    volumes:
+      - contextcore_pgdata:/var/lib/postgresql/data
+
+volumes:
+  contextcore_pgdata:

@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% set active = "prove" %}
+{% block title %}Nullform — Prove{% endblock %}
+{% block body %}
+<h1>Prove your identity</h1>
+<p class="lede">Paste your private key and a challenge message. Your browser builds a
+Schnorr zero-knowledge proof bound to that message and sends only the proof pair
+(t, s). The server checks it against your public key — confirming you hold the
+private key without ever seeing it. Tamper with the message or the key and the
+proof fails.</p>
+
+<div class="card">
+  <label>Handle</label>
+  <input type="text" id="handle" placeholder="the handle you enrolled">
+
+  <label>Private key</label>
+  <textarea id="secret" class="mono" placeholder="paste the private key you saved at enrolment"></textarea>
+
+  <label>Challenge message <span class="muted">(what you are signing in to / authorising)</span></label>
+  <input type="text" id="message" placeholder="e.g. login:2026-07-21T10:00Z">
+
+  <button id="prove">Build proof &amp; verify</button>
+  <div id="err" class="err hidden"></div>
+</div>
+
+<div id="result" class="cert hidden">
+  <div class="verdict" id="verdict"></div>
+  <div id="detail" class="muted" style="font-size:13px;margin-bottom:8px"></div>
+  <div class="kv"><div class="k">Identity</div><div class="v" id="c_id"></div></div>
+  <div class="kv"><div class="k">Message</div><div class="v" id="c_msg"></div></div>
+  <div class="kv"><div class="k">Proof commitment t</div><div class="v hash" id="c_t" style="max-height:70px;overflow:auto"></div></div>
+  <div class="kv"><div class="k">Proof response s</div><div class="v hash" id="c_s" style="max-height:70px;overflow:auto"></div></div>
+</div>
+{% endblock %}
+{% block scripts %}<script src="{{ url_for('static', filename='prove.js') }}"></script>{% endblock %}

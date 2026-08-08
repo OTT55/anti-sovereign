@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>ArcVault — IP Adaptation</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <script>
+    (function(){ try{ var t=localStorage.getItem('ott-theme'); if(!t){ t=matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light'; } document.documentElement.setAttribute('data-theme',t); }catch(e){} })();
+  </script>
+</head>
+<body>
+  <header class="top">
+    <div class="brand"><b>ArcVault</b><span>IP Arbitrage</span></div>
+    <nav><a href="/" class="active">Adapt</a></nav>
+    <button class="theme-toggle" onclick="ottToggleTheme()" title="Toggle light / dark"><span id="theme-icon">&#9789;</span></button>
+  </header>
+  <script>
+    function ottToggleTheme(){
+      var next = (document.documentElement.getAttribute('data-theme')==='dark') ? 'light' : 'dark';
+      document.documentElement.setAttribute('data-theme', next);
+      try{ localStorage.setItem('ott-theme', next); }catch(e){}
+      var icon = document.getElementById('theme-icon');
+      if(icon) icon.innerHTML = next==='dark' ? '&#9789;' : '&#9788;';
+    }
+    document.addEventListener('DOMContentLoaded', function(){
+      var icon = document.getElementById('theme-icon');
+      if(icon) icon.innerHTML = document.documentElement.getAttribute('data-theme')==='dark' ? '&#9789;' : '&#9788;';
+    });
+  </script>
+
+  <div class="wrap">
+    <h1>Re-forge a public-domain work</h1>
+    <p class="lede">ArcVault takes the verbatim opening of a real public-domain story
+    and rewrites it in a new genre — plot and characters intact, voice and pacing
+    transformed. Choose a source, pick a target genre, and adapt.</p>
+
+    <div class="card">
+      <label>Source work</label>
+      <select id="story">
+        {% for s in stories %}<option value="{{ s.key }}">{{ s.title }} — {{ s.author }}</option>{% endfor %}
+      </select>
+
+      <label style="margin-top:18px">Target genre</label>
+      <div class="tabs" id="genres">
+        {% for gen in genres %}
+        <div class="tab {{ 'active' if loop.first }}" data-genre="{{ gen.key }}">{{ gen.label }}</div>
+        {% endfor %}
+      </div>
+
+      <button id="adapt">Adapt →</button>
+      <div id="err" class="err hidden"></div>
+    </div>
+
+    <div class="panes">
+      <div class="pane">
+        <div class="pane-head">Original <span class="muted" id="src-meta"></span></div>
+        <div class="pane-body original" id="original"></div>
+      </div>
+      <div class="pane">
+        <div class="pane-head">Adaptation <span class="pill" id="genre-tag"></span></div>
+        <div class="pane-body adapted" id="adapted"><span class="muted">The adaptation will appear here.</span></div>
+        <button class="btn-ghost hidden" id="download">Download .txt</button>
+      </div>
+    </div>
+  </div>
+
+  <footer>ArcVault · Sovereign Stack · every story is raw material</footer>
+  <script>
+    window.STORIES = {{ stories|tojson }};
+    window.GENRES = {{ genres|tojson }};
+  </script>
+  <script src="{{ url_for('static', filename='script.js') }}"></script>
+</body>
+</html>

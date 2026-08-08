@@ -1,0 +1,18 @@
+Q3 Financial Summary
+
+Revenue grew twelve percent quarter over quarter, driven primarily by new
+enterprise contracts signed in August and September. The sales team closed
+four new logos in the mid-market segment.
+
+Engineering Update
+
+The authentication system rewrite shipped in October, closing out three
+long-standing security tickets. The team also migrated the build pipeline
+to a faster CI runner, cutting average build time from eleven minutes to
+four.
+
+Customer Success
+
+Churn dropped after the onboarding redesign launched in September, with the
+biggest improvement in the first-week retention cohort. Support ticket
+volume held steady despite the growth in active accounts.

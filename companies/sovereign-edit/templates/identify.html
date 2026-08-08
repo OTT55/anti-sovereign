@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% set active = "identify" %}
+{% block title %}Sovereign Edit — Identify a file{% endblock %}
+{% block body %}
+<h1>Identify a file</h1>
+<p class="lede">You're holding a file and you're about to send it to a festival, a
+client, or a colourist. Drop it here. Sovereign Edit fingerprints it locally and
+tells you exactly what it is — the approved master, an earlier stage, or nothing
+it has ever seen.</p>
+
+<div class="card">
+  <label>The file in question <span class="muted">(hashed in your browser — it never uploads)</span></label>
+  <input type="file" id="file">
+  <div id="filehash" class="hash hidden" style="margin-top:8px"></div>
+  <div id="err" class="err hidden"></div>
+</div>
+
+<div id="result" class="cert hidden">
+  <div class="verdict" id="verdict"></div>
+  <div id="detail" class="muted" style="font-size:13px;margin-bottom:10px"></div>
+  <div id="fields"></div>
+</div>
+{% endblock %}
+{% block scripts %}<script src="{{ url_for('static', filename='identify.js') }}"></script>{% endblock %}

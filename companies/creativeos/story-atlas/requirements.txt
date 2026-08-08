@@ -1,0 +1,43 @@
+Flask==3.1.3
+
+# Optional — Tier 2 of draft-import entity detection (real trained NER,
+# dependency parsing, and the knowledge-graph/narrative-state features,
+# layered on top of the regex/heuristic pass). Falls back to heuristics-only
+# without it.
+# spacy>=3.7
+# then: python -m spacy download en_core_web_sm
+
+# Optional — the knowledge-graph layer (centrality, shortest-path "how are
+# X and Y connected" queries). Usually already present as a transitive
+# dependency of spacy/thinc, but declared directly since app.py imports it
+# itself rather than relying on that being true forever.
+# networkx>=3.6
+
+# Optional — local coreference resolution ("John... He... him" -> one
+# entity), layered into draft-import alongside Tier 2. Confirmed working on
+# Python 3.14, but ONLY with transformers pinned below — the newest
+# transformers (5.x) has refactored internals that break fastcoref's model
+# loading outright (AttributeError on model load). Resolves pronouns
+# reliably; does not resolve definite descriptions ("the old admiral") back
+# to a named character — that's a harder, separate coreference sub-problem
+# fastcoref (like most coref systems) doesn't cover.
+# fastcoref>=2.1
+# transformers==4.57.6
+
+# Optional — Tier 3 of draft-import ("Deepen with AI"): the relative-date
+# reasoning and recategorization that neither regex, NER, nor coreference
+# can do. Requires ANTHROPIC_API_KEY too. Falls back to an honest
+# "AI deepen skipped" note without it.
+# anthropic>=0.40
+
+# Optional — a local fallback for Tier 3 when no ANTHROPIC_API_KEY is set:
+# a local Ollama server (https://ollama.com), called directly over HTTP via
+# stdlib urllib, so no new pip package is needed here — just the Ollama
+# daemon running with a model pulled (default OLLAMA_MODEL=llama3.2:3b,
+# override via env; OLLAMA_URL defaults to http://localhost:11434).
+# Evaluated on this machine (see LOCAL_AI_EVALUATION.md): valid JSON every
+# run, correctly re-types entities — but on a date it has to reason out with
+# no stated anchor, it confidently invents a different specific wrong year
+# each run rather than saying "unknown." That's why the result is labeled
+# "deepened locally with Ollama" rather than presented like Claude's output,
+# and why it still only ever proposes — you review and commit either way.
