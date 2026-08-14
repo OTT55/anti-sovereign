@@ -1,8 +1,8 @@
 """
-Launch every Sovereign Stack company MVP at once.
+Launch every Sovereign Stack & Anti-Sovereign app MVP at once.
 
-Starts each Flask app on its own port as a subprocess and prints the URLs.
-Press Ctrl+C to stop them all.
+Starts each Flask app on its assigned port as a subprocess and prints the URLs.
+Includes Central Gateway (5000) and AI Labs Connector (5200).
 
     python companies/run_all.py
 """
@@ -16,6 +16,7 @@ BASE = Path(__file__).parent
 
 # (folder, port, label)
 APPS = [
+    ("gateway",        5000, "Sovereign Gateway — Infrastructure Launchpad"),
     ("canonchain",     5101, "Canonchain — Rights Registry"),
     ("veridact",       5102, "Veridact — Truth Infrastructure"),
     ("nullform",       5103, "Nullform — Identity Layer"),
@@ -25,10 +26,10 @@ APPS = [
     ("contextcore",    5107, "ContextCore — Data Refineries (RAG + collections)"),
     ("arcvault",       5108, "ArcVault — IP Arbitrage"),
     ("story-atlas",    5109, "Story Atlas — Creative Intelligence Workspace"),
+    ("ai-labs",        5200, "AI Labs Connector — Noyron, Claude & Local LLM Mesh"),
 ]
 
-# Collections that need seeding before their app starts (idempotent — the
-# seed script checks whether its collection is already populated).
+# Collections that need seeding before their app starts (idempotent)
 SEEDS = [
     ("contextcore", "seed_distribution.py"),
 ]
@@ -42,15 +43,20 @@ LAUNCH = (
 
 
 def main():
+    print("\n🚀 Anti-Sovereign Infrastructure — Initializing Services...\n")
+    
     for folder, script in SEEDS:
-        subprocess.run(
-            [sys.executable, script], cwd=BASE / folder,
-            stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
-        )
+        if (BASE / folder / script).exists():
+            subprocess.run(
+                [sys.executable, script], cwd=BASE / folder,
+                stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
+            )
 
     procs = []
     for folder, port, label in APPS:
         cwd = BASE / folder
+        if not cwd.exists():
+            continue
         p = subprocess.Popen(
             [sys.executable, "-c", LAUNCH.format(port=port)],
             cwd=cwd,
@@ -60,9 +66,14 @@ def main():
         procs.append(p)
 
     time.sleep(2)
-    print("\n  Sovereign Stack — company MVPs running:\n")
+    print("  ================================================================")
+    print("  🌐 Sovereign Stack & AI Labs — All Services Live:")
+    print("  ================================================================\n")
     for _folder, port, label in APPS:
-        print(f"    http://127.0.0.1:{port}   {label}")
+        if (_folder == "gateway"):
+            print(f"    ⭐ http://127.0.0.1:{port}   --> {label} (MAIN)")
+        else:
+            print(f"       http://127.0.0.1:{port}   {label}")
     print("\n  Press Ctrl+C to stop all.\n")
 
     try:
@@ -71,7 +82,7 @@ def main():
     except KeyboardInterrupt:
         for p in procs:
             p.terminate()
-        print("\n  Stopped.")
+        print("\n  Stopped all services cleanly.")
 
 
 if __name__ == "__main__":

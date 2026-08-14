@@ -271,6 +271,17 @@ def settle(deal_id):
     )
 
 
+@app.route("/__whoami")
+def whoami():
+    return jsonify({
+        "name": "Strata Finance",
+        "port": 5106,
+        "category": "Capital Settlement",
+        "status": "operational"
+    })
+
+
 if __name__ == "__main__":
+
     init_db()
     app.run(host=os.environ.get("HOST", "127.0.0.1"), port=5106, debug=True)

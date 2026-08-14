@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AI Labs Connector — Frontier Intelligence Gateway</title>
+  <link rel="stylesheet" href="/design-system/vibe-system.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-dark: #090B10;
+      --card-bg: rgba(15, 20, 30, 0.8);
+      --border-color: rgba(244, 63, 94, 0.2);
+      --accent-rose: #F43F5E;
+    }
+    body {
+      background: var(--bg-dark);
+      color: #E2E8F0;
+      font-family: 'Inter', sans-serif;
+      margin: 0;
+      padding: 2rem 1.5rem;
+    }
+    .container { max-width: 1200px; margin: 0 auto; }
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 2rem;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      padding-bottom: 1.5rem;
+    }
+    .title {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 2rem;
+      font-weight: 700;
+      margin: 0;
+      background: linear-gradient(135deg, #FFF 0%, #FDA4AF 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    .subtitle { color: #94A3B8; font-size: 0.95rem; margin-top: 0.3rem; }
+    .status-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 1rem;
+      margin-bottom: 2rem;
+    }
+    .status-card {
+      background: var(--card-bg);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 10px;
+      padding: 1rem 1.25rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .provider-name { font-size: 0.9rem; font-weight: 600; color: #F1F5F9; }
+    .tag {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.75rem;
+      padding: 0.2rem 0.6rem;
+      border-radius: 4px;
+    }
+    .tag.active { background: rgba(16, 185, 129, 0.15); color: #34D399; border: 1px solid rgba(16, 185, 129, 0.3); }
+    .tag.ready { background: rgba(99, 102, 241, 0.15); color: #818CF8; border: 1px solid rgba(99, 102, 241, 0.3); }
+    .tag.unconfigured { background: rgba(148, 163, 184, 0.1); color: #94A3B8; border: 1px solid rgba(148, 163, 184, 0.2); }
+    
+    .workbench {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1.5rem;
+    }
+    @media (max-width: 900px) { .workbench { grid-template-columns: 1fr; } }
+    
+    .panel {
+      background: var(--card-bg);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 12px;
+      padding: 1.5rem;
+      display: flex;
+      flex-direction: column;
+    }
+    .panel-title {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 1.1rem;
+      font-weight: 600;
+      margin: 0 0 1rem;
+      color: #F8FAFC;
+    }
+    textarea {
+      background: rgba(0, 0, 0, 0.4);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 8px;
+      color: #FFF;
+      padding: 1rem;
+      font-family: 'Inter', sans-serif;
+      font-size: 0.95rem;
+      resize: vertical;
+      min-height: 140px;
+      margin-bottom: 1rem;
+    }
+    textarea:focus { outline: none; border-color: var(--accent-rose); }
+    select {
+      background: rgba(0, 0, 0, 0.4);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 6px;
+      color: #FFF;
+      padding: 0.6rem 1rem;
+      font-size: 0.9rem;
+      margin-bottom: 1rem;
+    }
+    .btn-submit {
+      background: var(--accent-rose);
+      color: #FFF;
+      border: none;
+      border-radius: 8px;
+      padding: 0.75rem 1.5rem;
+      font-size: 0.95rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 150ms ease;
+    }
+    .btn-submit:hover { opacity: 0.9; box-shadow: 0 0 15px rgba(244, 63, 94, 0.4); }
+    .response-area {
+      background: rgba(0, 0, 0, 0.5);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 8px;
+      padding: 1rem;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.88rem;
+      color: #E2E8F0;
+      white-space: pre-wrap;
+      overflow-y: auto;
+      flex-grow: 1;
+      min-height: 250px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <div>
+        <h1 class="title">AI Labs Integration Connector</h1>
+        <div class="subtitle">Frontier Cognitive Gateway: Claude, Noyron, Antigravity & Local Open-Weights</div>
+      </div>
+      <a href="http://127.0.0.1:5000" style="color: #94A3B8; text-decoration: none; font-size: 0.9rem;">← Back to Gateway</a>
+    </div>
+
+    <!-- Provider Status -->
+    <div class="status-grid">
+      <div class="status-card">
+        <span class="provider-name">Noyron Cognitive Engine</span>
+        <span class="tag ready">Ready (Synthesizer)</span>
+      </div>
+      <div class="status-card">
+        <span class="provider-name">Anthropic Claude API</span>
+        {% if key_status.anthropic %}
+          <span class="tag active">API Key Connected</span>
+        {% else %}
+          <span class="tag unconfigured">Key Unset (.env)</span>
+        {% endif %}
+      </div>
+      <div class="status-card">
+        <span class="provider-name">Google Antigravity SDK</span>
+        {% if key_status.gemini %}
+          <span class="tag active">Active</span>
+        {% else %}
+          <span class="tag ready">System Active</span>
+        {% endif %}
+      </div>
+      <div class="status-card">
+        <span class="provider-name">Local Open-Weights (Ollama)</span>
+        {% if key_status.ollama_online %}
+          <span class="tag active">Node Online :11434</span>
+        {% else %}
+          <span class="tag unconfigured">Node Offline</span>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- Interactive Workbench -->
+    <div class="workbench">
+      <div class="panel">
+        <h2 class="panel-title">Multi-Lab Prompt Router</h2>
+        
+        <label style="font-size: 0.85rem; color: #94A3B8; margin-bottom: 0.4rem;">Select AI Provider Lab</label>
+        <select id="providerSelect">
+          <option value="noyron">Noyron AI Labs (Multi-Agent Cognitive Synthesis)</option>
+          <option value="claude">Anthropic Claude (Frontier Reasoning)</option>
+          <option value="ollama">Local Open-Weights (Ollama / Llama3 / Local)</option>
+        </select>
+
+        <label style="font-size: 0.85rem; color: #94A3B8; margin-bottom: 0.4rem;">Prompt Instruction</label>
+        <textarea id="promptInput" placeholder="Enter your challenge, query or instructions for the frontier AI labs..."></textarea>
+
+        <button class="btn-submit" onclick="sendPrompt()">Execute Synthesis Request</button>
+      </div>
+
+      <div class="panel">
+        <h2 class="panel-title">Cognitive Output Stream</h2>
+        <div class="response-area" id="outputArea">Select a provider and submit a prompt to observe live synthesis...</div>
+      </div>
+    </div>
+  </div>
+
+  <script src="/design-system/vibe-core.js"></script>
+  <script>
+    async function sendPrompt() {
+      const provider = document.getElementById("providerSelect").value;
+      const prompt = document.getElementById("promptInput").value.trim();
+      const output = document.getElementById("outputArea");
+
+      if (!prompt) {
+        output.textContent = "Please enter a prompt first.";
+        return;
+      }
+
+      output.textContent = "Connecting to " + provider + " AI Lab... Synthesizing response...";
+
+      try {
+        const res = await fetch("/api/prompt", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ provider, prompt })
+        });
+        const data = await res.json();
+        if (data.success) {
+          output.textContent = data.response;
+        } else {
+          output.textContent = "ERROR (" + (data.error || "Execution failed") + ")\n\n" + (data.response || "");
+        }
+      } catch (err) {
+        output.textContent = "Network / Connection error: " + err.message;
+      }
+    }
+  </script>
+</body>
+</html>

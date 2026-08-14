@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sovereign Gateway — Infrastructure Launchpad</title>
+  <link rel="stylesheet" href="/design-system/vibe-system.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-dark: #0A0D14;
+      --card-bg: rgba(18, 24, 38, 0.75);
+      --card-border: rgba(255, 255, 255, 0.08);
+      --accent: #6366F1;
+      --accent-glow: rgba(99, 102, 241, 0.25);
+    }
+    body {
+      background: var(--bg-dark);
+      color: #E2E8F0;
+      font-family: 'Inter', sans-serif;
+      margin: 0;
+      padding: 0;
+      min-height: 100vh;
+    }
+    .header-banner {
+      background: linear-gradient(180deg, rgba(99, 102, 241, 0.12) 0%, rgba(10, 13, 20, 0) 100%);
+      border-bottom: 1px solid var(--card-border);
+      padding: 3rem 2rem 2rem;
+    }
+    .container {
+      max-width: 1280px;
+      margin: 0 auto;
+      padding: 0 1.5rem;
+    }
+    .hero-title {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 2.5rem;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      margin: 0 0 0.5rem;
+      background: linear-gradient(135deg, #FFFFFF 0%, #A5B4FC 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    .hero-sub {
+      color: #94A3B8;
+      font-size: 1.1rem;
+      max-width: 700px;
+      margin-bottom: 1.5rem;
+    }
+    .badge-bar {
+      display: flex;
+      gap: 1rem;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+    .badge {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid var(--card-border);
+      padding: 0.4rem 0.8rem;
+      border-radius: 6px;
+      font-size: 0.85rem;
+      font-family: 'JetBrains Mono', monospace;
+      color: #CBD5E1;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
+      gap: 1.5rem;
+      margin: 2.5rem 0 4rem;
+    }
+    .app-card {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 12px;
+      padding: 1.5rem;
+      transition: all 250ms cubic-bezier(0.16, 1, 0.3, 1);
+      backdrop-filter: blur(12px);
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      position: relative;
+      overflow: hidden;
+    }
+    .app-card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 3px;
+      background: var(--app-accent, var(--accent));
+      opacity: 0.8;
+    }
+    .app-card:hover {
+      transform: translateY(-4px);
+      border-color: rgba(255, 255, 255, 0.2);
+      box-shadow: 0 12px 30px -10px rgba(0, 0, 0, 0.5), 0 0 20px var(--accent-glow);
+    }
+    .card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 0.8rem;
+    }
+    .app-title {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 1.25rem;
+      font-weight: 600;
+      margin: 0;
+      color: #F8FAFC;
+    }
+    .app-category {
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: #94A3B8;
+      font-weight: 600;
+    }
+    .app-desc {
+      color: #94A3B8;
+      font-size: 0.92rem;
+      line-height: 1.5;
+      margin-bottom: 1.5rem;
+      flex-grow: 1;
+    }
+    .card-footer {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding-top: 1rem;
+      border-top: 1px solid rgba(255, 255, 255, 0.05);
+    }
+    .port-tag {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.85rem;
+      color: #CBD5E1;
+      background: rgba(0, 0, 0, 0.3);
+      padding: 0.25rem 0.6rem;
+      border-radius: 4px;
+      border: 1px solid rgba(255, 255, 255, 0.06);
+    }
+    .status-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      display: inline-block;
+      margin-right: 6px;
+    }
+    .status-dot.online { background: #10B981; box-shadow: 0 0 8px #10B981; }
+    .status-dot.offline { background: #64748B; }
+    .launch-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: rgba(255, 255, 255, 0.08);
+      color: #F8FAFC;
+      text-decoration: none;
+      font-size: 0.88rem;
+      font-weight: 500;
+      padding: 0.45rem 1rem;
+      border-radius: 6px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      transition: all 150ms ease;
+    }
+    .launch-btn:hover {
+      background: var(--app-accent, var(--accent));
+      color: #FFF;
+      border-color: transparent;
+      box-shadow: 0 0 12px var(--accent-glow);
+    }
+    .ai-banner {
+      background: linear-gradient(135deg, rgba(244, 63, 94, 0.1) 0%, rgba(139, 92, 246, 0.1) 100%);
+      border: 1px solid rgba(244, 63, 94, 0.2);
+      border-radius: 12px;
+      padding: 1.5rem 2rem;
+      margin-bottom: 2.5rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 1.5rem;
+    }
+    .ai-title {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 1.3rem;
+      margin: 0 0 0.3rem;
+      color: #FFF;
+    }
+    .ai-sub {
+      color: #FDA4AF;
+      font-size: 0.95rem;
+      margin: 0;
+    }
+  </style>
+</head>
+<body>
+  <div class="header-banner">
+    <div class="container">
+      <h1 class="hero-title">Anti-Sovereign Gateway</h1>
+      <p class="hero-sub">Autonomous Infrastructure Launchpad, Pure Python Microservices & Frontier AI Engine Mesh</p>
+      <div class="badge-bar">
+        <div class="badge"><span class="status-dot online"></span> Central Gateway :5000</div>
+        <div class="badge">Press <kbd class="vibe-kbd" style="margin: 0 4px;">⌘K</kbd> for Command Palette</div>
+        <div class="badge">Repo: OTT55/anti-sovereign</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="container">
+    <!-- AI Labs Integration Card -->
+    <div class="ai-banner" style="margin-top: 2rem;">
+      <div>
+        <h3 class="ai-title">⚡ Frontier AI Labs Integration Mesh</h3>
+        <p class="ai-sub">Noyron, Claude, Google Antigravity & Local Open-Weights (Ollama / Llama3) Cognitive Layer</p>
+      </div>
+      <a href="http://127.0.0.1:5200" target="_blank" class="launch-btn" style="--app-accent: #F43F5E;">Open AI Connector →</a>
+    </div>
+
+    <!-- Company Applications Matrix -->
+    <div class="grid">
+      {% for app in apps %}
+      <div class="app-card" style="--app-accent: {{ app.accent }};">
+        <div>
+          <div class="card-header">
+            <div>
+              <span class="app-category">{{ app.category }}</span>
+              <h2 class="app-title">{{ app.name }}</h2>
+            </div>
+            <span class="port-tag">:{{ app.port }}</span>
+          </div>
+          <p class="app-desc">{{ app.desc }}</p>
+        </div>
+        <div class="card-footer">
+          <div style="font-size: 0.85rem; color: #94A3B8;" id="status-{{ app.port }}">
+            <span class="status-dot offline"></span> Checking...
+          </div>
+          <a href="http://127.0.0.1:{{ app.port }}" target="_blank" class="launch-btn">Launch App ↗</a>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+
+  <script src="/design-system/vibe-core.js"></script>
+  <script>
+    async function pollHealth() {
+      try {
+        const res = await fetch('/api/health');
+        const health = await res.json();
+        for (const [port, info] of Object.entries(health)) {
+          const el = document.getElementById(`status-${port}`);
+          if (el) {
+            if (info.online) {
+              el.innerHTML = `<span class="status-dot online"></span> <span style="color:#34D399; font-weight:500;">Running</span>`;
+            } else {
+              el.innerHTML = `<span class="status-dot offline"></span> <span style="color:#94A3B8;">Standby</span>`;
+            }
+          }
+        }
+      } catch (err) {
+        console.error("Health check error:", err);
+      }
+    }
+    pollHealth();
+    setInterval(pollHealth, 4000);
+  </script>
+</body>
+</html>

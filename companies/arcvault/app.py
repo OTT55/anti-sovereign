@@ -58,5 +58,16 @@ def adapt():
     return jsonify(adapted=adapted)
 
 
+@app.route("/__whoami")
+def whoami():
+    return jsonify({
+        "name": "ArcVault",
+        "port": 5108,
+        "category": "IP Arbitrage",
+        "status": "operational"
+    })
+
+
 if __name__ == "__main__":
+
     app.run(host=os.environ.get("HOST", "127.0.0.1"), port=5108, debug=True)

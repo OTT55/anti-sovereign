@@ -202,6 +202,17 @@ def api_verify():
     )
 
 
+@app.route("/__whoami")
+def whoami():
+    return jsonify({
+        "name": "Nullform",
+        "port": 5103,
+        "category": "Identity Layer",
+        "status": "operational"
+    })
+
+
 if __name__ == "__main__":
+
     init_db()
     app.run(host=os.environ.get("HOST", "127.0.0.1"), port=5103, debug=True)
