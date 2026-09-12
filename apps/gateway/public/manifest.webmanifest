@@ -1,0 +1,13 @@
+{
+  "name": "Anti-Sovereign Gateway",
+  "short_name": "Gateway",
+  "description": "Live status and links for every app in the portfolio",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#0b0b0d",
+  "theme_color": "#0b0b0d",
+  "icons": [
+    { "src": "/icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }
+  ]
+}

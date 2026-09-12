@@ -1,0 +1,20 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@import "@anti-sovereign/design-system/tokens.css";
+
+/* Gateway is neutral chrome by design — no single product accent, keeping the
+   token default (a neutral blue) only for focus rings and incidental UI. */
+
+body {
+  background-color: var(--bg);
+  color: var(--text);
+}
+
+.glass-card {
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  backdrop-filter: var(--glass-blur);
+  border-radius: var(--r-md);
+}

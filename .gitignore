@@ -1,4 +1,6 @@
-# Python
+# Python (venv/.venv/ENV below already cover a venv's own lib/lib64 dirs —
+# no bare lib/ pattern here, since that would also swallow the TypeScript
+# rewrite's src/lib/ source directories)
 __pycache__/
 *.py[cod]
 *$py.class
@@ -11,8 +13,6 @@ dist/
 downloads/
 eggs/
 .eggs/
-lib/
-lib64/
 parts/
 sdist/
 var/
@@ -30,11 +30,17 @@ ENV/
 *.db
 *.sqlite
 *.sqlite3
+*.sqlite-journal
+*.sqlite-wal
+*.sqlite-shm
 .env
 .env.*
 *.env
 *.env.txt
 .env.local
+.*_secret
+!.env.example
+!**/.env.example
 
 # IDE & OS
 .vscode/
@@ -45,3 +51,12 @@ desktop.ini
 
 # Logs
 *.log
+
+# Node / TypeScript monorepo
+node_modules/
+.next/
+.turbo/
+dist/
+*.tsbuildinfo
+.pnpm-store/
+next-env.d.ts
