@@ -11,7 +11,7 @@
   ],
   "scripts": {
     "build": "npm run build --workspaces --if-present",
-    "dev": "concurrently -n gateway,canonlock,veridact -c blue,yellow,magenta \"npm run dev -w gateway\" \"npm run dev -w canonlock\" \"npm run dev -w veridact\"",
+    "dev": "concurrently -n gateway,canonlock,veridact,framevault -c blue,yellow,magenta,green \"npm run dev -w gateway\" \"npm run dev -w canonlock\" \"npm run dev -w veridact\" \"npm run dev -w framevault\"",
     "lint": "npm run lint --workspaces --if-present",
     "test": "npm run test --workspaces --if-present",
     "typecheck": "npm run typecheck --workspaces --if-present"

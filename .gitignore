@@ -39,6 +39,7 @@ ENV/
 *.env.txt
 .env.local
 .*_secret
+.*_secrets
 !.env.example
 !**/.env.example
 
