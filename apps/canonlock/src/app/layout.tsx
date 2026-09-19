@@ -1,12 +1,14 @@
 import { fontVariables } from "@anti-sovereign/design-system/fonts";
 import type { Metadata, Viewport } from "next";
 import Link from "next/link";
+import "@anti-sovereign/design-system/editorial.css";
 import "./globals.css";
+import { LiveRoot } from "./_components/LiveRoot";
 import { RegisterServiceWorker } from "./register-sw";
 
 export const metadata: Metadata = {
   title: "Canonlock",
-  description: "SHA-256 IP registry with Merkle inclusion proofs and certificates",
+  description: "SHA-256 registry: Merkle inclusion proofs, sealed certificates, RFC-3161 timestamps.",
   manifest: "/manifest.webmanifest",
   icons: [{ rel: "icon", url: "/icon.svg", type: "image/svg+xml" }],
 };
@@ -34,7 +36,12 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             </div>
           </nav>
         </header>
-        <main className="mx-auto max-w-3xl px-6 py-10">{children}</main>
+        <main>{children}</main>
+        <footer className="rule px-6 py-6">
+          <div className="mx-auto max-w-data">
+            <LiveRoot />
+          </div>
+        </footer>
         <RegisterServiceWorker />
       </body>
     </html>

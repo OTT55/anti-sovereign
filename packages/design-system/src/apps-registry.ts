@@ -20,7 +20,7 @@ export const APPS: AppRegistryEntry[] = [
     port: 5501,
     category: "Registry",
     accent: "#F59E0B",
-    description: "SHA-256 IP registry with Merkle inclusion proofs and certificates",
+    description: "SHA-256 registry: Merkle inclusion proofs, sealed certificates, RFC-3161 timestamps.",
   },
   {
     id: "veridact",
@@ -28,7 +28,7 @@ export const APPS: AppRegistryEntry[] = [
     port: 5502,
     category: "Attestation",
     accent: "#7C3AED",
-    description: "Capture attestation: real-camera vs. AI-generated media, plus watermarking",
+    description: "Device-bound signing for live captures, plus LSB watermarking.",
   },
   {
     id: "story-atlas",

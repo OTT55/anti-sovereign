@@ -55,6 +55,24 @@ const preset: Partial<Config> = {
       boxShadow: {
         glass: "0 8px 32px rgba(0, 0, 0, 0.32)",
       },
+      fontSize: {
+        "step--1": "var(--step--1)",
+        "step-0": "var(--step-0)",
+        "step-1": "var(--step-1)",
+        "step-2": "var(--step-2)",
+        "step-3": "var(--step-3)",
+        "step-4": "var(--step-4)",
+        "step-5": "var(--step-5)",
+      },
+      maxWidth: {
+        prose: "var(--measure-prose)",
+        narrow: "var(--measure-narrow)",
+        data: "var(--measure-data)",
+      },
+      spacing: {
+        section: "var(--space-section)",
+        "section-lg": "var(--space-section-lg)",
+      },
     },
   },
 };

@@ -28,7 +28,7 @@ export default function VerifyPage() {
   }
 
   return (
-    <div className="space-y-8">
+    <div className="mx-auto max-w-3xl space-y-8 px-6 py-10">
       <section>
         <p className="font-mono text-xs uppercase tracking-widest text-accent">Verify</p>
         <h1 className="font-display text-3xl font-semibold text-text">Check a registration</h1>

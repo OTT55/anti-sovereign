@@ -6,7 +6,7 @@ import { RegisterServiceWorker } from "./register-sw";
 
 export const metadata: Metadata = {
   title: "Veridact",
-  description: "Capture attestation: real-camera vs. AI-generated media, plus watermarking",
+  description: "Device-bound signing for live captures, plus LSB watermarking.",
   manifest: "/manifest.webmanifest",
   icons: [{ rel: "icon", url: "/icon.svg", type: "image/svg+xml" }],
 };

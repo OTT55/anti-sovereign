@@ -1,0 +1,39 @@
+/*
+ * Opt-in primitives for narrative/editorial marketing pages (the "website"
+ * layer, as opposed to the bare app-utility screens). Import explicitly:
+ *   import "@anti-sovereign/design-system/editorial.css";
+ * A class only belongs here once at least two apps use it — anything one
+ * app alone needs stays local to that app's own globals.css.
+ */
+
+.rule {
+  border: 0;
+  border-top: var(--rule-hairline);
+}
+
+.rule-v {
+  border: 0;
+  border-left: var(--rule-hairline);
+}
+
+/* Scroll-linked reveal. Content is NEVER hidden by this — only nudged in
+   from a few pixels below. Opacity stays untouched so a visitor who lands
+   mid-page (a direct link, a fast scroll, a screenshot tool that resizes
+   the viewport instead of scrolling it) always sees the content; browsers
+   without animation-timeline support just render it in its resting place. */
+@supports (animation-timeline: view()) {
+  @media (prefers-reduced-motion: no-preference) {
+    [data-reveal] {
+      transform: translateY(12px);
+      animation: editorial-reveal linear;
+      animation-timeline: view();
+      animation-range: entry 0% cover 30%;
+    }
+  }
+}
+
+@keyframes editorial-reveal {
+  to {
+    transform: translateY(0);
+  }
+}

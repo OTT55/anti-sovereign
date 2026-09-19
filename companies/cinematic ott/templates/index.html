@@ -1,0 +1,244 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Cinematic OTT · Color Grading Engine</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #0C0D12;
+      --surface: #14161F;
+      --surface-border: #232736;
+      --accent: #F59E0B;
+      --accent-glow: rgba(245, 158, 11, 0.15);
+      --text: #F3F4F6;
+      --text-muted: #9CA3AF;
+      --font-main: 'Plus Jakarta Sans', sans-serif;
+      --font-mono: 'IBM Plex Mono', monospace;
+      --font-title: 'Space Grotesk', sans-serif;
+    }
+    * { box-sizing: border-box; margin:0; padding:0; }
+    body {
+      background-color: var(--bg);
+      color: var(--text);
+      font-family: var(--font-main);
+      padding: 24px;
+      min-height: 100vh;
+    }
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding-bottom: 20px;
+      border-bottom: 1px solid var(--surface-border);
+      margin-bottom: 24px;
+    }
+    .brand {
+      font-family: var(--font-title);
+      font-size: 20px;
+      font-weight: 700;
+      color: var(--accent);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .badge {
+      background: var(--accent-glow);
+      color: var(--accent);
+      padding: 4px 10px;
+      border-radius: 6px;
+      font-size: 11px;
+      font-family: var(--font-mono);
+      border: 1px solid rgba(245, 158, 11, 0.3);
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: 340px 1fr;
+      gap: 24px;
+    }
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--surface-border);
+      border-radius: 12px;
+      padding: 20px;
+    }
+    .card h2 {
+      font-family: var(--font-title);
+      font-size: 16px;
+      margin-bottom: 12px;
+      color: var(--text);
+    }
+    label {
+      display: block;
+      margin-bottom: 16px;
+      font-size: 13px;
+      color: var(--text-muted);
+    }
+    input[type="file"] {
+      display: block;
+      width: 100%;
+      margin-top: 6px;
+      padding: 10px;
+      background: var(--bg);
+      border: 1px solid var(--surface-border);
+      border-radius: 6px;
+      color: var(--text);
+      font-size: 12px;
+    }
+    .btn {
+      width: 100%;
+      padding: 12px;
+      background: var(--accent);
+      color: #000;
+      font-weight: 700;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 14px;
+      transition: all 0.2s;
+    }
+    .btn:hover {
+      opacity: 0.9;
+      transform: translateY(-1px);
+    }
+    .btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+    .preview-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+      margin-top: 16px;
+    }
+    .preview-box {
+      background: var(--bg);
+      border: 1px solid var(--surface-border);
+      border-radius: 8px;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+    .preview-box header {
+      padding: 8px 12px;
+      font-size: 12px;
+      font-family: var(--font-mono);
+      background: rgba(0,0,0,0.3);
+      border-bottom: 1px solid var(--surface-border);
+      margin: 0;
+    }
+    .preview-box img {
+      width: 100%;
+      height: 280px;
+      object-fit: cover;
+      display: block;
+    }
+    .placeholder {
+      height: 280px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--text-muted);
+      font-size: 13px;
+      font-family: var(--font-mono);
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="brand">
+    <span>🎬 Cinematic OTT</span>
+    <span class="badge">Standalone Color Grading Suite (Port 5310)</span>
+  </div>
+</header>
+
+<div class="grid">
+  <!-- Upload Controls -->
+  <div class="card">
+    <h2>Reference-Based Grade</h2>
+    <p style="font-size:12px; color:var(--text-muted); margin-bottom:16px;">
+      Upload a reference film frame (the look you want) and your target camera shot. Cinematic OTT will transfer the color profile and generate a 3D LUT.
+    </p>
+
+    <form id="gradeForm">
+      <label>
+        <span>Reference Film Frame (Target Look)</span>
+        <input type="file" id="refFile" accept="image/*" required>
+      </label>
+
+      <label>
+        <span>Target Photo / Camera Frame</span>
+        <input type="file" id="targetFile" accept="image/*" required>
+      </label>
+
+      <button type="submit" class="btn" id="btnProcess">Run Color Transfer</button>
+    </form>
+
+    <form id="lutForm" action="/api/download_lut" method="POST" style="margin-top:16px;">
+      <button type="submit" class="btn" style="background:transparent; color:var(--accent); border:1px solid var(--accent);" id="btnDownloadLut" disabled>
+        📥 Export 3D LUT (.cube)
+      </button>
+    </form>
+  </div>
+
+  <!-- Preview Area -->
+  <div class="card">
+    <h2>Grading Workspace</h2>
+    <div class="preview-grid">
+      <div class="preview-box">
+        <header>Reference Look</header>
+        <div id="refHost" class="placeholder">No Reference</div>
+      </div>
+      <div class="preview-box">
+        <header>Target Original</header>
+        <div id="targetHost" class="placeholder">No Target</div>
+      </div>
+      <div class="preview-box" style="border-color: var(--accent);">
+        <header style="color:var(--accent);">AI Graded Output</header>
+        <div id="gradedHost" class="placeholder">Awaiting Grade</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  document.getElementById('gradeForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    const btn = document.getElementById('btnProcess');
+    const refFile = document.getElementById('refFile').files[0];
+    const targetFile = document.getElementById('targetFile').files[0];
+    if (!refFile || !targetFile) return;
+
+    btn.disabled = true;
+    btn.textContent = 'Processing Color Space...';
+
+    const formData = new FormData();
+    formData.append('reference', refFile);
+    formData.append('target', targetFile);
+
+    try {
+      const res = await fetch('/api/grade', { method: 'POST', body: formData });
+      const data = await res.json();
+      if (data.status === 'success') {
+        document.getElementById('refHost').innerHTML = `<img src="${data.reference}">`;
+        document.getElementById('targetHost').innerHTML = `<img src="${data.target}">`;
+        document.getElementById('gradedHost').innerHTML = `<img src="${data.graded}">`;
+        document.getElementById('btnDownloadLut').disabled = false;
+      } else {
+        alert(data.error || 'Failed to process grade.');
+      }
+    } catch(err) {
+      alert('Error communicating with Cinematic OTT engine.');
+    } finally {
+      btn.disabled = false;
+      btn.textContent = 'Run Color Transfer';
+    }
+  });
+</script>
+
+</body>
+</html>
